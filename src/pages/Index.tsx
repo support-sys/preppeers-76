@@ -1,17 +1,13 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, MessageSquare, Trophy } from "lucide-react";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+  return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Tech Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" 
-             style={{
-               backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
-               backgroundSize: '60px 60px'
-             }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" style={{
+        backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+        backgroundSize: '60px 60px'
+      }}>
         </div>
       </div>
 
@@ -33,19 +29,12 @@ const Index = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            <Button 
-              size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group"
-            >
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
               Book a Mock Interview
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="border-2 border-white text-white hover:bg-white hover:text-slate-900 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm"
-            >
+            <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
               Become an Interviewer
             </Button>
           </div>
@@ -83,8 +72,6 @@ const Index = () => {
       <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
       <div className="absolute bottom-20 right-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-xl animate-pulse delay-700"></div>
       <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
