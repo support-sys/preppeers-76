@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, DollarSign, Clock, Network, Users, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -16,7 +18,8 @@ const Interviewers = () => {
     name: "",
     email: "",
     linkedin: "",
-    skills: "",
+    skillCategory: "",
+    skills: [] as string[],
     experience: "",
     availability: "",
     paymentDetails: "",
@@ -24,18 +27,58 @@ const Interviewers = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
+  const skillCategories = {
+    "Frontend Development": [
+      "React", "Angular", "Vue.js", "JavaScript", "TypeScript", "HTML/CSS", 
+      "Next.js", "Svelte", "Redux", "Webpack", "Sass/SCSS"
+    ],
+    "Backend Development": [
+      "Node.js", "Python", "Java", "C#", "PHP", "Ruby", "Go", "Rust", 
+      "Express.js", "Django", "Spring Boot", "Laravel", "Ruby on Rails"
+    ],
+    "Mobile Development": [
+      "React Native", "Flutter", "iOS (Swift)", "Android (Kotlin/Java)", 
+      "Xamarin", "Ionic", "PhoneGap/Cordova"
+    ],
+    "Data Science & AI": [
+      "Python", "R", "SQL", "Machine Learning", "Deep Learning", "TensorFlow", 
+      "PyTorch", "Pandas", "NumPy", "Scikit-learn", "Apache Spark"
+    ],
+    "DevOps & Cloud": [
+      "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "Jenkins", 
+      "GitLab CI/CD", "Terraform", "Ansible", "Linux"
+    ],
+    "Database": [
+      "MySQL", "PostgreSQL", "MongoDB", "Redis", "Cassandra", "DynamoDB", 
+      "Oracle", "SQL Server", "Elasticsearch"
+    ]
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSkillCategoryChange = (value: string) => {
+    setFormData(prev => ({ ...prev, skillCategory: value, skills: [] }));
+  };
+
+  const handleSkillToggle = (skill: string) => {
+    setFormData(prev => ({
+      ...prev,
+      skills: prev.skills.includes(skill)
+        ? prev.skills.filter(s => s !== skill)
+        : [...prev.skills, skill]
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.skills) {
+    if (!formData.name || !formData.email || !formData.skillCategory || formData.skills.length === 0) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields and select at least one skill.",
         variant: "destructive",
       });
       return;
@@ -144,18 +187,41 @@ const Interviewers = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="skills" className="text-white">Skills & Technologies *</Label>
-                      <Textarea
-                        id="skills"
-                        name="skills"
-                        value={formData.skills}
-                        onChange={handleInputChange}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                        placeholder="List your technical skills (e.g., Java, Python, React, Node.js, Data Science, etc.)"
-                        rows={4}
-                        required
-                      />
+                      <Label className="text-white">Skill Category *</Label>
+                      <Select value={formData.skillCategory} onValueChange={handleSkillCategoryChange}>
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                          <SelectValue placeholder="Select your primary expertise area" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-600">
+                          {Object.keys(skillCategories).map((category) => (
+                            <SelectItem key={category} value={category} className="text-white hover:bg-slate-700">
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
+
+                    {formData.skillCategory && (
+                      <div>
+                        <Label className="text-white">Specific Technologies *</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2 p-4 bg-white/5 rounded-lg border border-white/10">
+                          {skillCategories[formData.skillCategory as keyof typeof skillCategories].map((skill) => (
+                            <div key={skill} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={skill}
+                                checked={formData.skills.includes(skill)}
+                                onCheckedChange={() => handleSkillToggle(skill)}
+                                className="border-white/40 data-[state=checked]:bg-blue-600"
+                              />
+                              <Label htmlFor={skill} className="text-slate-300 text-sm cursor-pointer">
+                                {skill}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div>
                       <Label htmlFor="experience" className="text-white">Years of Experience</Label>
