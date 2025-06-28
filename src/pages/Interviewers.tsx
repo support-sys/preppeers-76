@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, DollarSign, Clock, Network, Users, MessageSquare } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -21,11 +21,12 @@ const Interviewers = () => {
     skillCategory: "",
     skills: [] as string[],
     experience: "",
-    availability: "",
-    paymentDetails: "",
+    availableDays: [] as string[],
+    timeSlots: [] as string[],
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const skillCategories = {
     "Frontend Development": [
@@ -54,6 +55,18 @@ const Interviewers = () => {
     ]
   };
 
+  const daysOfWeek = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+  ];
+
+  const timeSlots = [
+    "9:00 AM - 12:00 PM",
+    "12:00 PM - 3:00 PM", 
+    "3:00 PM - 6:00 PM",
+    "6:00 PM - 9:00 PM",
+    "9:00 PM - 12:00 AM"
+  ];
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -72,6 +85,24 @@ const Interviewers = () => {
     }));
   };
 
+  const handleDayToggle = (day: string) => {
+    setFormData(prev => ({
+      ...prev,
+      availableDays: prev.availableDays.includes(day)
+        ? prev.availableDays.filter(d => d !== day)
+        : [...prev.availableDays, day]
+    }));
+  };
+
+  const handleTimeSlotToggle = (timeSlot: string) => {
+    setFormData(prev => ({
+      ...prev,
+      timeSlots: prev.timeSlots.includes(timeSlot)
+        ? prev.timeSlots.filter(t => t !== timeSlot)
+        : [...prev.timeSlots, timeSlot]
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -84,13 +115,19 @@ const Interviewers = () => {
       return;
     }
 
+    if (formData.availableDays.length === 0) {
+      toast({
+        title: "Missing Availability",
+        description: "Please select at least one available day.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log("Interviewer application submitted:", formData);
-    setIsSubmitted(true);
     
-    toast({
-      title: "Application Submitted!",
-      description: "We'll review your profile and contact you within 24 hours.",
-    });
+    // Navigate to payment page with form data
+    navigate('/interviewer-payment', { state: { interviewerData: formData } });
   };
 
   if (isSubmitted) {
@@ -236,28 +273,41 @@ const Interviewers = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="availability" className="text-white">Availability</Label>
-                      <Textarea
-                        id="availability"
-                        name="availability"
-                        value={formData.availability}
-                        onChange={handleInputChange}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                        placeholder="When are you available for conducting interviews? (e.g., Weekends, Evenings after 6 PM, etc.)"
-                        rows={3}
-                      />
+                      <Label className="text-white">Available Days *</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 p-4 bg-white/5 rounded-lg border border-white/10">
+                        {daysOfWeek.map((day) => (
+                          <div key={day} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={day}
+                              checked={formData.availableDays.includes(day)}
+                              onCheckedChange={() => handleDayToggle(day)}
+                              className="border-white/40 data-[state=checked]:bg-blue-600"
+                            />
+                            <Label htmlFor={day} className="text-slate-300 text-sm cursor-pointer">
+                              {day}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div>
-                      <Label htmlFor="paymentDetails" className="text-white">Payment Details</Label>
-                      <Input
-                        id="paymentDetails"
-                        name="paymentDetails"
-                        value={formData.paymentDetails}
-                        onChange={handleInputChange}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                        placeholder="UPI ID or PayPal email"
-                      />
+                      <Label className="text-white">Available Time Slots</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 p-4 bg-white/5 rounded-lg border border-white/10">
+                        {timeSlots.map((timeSlot) => (
+                          <div key={timeSlot} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={timeSlot}
+                              checked={formData.timeSlots.includes(timeSlot)}
+                              onCheckedChange={() => handleTimeSlotToggle(timeSlot)}
+                              className="border-white/40 data-[state=checked]:bg-blue-600"
+                            />
+                            <Label htmlFor={timeSlot} className="text-slate-300 text-sm cursor-pointer">
+                              {timeSlot}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <Button
@@ -265,7 +315,7 @@ const Interviewers = () => {
                       size="lg"
                       className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
                     >
-                      Submit Application
+                      Continue to Payment Details
                     </Button>
                   </form>
                 </CardContent>
