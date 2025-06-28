@@ -1,17 +1,22 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User } from "lucide-react";
+import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, DollarSign, Clock, Network } from "lucide-react";
+import { Link } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <Navigation />
+      
       {/* Tech Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent">
           <div 
             className="w-full h-full"
             style={{
-              backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+              background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
               backgroundSize: '60px 60px'
             }}
           />
@@ -25,25 +30,29 @@ const Index = () => {
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
             Crack Your IT Interviews with{" "}
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Real Mock Interviews
+              Real Engineers
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Practice with real engineers. Get real feedback. Land real jobs.
+            Practice with professionals, receive feedback, and become job-ready.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
-              Book a Mock Interview
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Button>
+            <Link to="/book">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
+                Book a Mock Interview
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </Button>
+            </Link>
             
-            <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
-              Become an Interviewer
-            </Button>
+            <Link to="/interviewers">
+              <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
+                Become an Interviewer
+              </Button>
+            </Link>
           </div>
 
           {/* Feature Highlights */}
@@ -139,11 +148,188 @@ const Index = () => {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
-                Start Practicing
-                <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
-              </Button>
+              <Link to="/book">
+                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
+                  Start Practicing
+                  <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* For Interviewers Section */}
+      <div className="relative z-10 bg-slate-800/50 backdrop-blur-sm border-t border-white/10">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-6xl mx-auto">
+            {/* Section Header */}
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                For <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Interviewers</span>
+              </h2>
+              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+                Share your expertise, earn flexible income, and help shape the next generation of IT professionals
+              </p>
+            </div>
+
+            {/* Benefits Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="w-8 h-8 text-green-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">Flexible Income</h3>
+                <p className="text-slate-300">Earn ₹500-₹1500 per session based on your experience and conduct interviews on your schedule</p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Clock className="w-8 h-8 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">Work Flexibly</h3>
+                <p className="text-slate-300">Set your own availability and work from anywhere. Perfect for full-time professionals looking for side income</p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Network className="w-8 h-8 text-purple-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">Build Your Network</h3>
+                <p className="text-slate-300">Connect with aspiring professionals and expand your professional network while giving back to the community</p>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <div className="text-center">
+              <Link to="/interviewers">
+                <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 group">
+                  Become an Interviewer
+                  <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Testimonials Section */}
+      <div className="relative z-10 bg-white/5 backdrop-blur-sm border-t border-white/10">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                What Our Users Say
+              </h2>
+              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+                Real feedback from professionals who've transformed their careers
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    R
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-white font-semibold">Rahul Sharma</h4>
+                    <p className="text-slate-400 text-sm">Software Engineer @ Google</p>
+                  </div>
+                </div>
+                <p className="text-slate-300">
+                  "The mock interviews helped me identify my weak areas and gave me confidence. Landed my dream job at Google!"
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
+                    P
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-white font-semibold">Priya Patel</h4>
+                    <p className="text-slate-400 text-sm">Frontend Developer @ Microsoft</p>
+                  </div>
+                </div>
+                <p className="text-slate-300">
+                  "The detailed feedback was incredibly valuable. I improved my coding interview skills significantly."
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                    A
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-white font-semibold">Amit Kumar</h4>
+                    <p className="text-slate-400 text-sm">Data Scientist @ Amazon</p>
+                  </div>
+                </div>
+                <p className="text-slate-300">
+                  "Practicing with real engineers made all the difference. The experience felt authentic and prepared me well."
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Preview Section */}
+      <div className="relative z-10 bg-slate-800/50 backdrop-blur-sm border-t border-white/10">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-slate-300 mb-12 max-w-3xl mx-auto">
+              Choose the plan that fits your needs. All sessions include live feedback and improvement plans.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2">Starter</h3>
+                <div className="text-4xl font-bold text-blue-400 mb-4">₹999</div>
+                <p className="text-slate-300 mb-6">1 Mock Interview</p>
+                <ul className="text-slate-300 text-left space-y-2">
+                  <li>• Live GMeet session</li>
+                  <li>• Basic feedback report</li>
+                  <li>• 60-minute session</li>
+                </ul>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-blue-400 hover:bg-white/15 transition-all duration-300 relative">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
+                  Most Popular
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Professional</h3>
+                <div className="text-4xl font-bold text-blue-400 mb-4">₹2499</div>
+                <p className="text-slate-300 mb-6">3 Mock Interviews + Plan</p>
+                <ul className="text-slate-300 text-left space-y-2">
+                  <li>• 3 live GMeet sessions</li>
+                  <li>• Detailed improvement plan</li>
+                  <li>• Progress tracking</li>
+                </ul>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2">Premium</h3>
+                <div className="text-4xl font-bold text-blue-400 mb-4">₹3999</div>
+                <p className="text-slate-300 mb-6">Complete Package</p>
+                <ul className="text-slate-300 text-left space-y-2">
+                  <li>• 3 mock interviews</li>
+                  <li>• Resume review</li>
+                  <li>• Feedback tracker</li>
+                </ul>
+              </div>
+            </div>
+
+            <Link to="/pricing">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105">
+                See Full Pricing
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -152,6 +338,8 @@ const Index = () => {
       <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
       <div className="absolute bottom-20 right-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-xl animate-pulse delay-700"></div>
       <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
+
+      <Footer />
     </div>
   );
 };
