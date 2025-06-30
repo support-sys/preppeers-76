@@ -87,7 +87,17 @@ const Interviewers = () => {
       .single();
 
     if (data) {
-      const timeSlots = data.time_slots as TimeSlots || { morning: false, afternoon: false, evening: false };
+      // Safely parse time_slots with proper type checking
+      let timeSlots: TimeSlots = { morning: false, afternoon: false, evening: false };
+      
+      if (data.time_slots && typeof data.time_slots === 'object' && !Array.isArray(data.time_slots)) {
+        const parsedSlots = data.time_slots as Record<string, unknown>;
+        timeSlots = {
+          morning: Boolean(parsedSlots.morning),
+          afternoon: Boolean(parsedSlots.afternoon),
+          evening: Boolean(parsedSlots.evening)
+        };
+      }
       
       setInterviewerData({
         experienceYears: data.experience_years?.toString() || "",
@@ -161,6 +171,9 @@ const Interviewers = () => {
         throw new Error("User not authenticated");
       }
 
+      // Convert timeSlots to JSON for database storage
+      const timeSlotsJson = JSON.parse(JSON.stringify(interviewerData.timeSlots));
+
       // Save to Supabase
       const { error } = await supabase
         .from('interviewers')
@@ -172,7 +185,7 @@ const Interviewers = () => {
           skills: [], // Legacy field
           technologies: interviewerData.skills,
           availability_days: interviewerData.availableDays,
-          time_slots: interviewerData.timeSlots,
+          time_slots: timeSlotsJson,
           hourly_rate: parseFloat(interviewerData.hourlyRate),
           bio: interviewerData.bio,
           linkedin_url: interviewerData.linkedinUrl,
