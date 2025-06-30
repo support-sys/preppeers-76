@@ -26,6 +26,12 @@ const skillOptions = {
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+interface TimeSlots {
+  morning: boolean;
+  afternoon: boolean;
+  evening: boolean;
+}
+
 const Interviewers = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,7 +48,7 @@ const Interviewers = () => {
       morning: false,
       afternoon: false,
       evening: false
-    },
+    } as TimeSlots,
     hourlyRate: "",
     bio: "",
     linkedinUrl: "",
@@ -81,6 +87,8 @@ const Interviewers = () => {
       .single();
 
     if (data) {
+      const timeSlots = data.time_slots as TimeSlots || { morning: false, afternoon: false, evening: false };
+      
       setInterviewerData({
         experienceYears: data.experience_years?.toString() || "",
         company: data.company || "",
@@ -88,7 +96,7 @@ const Interviewers = () => {
         skillCategory: "", // This will be derived from skills
         skills: data.technologies || [],
         availableDays: data.availability_days || [],
-        timeSlots: data.time_slots || { morning: false, afternoon: false, evening: false },
+        timeSlots: timeSlots,
         hourlyRate: data.hourly_rate?.toString() || "",
         bio: data.bio || "",
         linkedinUrl: data.linkedin_url || "",
@@ -134,7 +142,7 @@ const Interviewers = () => {
     });
   };
 
-  const handleTimeSlotChange = (slot: string) => {
+  const handleTimeSlotChange = (slot: keyof TimeSlots) => {
     setInterviewerData(prev => ({
       ...prev,
       timeSlots: {
@@ -177,11 +185,11 @@ const Interviewers = () => {
 
       // Sync to Google Sheets
       try {
-        await fetch(`${supabase.supabaseUrl}/functions/v1/sync-to-sheets`, {
+        await fetch(`https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/sync-to-sheets`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.supabaseKey}`
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoaG9lb2RvZnNiZ2Z4bmRob3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMTAwNjQsImV4cCI6MjA2NjY4NjA2NH0.FgJT65W6Vk0jF4sdY0DLbUiAhvR1t3hm-gx57rZc88I`
           },
           body: JSON.stringify({
             type: 'interviewer',

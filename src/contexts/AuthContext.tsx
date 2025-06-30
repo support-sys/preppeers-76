@@ -9,7 +9,6 @@ interface AuthContextType {
   userRole: 'interviewer' | 'interviewee' | null;
   signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: (role: 'interviewer' | 'interviewee') => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   loading: boolean;
 }
@@ -91,21 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signInWithGoogle = async (role: 'interviewer' | 'interviewee') => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-        queryParams: {
-          role: role
-        }
-      }
-    });
-    return { error };
-  };
-
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -117,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userRole,
     signUp,
     signIn,
-    signInWithGoogle,
     signOut,
     loading
   };
