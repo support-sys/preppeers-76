@@ -9,7 +9,141 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      interviewees: {
+        Row: {
+          bio: string | null
+          created_at: string
+          experience_level: string | null
+          github_url: string | null
+          id: string
+          interview_types: string[] | null
+          linkedin_url: string | null
+          preferred_interview_length: number | null
+          resume_url: string | null
+          skills_to_practice: string[] | null
+          target_companies: string[] | null
+          target_role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          experience_level?: string | null
+          github_url?: string | null
+          id?: string
+          interview_types?: string[] | null
+          linkedin_url?: string | null
+          preferred_interview_length?: number | null
+          resume_url?: string | null
+          skills_to_practice?: string[] | null
+          target_companies?: string[] | null
+          target_role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          experience_level?: string | null
+          github_url?: string | null
+          id?: string
+          interview_types?: string[] | null
+          linkedin_url?: string | null
+          preferred_interview_length?: number | null
+          resume_url?: string | null
+          skills_to_practice?: string[] | null
+          target_companies?: string[] | null
+          target_role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      interviewers: {
+        Row: {
+          availability_days: string[] | null
+          bio: string | null
+          company: string | null
+          created_at: string
+          experience_years: number | null
+          github_url: string | null
+          hourly_rate: number | null
+          id: string
+          linkedin_url: string | null
+          position: string | null
+          skills: string[] | null
+          technologies: string[] | null
+          time_slots: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability_days?: string[] | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          experience_years?: number | null
+          github_url?: string | null
+          hourly_rate?: number | null
+          id?: string
+          linkedin_url?: string | null
+          position?: string | null
+          skills?: string[] | null
+          technologies?: string[] | null
+          time_slots?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability_days?: string[] | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          experience_years?: number | null
+          github_url?: string | null
+          hourly_rate?: number | null
+          id?: string
+          linkedin_url?: string | null
+          position?: string | null
+          skills?: string[] | null
+          technologies?: string[] | null
+          time_slots?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +152,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "interviewer" | "interviewee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +267,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["interviewer", "interviewee"],
+    },
   },
 } as const
