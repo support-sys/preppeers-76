@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,13 +71,16 @@ const InterviewerDashboard = () => {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
+    // Create a more readable format that shows the actual date and time
     return date.toLocaleString('en-US', {
+      weekday: 'short',
       year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZoneName: 'short'
     });
   };
 
