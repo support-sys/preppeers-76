@@ -51,7 +51,7 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
       .from('interviewers')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       // Determine selected categories based on skills
@@ -122,20 +122,42 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
     try {
       if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase
+      // Check if interviewer record exists
+      const { data: existingData } = await supabase
         .from('interviewers')
-        .upsert({
-          user_id: user.id,
-          experience_years: parseInt(profileData.experienceYears),
-          company: profileData.company,
-          position: profileData.position,
-          technologies: profileData.skills,
-          bio: profileData.bio,
-          linkedin_url: profileData.linkedinUrl,
-          github_url: profileData.githubUrl
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      const profileUpdateData = {
+        experience_years: parseInt(profileData.experienceYears) || null,
+        company: profileData.company || null,
+        position: profileData.position || null,
+        technologies: profileData.skills,
+        bio: profileData.bio || null,
+        linkedin_url: profileData.linkedinUrl || null,
+        github_url: profileData.githubUrl || null
+      };
+
+      if (existingData) {
+        // Update existing record
+        const { error } = await supabase
+          .from('interviewers')
+          .update(profileUpdateData)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('interviewers')
+          .insert({
+            user_id: user.id,
+            ...profileUpdateData
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Profile Updated",
@@ -144,6 +166,7 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
       
       onClose();
     } catch (error: any) {
+      console.error('Profile update error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update profile.",

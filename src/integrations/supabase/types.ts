@@ -66,12 +66,15 @@ export type Database = {
           bio: string | null
           company: string | null
           created_at: string
+          current_available_date: string | null
+          current_time_slots: Json | null
           experience_years: number | null
           github_url: string | null
           hourly_rate: number | null
           id: string
           linkedin_url: string | null
           position: string | null
+          schedule_last_updated: string | null
           skills: string[] | null
           technologies: string[] | null
           time_slots: Json | null
@@ -83,12 +86,15 @@ export type Database = {
           bio?: string | null
           company?: string | null
           created_at?: string
+          current_available_date?: string | null
+          current_time_slots?: Json | null
           experience_years?: number | null
           github_url?: string | null
           hourly_rate?: number | null
           id?: string
           linkedin_url?: string | null
           position?: string | null
+          schedule_last_updated?: string | null
           skills?: string[] | null
           technologies?: string[] | null
           time_slots?: Json | null
@@ -100,12 +106,15 @@ export type Database = {
           bio?: string | null
           company?: string | null
           created_at?: string
+          current_available_date?: string | null
+          current_time_slots?: Json | null
           experience_years?: number | null
           github_url?: string | null
           hourly_rate?: number | null
           id?: string
           linkedin_url?: string | null
           position?: string | null
+          schedule_last_updated?: string | null
           skills?: string[] | null
           technologies?: string[] | null
           time_slots?: Json | null

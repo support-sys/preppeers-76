@@ -46,7 +46,7 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
       .from('interviewers')
       .select('availability_days, time_slots')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       const initialAvailability: DayAvailability = {};
@@ -62,7 +62,6 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
       if (data.time_slots && typeof data.time_slots === 'object') {
         Object.entries(data.time_slots as Record<string, any>).forEach(([day, slots]) => {
           if (Array.isArray(slots)) {
-            // Type assertion with proper validation
             const validSlots = slots.filter((slot: any) => 
               slot && typeof slot === 'object' && 
               typeof slot.id === 'string' && 
@@ -142,6 +141,28 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
     }));
   };
 
+  const calculateCurrentAvailableDate = () => {
+    const today = new Date();
+    const availableDays = Object.keys(availability).filter(day => 
+      availability[day]?.available && availability[day]?.timeSlots.length > 0
+    );
+    
+    if (availableDays.length === 0) return null;
+
+    // Find the next available date starting from today
+    for (let i = 0; i < 7; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() + i);
+      const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+      
+      if (availableDays.includes(dayName)) {
+        return checkDate.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+      }
+    }
+    
+    return null;
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -156,18 +177,48 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
         }
       });
 
+      // Calculate current available date and current time slots for today/next available day
+      const currentAvailableDate = calculateCurrentAvailableDate();
+      const currentTimeSlots = currentAvailableDate ? timeSlots : {};
+
       // Convert to JSON format for Supabase
       const timeSlotsJson = JSON.parse(JSON.stringify(timeSlots));
+      const currentTimeSlotsJson = JSON.parse(JSON.stringify(currentTimeSlots));
 
-      const { error } = await supabase
+      // Check if interviewer record exists
+      const { data: existingData } = await supabase
         .from('interviewers')
-        .upsert({
-          user_id: user.id,
-          availability_days: availableDays,
-          time_slots: timeSlotsJson
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existingData) {
+        // Update existing record
+        const { error } = await supabase
+          .from('interviewers')
+          .update({
+            availability_days: availableDays,
+            time_slots: timeSlotsJson,
+            current_available_date: currentAvailableDate,
+            current_time_slots: currentTimeSlotsJson
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('interviewers')
+          .insert({
+            user_id: user.id,
+            availability_days: availableDays,
+            time_slots: timeSlotsJson,
+            current_available_date: currentAvailableDate,
+            current_time_slots: currentTimeSlotsJson
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Schedule Updated",
@@ -176,6 +227,7 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
       
       onClose();
     } catch (error: any) {
+      console.error('Schedule update error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update schedule.",

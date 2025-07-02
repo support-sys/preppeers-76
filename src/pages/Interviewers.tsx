@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +68,7 @@ const Interviewers = () => {
       .from('interviewers')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       setInterviewerData({
@@ -140,26 +139,45 @@ const Interviewers = () => {
         throw new Error("User not authenticated");
       }
 
-      // First, save to database
-      const { error } = await supabase
+      // Check if interviewer record exists
+      const { data: existingData } = await supabase
         .from('interviewers')
-        .upsert({
-          user_id: user.id,
-          experience_years: parseInt(interviewerData.experienceYears),
-          company: interviewerData.company,
-          position: interviewerData.position,
-          skills: [],
-          technologies: interviewerData.skills,
-          availability_days: [],
-          time_slots: {},
-          hourly_rate: 0,
-          bio: interviewerData.bio,
-          linkedin_url: interviewerData.linkedinUrl,
-          github_url: interviewerData.githubUrl
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) {
-        throw error;
+      const profileData = {
+        experience_years: parseInt(interviewerData.experienceYears),
+        company: interviewerData.company,
+        position: interviewerData.position,
+        skills: [],
+        technologies: interviewerData.skills,
+        availability_days: [],
+        time_slots: {},
+        hourly_rate: 0,
+        bio: interviewerData.bio,
+        linkedin_url: interviewerData.linkedinUrl,
+        github_url: interviewerData.githubUrl
+      };
+
+      if (existingData) {
+        // Update existing record
+        const { error } = await supabase
+          .from('interviewers')
+          .update(profileData)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('interviewers')
+          .insert({
+            user_id: user.id,
+            ...profileData
+          });
+
+        if (error) throw error;
       }
 
       // Database save successful
