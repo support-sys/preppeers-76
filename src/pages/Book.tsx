@@ -2,80 +2,146 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
 import CandidateRegistrationForm from "@/components/CandidateRegistrationForm";
-import RazorpayPayment from "@/components/RazorpayPayment";
 import { useToast } from "@/hooks/use-toast";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Book = () => {
-  const [currentStep, setCurrentStep] = useState<'form' | 'payment' | 'success'>('form');
+  const [currentStep, setCurrentStep] = useState<'form' | 'matching' | 'success' | 'no-match'>('form');
   const [formData, setFormData] = useState<any>(null);
+  const [matchedInterviewer, setMatchedInterviewer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
 
-  const handleFormSubmit = (data: any) => {
-    setFormData(data);
-    setCurrentStep('payment');
+  const findMatchingInterviewer = async (candidateData: any) => {
+    try {
+      // Get available interviewers based on skills and experience
+      const { data: interviewers, error } = await supabase
+        .from('interviewers')
+        .select('*')
+        .contains('skills', [candidateData.targetRole])
+        .gte('experience_years', Math.max(1, parseInt(candidateData.experience) - 2))
+        .not('current_time_slots', 'is', null);
+
+      if (error) {
+        console.error('Error fetching interviewers:', error);
+        return null;
+      }
+
+      // Filter interviewers with available time slots
+      const availableInterviewers = interviewers?.filter(interviewer => {
+        const timeSlots = interviewer.current_time_slots;
+        return timeSlots && Object.keys(timeSlots).length > 0;
+      });
+
+      if (availableInterviewers && availableInterviewers.length > 0) {
+        // Return the first available interviewer (you can implement more sophisticated matching logic)
+        return availableInterviewers[0];
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error in findMatchingInterviewer:', error);
+      return null;
+    }
   };
 
-  const handlePaymentSuccess = async (paymentData: any) => {
-    setIsLoading(true);
+  const scheduleInterview = async (interviewer: any, candidate: any) => {
     try {
-      // Prepare data for Google Sheets
-      const candidateData = {
-        name: user?.user_metadata?.full_name || user?.email || "Unknown",
-        email: user?.email || "Unknown",
-        experience: formData.experience,
-        noticePeriod: formData.noticePeriod,
-        targetRole: formData.targetRole,
-        timeSlot: formData.timeSlot || "To be confirmed",
-        resumeUploaded: formData.resume ? "Yes" : "No",
-        resumeFileName: formData.resume?.name || "Not provided",
-        paymentId: paymentData.razorpay_payment_id,
-        submissionDate: new Date().toISOString()
+      // Create interview record
+      const interviewData = {
+        interviewer_id: interviewer.id,
+        candidate_id: user?.id,
+        candidate_name: user?.user_metadata?.full_name || user?.email,
+        candidate_email: user?.email,
+        interviewer_email: interviewer.user_id, // This should be the interviewer's email
+        target_role: candidate.targetRole,
+        experience: candidate.experience,
+        scheduled_time: candidate.timeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
+        status: 'scheduled',
+        resume_url: candidate.resume ? 'uploaded' : null
       };
 
-      console.log("Submitting candidate data:", candidateData);
+      // Send email notifications (this will be handled by an edge function)
+      const { data, error } = await supabase.functions.invoke('schedule-interview', {
+        body: interviewData
+      });
 
-      // Sync to Google Sheets
-      const syncResult = await syncCandidateToGoogleSheets(candidateData);
+      if (error) {
+        console.error('Error scheduling interview:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in scheduleInterview:', error);
+      throw error;
+    }
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    setFormData(data);
+    setCurrentStep('matching');
+    setIsLoading(true);
+
+    try {
+      // Find matching interviewer
+      const interviewer = await findMatchingInterviewer(data);
       
-      if (syncResult.success) {
+      if (interviewer) {
+        setMatchedInterviewer(interviewer);
+        
+        // Schedule the interview and send emails
+        await scheduleInterview(interviewer, data);
+        
+        // Sync to Google Sheets
+        const candidateData = {
+          name: user?.user_metadata?.full_name || user?.email || "Unknown",
+          email: user?.email || "Unknown",
+          experience: data.experience,
+          noticePeriod: data.noticePeriod,
+          targetRole: data.targetRole,
+          timeSlot: data.timeSlot || "To be confirmed",
+          resumeUploaded: data.resume ? "Yes" : "No",
+          resumeFileName: data.resume?.name || "Not provided",
+          matchedInterviewer: interviewer.company || "Unknown Company",
+          submissionDate: new Date().toISOString()
+        };
+
+        await syncCandidateToGoogleSheets(candidateData);
+        
         setCurrentStep('success');
         toast({
-          title: "Booking Confirmed!",
-          description: "You'll receive a GMeet link within 1 hour.",
+          title: "Interview Scheduled!",
+          description: "You'll receive a Google Meet link shortly.",
         });
       } else {
-        throw new Error("Failed to sync to Google Sheets");
+        setCurrentStep('no-match');
+        toast({
+          title: "No Interviewer Available",
+          description: "We're finding the best interviewer for you. You'll be notified soon!",
+        });
       }
     } catch (error) {
       console.error("Error processing booking:", error);
       toast({
         title: "Processing Error",
-        description: "Payment successful, but there was an issue processing your booking. We'll contact you soon.",
+        description: "There was an issue processing your request. Please try again.",
         variant: "destructive",
       });
+      setCurrentStep('form');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handlePaymentError = (error: any) => {
-    console.error("Payment error:", error);
-    toast({
-      title: "Payment Failed",
-      description: "There was an issue processing your payment. Please try again.",
-      variant: "destructive",
-    });
   };
 
   if (currentStep === 'success') {
@@ -86,9 +152,10 @@ const Book = () => {
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 border border-white/20">
               <CheckCircle className="w-20 h-20 text-green-400 mx-auto mb-6" />
-              <h1 className="text-4xl font-bold text-white mb-4">Booking Confirmed!</h1>
+              <h1 className="text-4xl font-bold text-white mb-4">Interview Scheduled!</h1>
               <p className="text-xl text-slate-300 mb-8">
-                Thank you for booking your mock interview. You'll receive a GMeet link within 1 hour at {user?.email}.
+                Your interview has been scheduled with {matchedInterviewer?.company || 'an expert interviewer'}. 
+                You'll receive a Google Meet link at {user?.email} shortly.
               </p>
               <div className="space-y-4 text-left bg-white/5 rounded-xl p-6 mb-8">
                 <div className="flex justify-between">
@@ -100,8 +167,8 @@ const Book = () => {
                   <span className="text-white">{formData?.targetRole}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Notice Period:</span>
-                  <span className="text-white">{formData?.noticePeriod?.replace('_', ' ')}</span>
+                  <span className="text-slate-400">Interviewer:</span>
+                  <span className="text-white">{matchedInterviewer?.company || 'Expert'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Time Slot:</span>
@@ -114,12 +181,85 @@ const Book = () => {
                     Back to Home
                   </Button>
                 </Link>
-                <Link to="/faq">
+                <Link to="/dashboard">
                   <Button className="bg-blue-600 hover:bg-blue-700">
-                    View FAQ
+                    View Dashboard
                   </Button>
                 </Link>
               </div>
+            </div>
+          </div>
+        </div>
+        <WhatsAppChat />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (currentStep === 'no-match') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <Navigation />
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 border border-white/20">
+              <Clock className="w-20 h-20 text-yellow-400 mx-auto mb-6" />
+              <h1 className="text-4xl font-bold text-white mb-4">Finding Your Interviewer</h1>
+              <p className="text-xl text-slate-300 mb-8">
+                We're currently finding the best interviewer for your {formData?.targetRole} role. 
+                You'll receive an email with the interview details shortly.
+              </p>
+              <div className="space-y-4 text-left bg-white/5 rounded-xl p-6 mb-8">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Experience:</span>
+                  <span className="text-white">{formData?.experience}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Target Role:</span>
+                  <span className="text-white">{formData?.targetRole}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Status:</span>
+                  <span className="text-yellow-400">Finding interviewer...</span>
+                </div>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <Link to="/">
+                  <Button variant="outline" className="bg-transparent border-white text-white hover:bg-white/10">
+                    Back to Home
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={() => {
+                    setCurrentStep('form');
+                    setFormData(null);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <WhatsAppChat />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (currentStep === 'matching') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <Navigation />
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 border border-white/20">
+              <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-blue-400 mx-auto mb-6"></div>
+              <h1 className="text-4xl font-bold text-white mb-4">Matching You With An Interviewer</h1>
+              <p className="text-xl text-slate-300">
+                We're finding the perfect interviewer based on your skills and experience...
+              </p>
             </div>
           </div>
         </div>
@@ -141,73 +281,17 @@ const Book = () => {
               Book Your Mock Interview
             </h1>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              {currentStep === 'form' 
-                ? "Fill out the form below to schedule your personalized mock interview with an experienced engineer."
-                : "Complete your payment to confirm your mock interview booking."
-              }
+              Fill out the form below and we'll match you with an experienced interviewer instantly.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              {currentStep === 'form' && (
-                <CandidateRegistrationForm
-                  onSubmit={handleFormSubmit}
-                  isLoading={isLoading}
-                />
-              )}
-
-              {currentStep === 'payment' && (
-                <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white text-2xl">Complete Payment</CardTitle>
-                    <CardDescription className="text-slate-300">
-                      Secure payment to confirm your mock interview booking.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="bg-white/5 rounded-xl p-6">
-                      <h3 className="text-white font-semibold mb-4">Booking Summary</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Target Role:</span>
-                          <span className="text-white">{formData?.targetRole}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Experience:</span>
-                          <span className="text-white">{formData?.experience}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Duration:</span>
-                          <span className="text-white">60 minutes</span>
-                        </div>
-                        <hr className="border-white/20 my-3" />
-                        <div className="flex justify-between text-lg font-semibold">
-                          <span className="text-white">Total Amount:</span>
-                          <span className="text-white">₹999</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <RazorpayPayment
-                      amount={999}
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                      disabled={isLoading}
-                    />
-
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentStep('form')}
-                      className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
-                      disabled={isLoading}
-                    >
-                      Back to Form
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
+              <CandidateRegistrationForm
+                onSubmit={handleFormSubmit}
+                isLoading={isLoading}
+              />
             </div>
 
             {/* Sidebar */}
@@ -219,9 +303,7 @@ const Book = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start space-x-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 ${
-                      currentStep === 'form' ? 'bg-blue-500' : 'bg-green-500'
-                    }`}>
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
                       1
                     </div>
                     <div>
@@ -230,25 +312,21 @@ const Book = () => {
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 ${
-                      currentStep === 'payment' ? 'bg-blue-500' : (currentStep === 'form' ? 'bg-gray-500' : 'bg-green-500')
-                    }`}>
+                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
                       2
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold">Complete Payment</h4>
-                      <p className="text-slate-300 text-sm">Secure payment via Razorpay</p>
+                      <h4 className="text-white font-semibold">Instant Matching</h4>
+                      <p className="text-slate-300 text-sm">We find the perfect interviewer for you</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 ${
-                      currentStep === 'form' || currentStep === 'payment' ? 'bg-gray-500' : 'bg-green-500'
-                    }`}>
+                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
                       3
                     </div>
                     <div>
                       <h4 className="text-white font-semibold">Get GMeet Link</h4>
-                      <p className="text-slate-300 text-sm">Receive link within 1 hour</p>
+                      <p className="text-slate-300 text-sm">Receive link and interviewer details</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">

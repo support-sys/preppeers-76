@@ -96,7 +96,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
       <CardHeader>
         <CardTitle className="text-white text-2xl">Interview Details</CardTitle>
         <CardDescription className="text-slate-300">
-          Please provide your professional information to get started.
+          Please provide your professional information to get matched with an interviewer.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -218,7 +218,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
             disabled={isLoading}
           >
-            Continue to Payment
+            {isLoading ? "Finding Interviewer..." : "Find My Interviewer"}
           </Button>
         </form>
       </CardContent>
