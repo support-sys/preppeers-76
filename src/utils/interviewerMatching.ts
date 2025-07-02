@@ -1,0 +1,125 @@
+
+export interface MatchingCandidate {
+  targetRole: string;
+  experience: string;
+  timeSlot?: string;
+  resume?: File;
+}
+
+export interface MatchedInterviewer {
+  id: string;
+  company?: string;
+  skills?: string[];
+  technologies?: string[];
+  experience_years?: number;
+  current_time_slots?: any;
+  matchScore?: number;
+  matchReasons?: string[];
+}
+
+// Skill mapping for better matching
+export const skillMapping: { [key: string]: string[] } = {
+  "Frontend Developer": ["React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer"],
+  "Backend Developer": ["Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API"],
+  "Full Stack Developer": ["React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer"],
+  "Data Scientist": ["Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
+  "Data Engineer": ["Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
+  "DevOps Engineer": ["Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
+  "Mobile Developer": ["React Native", "Flutter", "iOS", "Android", "Mobile", "Mobile Developer"],
+  "Machine Learning Engineer": ["Python", "TensorFlow", "PyTorch", "Machine Learning", "ML Engineer"],
+  "Product Manager": ["Product Management", "Agile", "Scrum", "Product Manager"],
+  "QA Engineer": ["Testing", "Automation", "QA", "Quality Assurance", "QA Engineer"]
+};
+
+export const parseTimeSlot = (timeSlot: string) => {
+  if (!timeSlot) return null;
+  
+  try {
+    const date = new Date(timeSlot);
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const hour = date.getHours();
+    
+    console.log('Parsed candidate time slot:', { dayOfWeek, hour, originalTimeSlot: timeSlot });
+    return { dayOfWeek, hour, date };
+  } catch (error) {
+    console.error('Error parsing time slot:', error);
+    return null;
+  }
+};
+
+export const checkTimeSlotMatch = (candidateTimeSlot: string, interviewerTimeSlots: any) => {
+  console.log('Checking time slot match:', { candidateTimeSlot, interviewerTimeSlots });
+  
+  if (!candidateTimeSlot || !interviewerTimeSlots) {
+    console.log('Missing time slot data');
+    return false;
+  }
+
+  const parsedCandidateTime = parseTimeSlot(candidateTimeSlot);
+  if (!parsedCandidateTime) {
+    console.log('Could not parse candidate time slot');
+    return false;
+  }
+
+  const { dayOfWeek, hour } = parsedCandidateTime;
+
+  // Check if interviewer has slots for this day
+  const daySlots = interviewerTimeSlots[dayOfWeek];
+  if (!daySlots || !Array.isArray(daySlots)) {
+    console.log(`No slots found for ${dayOfWeek}`);
+    return false;
+  }
+
+  // Check if any slot matches the candidate's preferred hour
+  const hasMatchingSlot = daySlots.some((slot: string) => {
+    const slotHour = parseInt(slot.split(':')[0]);
+    const isMatch = Math.abs(slotHour - hour) <= 1; // Allow 1 hour flexibility
+    console.log(`Checking slot ${slot} (hour ${slotHour}) against candidate hour ${hour}: ${isMatch}`);
+    return isMatch;
+  });
+
+  console.log(`Time slot match result: ${hasMatchingSlot}`);
+  return hasMatchingSlot;
+};
+
+export const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
+  console.log('Checking skills match:', { candidateRole, interviewerSkills, interviewerTechnologies });
+  
+  const relevantSkills = skillMapping[candidateRole] || [candidateRole];
+  console.log('Relevant skills for matching:', relevantSkills);
+
+  // Combine interviewer skills and technologies
+  const allInterviewerSkills = [...(interviewerSkills || []), ...(interviewerTechnologies || [])];
+  console.log('Interviewer all skills:', allInterviewerSkills);
+
+  // Check for exact matches first
+  const exactMatch = relevantSkills.some(skill => 
+    allInterviewerSkills.some(interviewerSkill => 
+      interviewerSkill.toLowerCase().includes(skill.toLowerCase()) ||
+      skill.toLowerCase().includes(interviewerSkill.toLowerCase())
+    )
+  );
+
+  console.log('Skills match result:', exactMatch);
+  return exactMatch;
+};
+
+export const parseExperience = (experienceStr: string): number => {
+  if (!experienceStr) return 0;
+  
+  // Extract numbers from experience string
+  const numbers = experienceStr.match(/\d+/g);
+  if (numbers && numbers.length > 0) {
+    return parseInt(numbers[0]);
+  }
+  
+  // Handle text-based experience
+  if (experienceStr.toLowerCase().includes('0-1') || experienceStr.toLowerCase().includes('entry')) {
+    return 1;
+  }
+  if (experienceStr.toLowerCase().includes('5+') || experienceStr.toLowerCase().includes('5 +')) {
+    return 5;
+  }
+  
+  return 2; // Default to 2 years
+};
