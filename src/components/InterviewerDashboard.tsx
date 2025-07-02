@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,6 +66,18 @@ const InterviewerDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   const upcomingInterviews = interviews.filter(interview => {
@@ -194,7 +205,7 @@ const InterviewerDashboard = () => {
                   <div>
                     <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
                     <p className="text-slate-300">
-                      {new Date(interview.scheduled_time).toLocaleString()} • {interview.target_role}
+                      {formatDateTime(interview.scheduled_time)} • {interview.target_role}
                     </p>
                     <p className="text-slate-400 text-sm">
                       Experience: {interview.experience} • {interview.candidate_email}
@@ -229,7 +240,7 @@ const InterviewerDashboard = () => {
                   <div>
                     <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
                     <p className="text-slate-300">
-                      {new Date(interview.scheduled_time).toLocaleString()} • {interview.target_role}
+                      {formatDateTime(interview.scheduled_time)} • {interview.target_role}
                     </p>
                     <p className="text-slate-400 text-sm">
                       Experience: {interview.experience} • {interview.candidate_email}

@@ -72,6 +72,18 @@ const Dashboard = () => {
     }
   };
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   const upcomingInterviews = interviews.filter(interview => {
     const scheduledTime = new Date(interview.scheduled_time);
     return scheduledTime > new Date() && interview.status === 'scheduled';
@@ -160,7 +172,7 @@ const Dashboard = () => {
                       <div>
                         <h3 className="text-white font-semibold">{interview.target_role}</h3>
                         <p className="text-slate-300">
-                          {new Date(interview.scheduled_time).toLocaleString()} • {interview.experience} experience
+                          {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
                         </p>
                         <p className="text-slate-400 text-sm">
                           Interviewer: {interview.interviewer_email}
@@ -279,7 +291,7 @@ const Dashboard = () => {
                       <div>
                         <h3 className="text-white font-semibold">{interview.target_role}</h3>
                         <p className="text-slate-300">
-                          {new Date(interview.scheduled_time).toLocaleString()} • {interview.experience} experience
+                          {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
                         </p>
                         <p className="text-slate-400 text-sm">
                           Interviewer: {interview.interviewer_email}
