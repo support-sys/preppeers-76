@@ -13,11 +13,13 @@ export type Database = {
         Row: {
           bio: string | null
           created_at: string
+          experience: string | null
           experience_level: string | null
           github_url: string | null
           id: string
           interview_types: string[] | null
           linkedin_url: string | null
+          notice_period: string | null
           preferred_interview_length: number | null
           resume_url: string | null
           skills_to_practice: string[] | null
@@ -29,11 +31,13 @@ export type Database = {
         Insert: {
           bio?: string | null
           created_at?: string
+          experience?: string | null
           experience_level?: string | null
           github_url?: string | null
           id?: string
           interview_types?: string[] | null
           linkedin_url?: string | null
+          notice_period?: string | null
           preferred_interview_length?: number | null
           resume_url?: string | null
           skills_to_practice?: string[] | null
@@ -45,11 +49,13 @@ export type Database = {
         Update: {
           bio?: string | null
           created_at?: string
+          experience?: string | null
           experience_level?: string | null
           github_url?: string | null
           id?: string
           interview_types?: string[] | null
           linkedin_url?: string | null
+          notice_period?: string | null
           preferred_interview_length?: number | null
           resume_url?: string | null
           skills_to_practice?: string[] | null
