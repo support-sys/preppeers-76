@@ -1,14 +1,14 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Calendar, CreditCard, CheckCircle } from "lucide-react";
+import { Upload, Calendar, CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 
 const Book = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +19,9 @@ const Book = () => {
     timeSlot: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { syncCandidateToGoogleSheets } = useGoogleSheets();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -31,7 +33,7 @@ const Book = () => {
     setFormData(prev => ({ ...prev, resume: file }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -44,14 +46,44 @@ const Book = () => {
       return;
     }
 
-    // Simulate form submission
-    console.log("Form submitted:", formData);
-    setIsSubmitted(true);
-    
-    toast({
-      title: "Booking Submitted!",
-      description: "You'll receive a GMeet link within 1 hour.",
-    });
+    setIsLoading(true);
+
+    try {
+      // Prepare data for Google Sheets
+      const candidateData = {
+        name: formData.name,
+        email: formData.email,
+        targetRole: formData.targetRole,
+        timeSlot: formData.timeSlot || "To be confirmed",
+        resumeUploaded: formData.resume ? "Yes" : "No",
+        resumeFileName: formData.resume?.name || "Not provided",
+        submissionDate: new Date().toISOString()
+      };
+
+      console.log("Submitting candidate data:", candidateData);
+
+      // Sync to Google Sheets
+      const syncResult = await syncCandidateToGoogleSheets(candidateData);
+      
+      if (syncResult.success) {
+        setIsSubmitted(true);
+        toast({
+          title: "Booking Submitted!",
+          description: "You'll receive a GMeet link within 1 hour.",
+        });
+      } else {
+        throw new Error("Failed to sync to Google Sheets");
+      }
+    } catch (error) {
+      console.error("Error submitting booking:", error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your booking. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -136,10 +168,11 @@ const Book = () => {
                           id="name"
                           name="name"
                           value={formData.name}
-                          onChange={handleInputChange}
+                          onChange={(e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
                           className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                           placeholder="Enter your full name"
                           required
+                          disabled={isLoading}
                         />
                       </div>
                       <div>
@@ -149,10 +182,11 @@ const Book = () => {
                           name="email"
                           type="email"
                           value={formData.email}
-                          onChange={handleInputChange}
+                          onChange={(e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
                           className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                           placeholder="Enter your email"
                           required
+                          disabled={isLoading}
                         />
                       </div>
                     </div>
@@ -175,7 +209,11 @@ const Book = () => {
                             type="file"
                             className="hidden"
                             accept=".pdf,.doc,.docx"
-                            onChange={handleFileChange}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              setFormData(prev => ({ ...prev, resume: file }));
+                            }}
+                            disabled={isLoading}
                           />
                         </label>
                         {formData.resume && (
@@ -193,9 +231,10 @@ const Book = () => {
                         id="targetRole"
                         name="targetRole"
                         value={formData.targetRole}
-                        onChange={handleInputChange}
+                        onChange={(e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
                         className="w-full mt-2 bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
+                        disabled={isLoading}
                       >
                         <option value="">Select your target role</option>
                         <option value="Frontend Developer">Frontend Developer</option>
@@ -219,8 +258,9 @@ const Book = () => {
                         name="timeSlot"
                         type="datetime-local"
                         value={formData.timeSlot}
-                        onChange={handleInputChange}
+                        onChange={(e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
                         className="bg-white/10 border-white/20 text-white"
+                        disabled={isLoading}
                       />
                       <p className="text-sm text-slate-400 mt-1">
                         We'll try to match your preferred time, or suggest alternatives.
@@ -232,9 +272,19 @@ const Book = () => {
                       type="submit"
                       size="lg"
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
+                      disabled={isLoading}
                     >
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Proceed to Payment
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-5 h-5 mr-2" />
+                          Proceed to Payment
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
