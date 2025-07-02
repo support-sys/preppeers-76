@@ -3,10 +3,13 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import UserMenu from "./UserMenu";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -43,6 +46,17 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {/* User Menu or Sign In Button */}
+            {user ? (
+              <UserMenu />
+            ) : (
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -73,6 +87,19 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {/* Mobile User Menu */}
+            <div className="mt-4 px-4">
+              {user ? (
+                <UserMenu />
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </div>

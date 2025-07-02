@@ -7,6 +7,7 @@ import { Calendar, Users, Clock, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import InterviewerDashboard from '@/components/InterviewerDashboard';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -32,6 +33,32 @@ const Dashboard = () => {
     setProfileComplete(!!data);
   };
 
+  // Show InterviewerDashboard for interviewers with complete profiles
+  if (userRole === 'interviewer' && profileComplete) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <Navigation />
+        
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                Welcome back, {user?.user_metadata?.full_name || user?.email}!
+              </h1>
+              <p className="text-xl text-slate-300">
+                Manage your interview sessions and help candidates succeed
+              </p>
+            </div>
+            
+            <InterviewerDashboard />
+          </div>
+        </div>
+        
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
@@ -40,7 +67,7 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Welcome back, {user?.email}!
+              Welcome back, {user?.user_metadata?.full_name || user?.email}!
             </h1>
             <p className="text-xl text-slate-300">
               {userRole === 'interviewer' 
