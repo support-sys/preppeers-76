@@ -58,13 +58,21 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
         };
       });
 
-      // Parse time_slots from database
+      // Parse time_slots from database - handle JSON properly
       if (data.time_slots && typeof data.time_slots === 'object') {
-        Object.entries(data.time_slots).forEach(([day, slots]) => {
+        Object.entries(data.time_slots as Record<string, any>).forEach(([day, slots]) => {
           if (Array.isArray(slots)) {
+            // Type assertion with proper validation
+            const validSlots = slots.filter((slot: any) => 
+              slot && typeof slot === 'object' && 
+              typeof slot.id === 'string' && 
+              typeof slot.start === 'string' && 
+              typeof slot.end === 'string'
+            ) as TimeSlot[];
+            
             initialAvailability[day] = {
               available: true,
-              timeSlots: slots as TimeSlot[]
+              timeSlots: validSlots
             };
           }
         });
@@ -148,12 +156,15 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
         }
       });
 
+      // Convert to JSON format for Supabase
+      const timeSlotsJson = JSON.parse(JSON.stringify(timeSlots));
+
       const { error } = await supabase
         .from('interviewers')
         .upsert({
           user_id: user.id,
           availability_days: availableDays,
-          time_slots: timeSlots
+          time_slots: timeSlotsJson
         });
 
       if (error) throw error;
