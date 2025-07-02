@@ -358,10 +358,7 @@ const Interviewers = () => {
                 </div>
 
                 {/* Hourly Rate */}
-                <div>
-                  <Label htmlFor="hourlyRate" className="text-white">Hourly Rate ($) *</Label>
-                  <Input id="hourlyRate" name="hourlyRate" type="number" value={interviewerData.hourlyRate} onChange={handleInputChange} className="bg-white/10 border-white/20 text-white placeholder:text-slate-400" placeholder="Enter your hourly rate" required />
-                </div>
+                
 
                 {/* Bio */}
                 <div>
@@ -376,10 +373,7 @@ const Interviewers = () => {
                 </div>
 
                 {/* GitHub URL */}
-                <div>
-                  <Label htmlFor="githubUrl" className="text-white">GitHub URL</Label>
-                  <Input id="githubUrl" name="githubUrl" type="url" value={interviewerData.githubUrl} onChange={handleInputChange} className="bg-white/10 border-white/20 text-white placeholder:text-slate-400" placeholder="Enter your GitHub URL" />
-                </div>
+                
 
                 {/* Submit Button */}
                 <Button type="submit" size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold" disabled={loading}>
