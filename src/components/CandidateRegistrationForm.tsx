@@ -57,7 +57,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     }
 
     try {
-      // Create or update interviewee profile
+      // Create or update interviewee profile using upsert
       if (user) {
         const { error } = await supabase
           .from('interviewees')
@@ -67,6 +67,8 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             notice_period: formData.noticePeriod,
             target_role: formData.targetRole,
             updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
           });
 
         if (error) {
