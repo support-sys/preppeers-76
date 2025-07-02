@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { MatchingCandidate, MatchedInterviewer, checkSkillsMatch, checkTimeSlotMatch, parseExperience, getAlternativeTimeSlots } from "@/utils/interviewerMatching";
 
@@ -166,10 +167,12 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
 
 export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string) => {
   try {
-    // Create interview record
+    console.log("Scheduling interview with:", { interviewer: interviewer.company, candidate: userFullName });
+    
+    // Create interview record data
     const interviewData = {
       interviewer_id: interviewer.id,
-      candidate_id: candidate.user_id,
+      candidate_id: candidate.user_id || userEmail, // Use email as fallback if user_id not available
       candidate_name: userFullName || userEmail,
       candidate_email: userEmail,
       interviewer_email: interviewer.user_id, // This should be the interviewer's email
@@ -180,16 +183,19 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       resume_url: candidate.resume ? 'uploaded' : null
     };
 
-    // Send email notifications (this will be handled by an edge function)
+    console.log("Sending interview data to edge function:", interviewData);
+
+    // Call the edge function to handle interview scheduling
     const { data, error } = await supabase.functions.invoke('schedule-interview', {
       body: interviewData
     });
 
     if (error) {
-      console.error('Error scheduling interview:', error);
+      console.error('Error calling schedule-interview function:', error);
       throw error;
     }
 
+    console.log("Interview scheduled successfully:", data);
     return data;
   } catch (error) {
     console.error('Error in scheduleInterview:', error);
