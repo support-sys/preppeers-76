@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,32 +21,211 @@ const Book = () => {
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
 
+  // Skill mapping for better matching
+  const skillMapping: { [key: string]: string[] } = {
+    "Frontend Developer": ["React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer"],
+    "Backend Developer": ["Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API"],
+    "Full Stack Developer": ["React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer"],
+    "Data Scientist": ["Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
+    "Data Engineer": ["Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
+    "DevOps Engineer": ["Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
+    "Mobile Developer": ["React Native", "Flutter", "iOS", "Android", "Mobile", "Mobile Developer"],
+    "Machine Learning Engineer": ["Python", "TensorFlow", "PyTorch", "Machine Learning", "ML Engineer"],
+    "Product Manager": ["Product Management", "Agile", "Scrum", "Product Manager"],
+    "QA Engineer": ["Testing", "Automation", "QA", "Quality Assurance", "QA Engineer"]
+  };
+
+  const parseTimeSlot = (timeSlot: string) => {
+    if (!timeSlot) return null;
+    
+    try {
+      const date = new Date(timeSlot);
+      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+      const hour = date.getHours();
+      
+      console.log('Parsed candidate time slot:', { dayOfWeek, hour, originalTimeSlot: timeSlot });
+      return { dayOfWeek, hour, date };
+    } catch (error) {
+      console.error('Error parsing time slot:', error);
+      return null;
+    }
+  };
+
+  const checkTimeSlotMatch = (candidateTimeSlot: string, interviewerTimeSlots: any) => {
+    console.log('Checking time slot match:', { candidateTimeSlot, interviewerTimeSlots });
+    
+    if (!candidateTimeSlot || !interviewerTimeSlots) {
+      console.log('Missing time slot data');
+      return false;
+    }
+
+    const parsedCandidateTime = parseTimeSlot(candidateTimeSlot);
+    if (!parsedCandidateTime) {
+      console.log('Could not parse candidate time slot');
+      return false;
+    }
+
+    const { dayOfWeek, hour } = parsedCandidateTime;
+
+    // Check if interviewer has slots for this day
+    const daySlots = interviewerTimeSlots[dayOfWeek];
+    if (!daySlots || !Array.isArray(daySlots)) {
+      console.log(`No slots found for ${dayOfWeek}`);
+      return false;
+    }
+
+    // Check if any slot matches the candidate's preferred hour
+    const hasMatchingSlot = daySlots.some((slot: string) => {
+      const slotHour = parseInt(slot.split(':')[0]);
+      const isMatch = Math.abs(slotHour - hour) <= 1; // Allow 1 hour flexibility
+      console.log(`Checking slot ${slot} (hour ${slotHour}) against candidate hour ${hour}: ${isMatch}`);
+      return isMatch;
+    });
+
+    console.log(`Time slot match result: ${hasMatchingSlot}`);
+    return hasMatchingSlot;
+  };
+
+  const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
+    console.log('Checking skills match:', { candidateRole, interviewerSkills, interviewerTechnologies });
+    
+    const relevantSkills = skillMapping[candidateRole] || [candidateRole];
+    console.log('Relevant skills for matching:', relevantSkills);
+
+    // Combine interviewer skills and technologies
+    const allInterviewerSkills = [...(interviewerSkills || []), ...(interviewerTechnologies || [])];
+    console.log('Interviewer all skills:', allInterviewerSkills);
+
+    // Check for exact matches first
+    const exactMatch = relevantSkills.some(skill => 
+      allInterviewerSkills.some(interviewerSkill => 
+        interviewerSkill.toLowerCase().includes(skill.toLowerCase()) ||
+        skill.toLowerCase().includes(interviewerSkill.toLowerCase())
+      )
+    );
+
+    console.log('Skills match result:', exactMatch);
+    return exactMatch;
+  };
+
+  const parseExperience = (experienceStr: string): number => {
+    if (!experienceStr) return 0;
+    
+    // Extract numbers from experience string
+    const numbers = experienceStr.match(/\d+/g);
+    if (numbers && numbers.length > 0) {
+      return parseInt(numbers[0]);
+    }
+    
+    // Handle text-based experience
+    if (experienceStr.toLowerCase().includes('0-1') || experienceStr.toLowerCase().includes('entry')) {
+      return 1;
+    }
+    if (experienceStr.toLowerCase().includes('5+') || experienceStr.toLowerCase().includes('5 +')) {
+      return 5;
+    }
+    
+    return 2; // Default to 2 years
+  };
+
   const findMatchingInterviewer = async (candidateData: any) => {
     try {
-      // Get available interviewers based on skills and experience
-      const { data: interviewers, error } = await supabase
+      console.log('Finding matching interviewer for candidate:', candidateData);
+      
+      // Get all interviewers first
+      const { data: allInterviewers, error } = await supabase
         .from('interviewers')
-        .select('*')
-        .contains('skills', [candidateData.targetRole])
-        .gte('experience_years', Math.max(1, parseInt(candidateData.experience) - 2))
-        .not('current_time_slots', 'is', null);
+        .select('*');
 
       if (error) {
         console.error('Error fetching interviewers:', error);
         return null;
       }
 
-      // Filter interviewers with available time slots
-      const availableInterviewers = interviewers?.filter(interviewer => {
-        const timeSlots = interviewer.current_time_slots;
-        return timeSlots && Object.keys(timeSlots).length > 0;
-      });
+      console.log('All interviewers found:', allInterviewers?.length);
 
-      if (availableInterviewers && availableInterviewers.length > 0) {
-        // Return the first available interviewer (you can implement more sophisticated matching logic)
-        return availableInterviewers[0];
+      if (!allInterviewers || allInterviewers.length === 0) {
+        console.log('No interviewers found in database');
+        return null;
       }
 
+      const candidateExperience = parseExperience(candidateData.experience);
+      console.log('Candidate parsed experience:', candidateExperience);
+
+      // Score and rank interviewers
+      const scoredInterviewers = allInterviewers.map(interviewer => {
+        let score = 0;
+        const reasons = [];
+
+        console.log(`\n--- Evaluating interviewer: ${interviewer.company || 'Unknown'} ---`);
+
+        // 1. Skills matching (40 points)
+        const skillsMatch = checkSkillsMatch(
+          candidateData.targetRole, 
+          interviewer.skills || [], 
+          interviewer.technologies || []
+        );
+        if (skillsMatch) {
+          score += 40;
+          reasons.push('Skills match');
+        }
+
+        // 2. Experience matching (30 points)
+        const interviewerExp = interviewer.experience_years || 0;
+        if (interviewerExp >= candidateExperience) {
+          const expDiff = Math.abs(interviewerExp - candidateExperience);
+          if (expDiff <= 2) {
+            score += 30;
+            reasons.push('Experience appropriate');
+          } else if (expDiff <= 5) {
+            score += 20;
+            reasons.push('Experience acceptable');
+          }
+        }
+
+        // 3. Time slot availability (30 points)
+        const timeMatch = checkTimeSlotMatch(candidateData.timeSlot, interviewer.current_time_slots);
+        if (timeMatch) {
+          score += 30;
+          reasons.push('Time available');
+        }
+
+        console.log(`Interviewer score: ${score}, reasons: ${reasons.join(', ')}`);
+        
+        return {
+          ...interviewer,
+          matchScore: score,
+          matchReasons: reasons
+        };
+      });
+
+      // Sort by score descending
+      scoredInterviewers.sort((a, b) => b.matchScore - a.matchScore);
+      
+      console.log('Top 3 scored interviewers:');
+      scoredInterviewers.slice(0, 3).forEach((interviewer, index) => {
+        console.log(`${index + 1}. ${interviewer.company || 'Unknown'} - Score: ${interviewer.matchScore}, Reasons: ${interviewer.matchReasons.join(', ')}`);
+      });
+
+      // Return best match if score is reasonable (at least skills match)
+      const bestMatch = scoredInterviewers[0];
+      if (bestMatch && bestMatch.matchScore >= 40) {
+        console.log('Best match found:', bestMatch.company || 'Unknown', 'Score:', bestMatch.matchScore);
+        return bestMatch;
+      }
+
+      // Fallback: return any interviewer with some availability
+      const fallbackMatch = scoredInterviewers.find(interviewer => 
+        interviewer.current_time_slots && 
+        Object.keys(interviewer.current_time_slots).length > 0
+      );
+
+      if (fallbackMatch) {
+        console.log('Fallback match found:', fallbackMatch.company || 'Unknown');
+        return fallbackMatch;
+      }
+
+      console.log('No suitable interviewer found');
       return null;
     } catch (error) {
       console.error('Error in findMatchingInterviewer:', error);
@@ -94,10 +272,13 @@ const Book = () => {
     setIsLoading(true);
 
     try {
+      console.log('Starting matching process with data:', data);
+      
       // Find matching interviewer
       const interviewer = await findMatchingInterviewer(data);
       
       if (interviewer) {
+        console.log('Interviewer found, scheduling interview...');
         setMatchedInterviewer(interviewer);
         
         // Schedule the interview and send emails
@@ -125,6 +306,7 @@ const Book = () => {
           description: "You'll receive a Google Meet link shortly.",
         });
       } else {
+        console.log('No interviewer found, showing no-match state');
         setCurrentStep('no-match');
         toast({
           title: "No Interviewer Available",
