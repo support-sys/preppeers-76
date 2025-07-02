@@ -15,13 +15,14 @@ export interface MatchedInterviewer {
   current_time_slots?: any;
   matchScore?: number;
   matchReasons?: string[];
+  alternativeTimeSlots?: string[];
 }
 
-// Skill mapping for better matching
+// Enhanced skill mapping for better matching
 export const skillMapping: { [key: string]: string[] } = {
-  "Frontend Developer": ["React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer"],
-  "Backend Developer": ["Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API"],
-  "Full Stack Developer": ["React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer"],
+  "Frontend Developer": ["React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer", "Next.js", "React.js", "Vue.js"],
+  "Backend Developer": ["Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API", "Express.js", "Django", "Spring"],
+  "Full Stack Developer": ["React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer", "MERN Stack", "MEAN Stack"],
   "Data Scientist": ["Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
   "Data Engineer": ["Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
   "DevOps Engineer": ["Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
@@ -82,6 +83,22 @@ export const checkTimeSlotMatch = (candidateTimeSlot: string, interviewerTimeSlo
   return hasMatchingSlot;
 };
 
+export const getAlternativeTimeSlots = (interviewerTimeSlots: any): string[] => {
+  if (!interviewerTimeSlots) return [];
+  
+  const alternatives: string[] = [];
+  
+  Object.entries(interviewerTimeSlots).forEach(([day, slots]) => {
+    if (Array.isArray(slots)) {
+      slots.forEach((slot: string) => {
+        alternatives.push(`${day} ${slot}`);
+      });
+    }
+  });
+  
+  return alternatives.slice(0, 3); // Return top 3 alternatives
+};
+
 export const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
   console.log('Checking skills match:', { candidateRole, interviewerSkills, interviewerTechnologies });
   
@@ -92,16 +109,27 @@ export const checkSkillsMatch = (candidateRole: string, interviewerSkills: strin
   const allInterviewerSkills = [...(interviewerSkills || []), ...(interviewerTechnologies || [])];
   console.log('Interviewer all skills:', allInterviewerSkills);
 
-  // Check for exact matches first
-  const exactMatch = relevantSkills.some(skill => 
-    allInterviewerSkills.some(interviewerSkill => 
-      interviewerSkill.toLowerCase().includes(skill.toLowerCase()) ||
-      skill.toLowerCase().includes(interviewerSkill.toLowerCase())
-    )
+  // Check for matches (case-insensitive and partial matches)
+  const hasMatch = relevantSkills.some(skill => 
+    allInterviewerSkills.some(interviewerSkill => {
+      const skillLower = skill.toLowerCase();
+      const interviewerSkillLower = interviewerSkill.toLowerCase();
+      
+      // Exact match or contains match
+      const isMatch = skillLower === interviewerSkillLower || 
+                     skillLower.includes(interviewerSkillLower) || 
+                     interviewerSkillLower.includes(skillLower);
+      
+      if (isMatch) {
+        console.log(`✓ Skill match found: ${skill} <-> ${interviewerSkill}`);
+      }
+      
+      return isMatch;
+    })
   );
 
-  console.log('Skills match result:', exactMatch);
-  return exactMatch;
+  console.log('Skills match result:', hasMatch);
+  return hasMatch;
 };
 
 export const parseExperience = (experienceStr: string): number => {
