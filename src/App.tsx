@@ -67,7 +67,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <WhatsAppChat phoneNumber="1234567890" />
+          <WhatsAppChat phoneNumber="919028919227" />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

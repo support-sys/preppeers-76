@@ -5,7 +5,7 @@ interface WhatsAppChatProps {
   phoneNumber?: string;
 }
 
-const WhatsAppChat = ({ phoneNumber = "1234567890" }: WhatsAppChatProps) => {
+const WhatsAppChat = ({ phoneNumber = "919028919227" }: WhatsAppChatProps) => {
   const handleWhatsAppClick = () => {
     const message = "Hi, I have a question about your mock interview service.";
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
