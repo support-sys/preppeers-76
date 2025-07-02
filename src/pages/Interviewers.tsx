@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 
 const skillOptions = {
   "Frontend Development": ["React", "Vue.js", "Angular", "JavaScript", "TypeScript", "HTML/CSS", "Next.js", "Svelte"],
@@ -29,6 +30,7 @@ const Interviewers = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
+  const { syncInterviewerToGoogleSheets } = useGoogleSheets();
   const [interviewerData, setInterviewerData] = useState({
     experienceYears: "",
     company: "",
@@ -41,6 +43,7 @@ const Interviewers = () => {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [syncingToSheets, setSyncingToSheets] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -137,6 +140,7 @@ const Interviewers = () => {
         throw new Error("User not authenticated");
       }
 
+      // First, save to database
       const { error } = await supabase
         .from('interviewers')
         .upsert({
@@ -158,38 +162,43 @@ const Interviewers = () => {
         throw error;
       }
 
-      // Sync to Google Sheets
+      // Database save successful
+      toast({
+        title: "Profile Saved!",
+        description: "Your interviewer profile has been saved to the database."
+      });
+
+      // Now sync to Google Sheets (this can fail without affecting the database save)
+      setSyncingToSheets(true);
       try {
-        await fetch(`https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/sync-to-sheets`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoaG9lb2RvZnNiZ2Z4bmRob3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMTAwNjQsImV4cCI6MjA2NjY4NjA2NH0.FgJT65W6Vk0jF4sdY0DLbUiAhvR1t3hm-gx57rZc88I`
-          },
-          body: JSON.stringify({
-            type: 'interviewer',
-            data: {
-              email: user.email,
-              experience_years: interviewerData.experienceYears,
-              company: interviewerData.company,
-              position: interviewerData.position,
-              skills: interviewerData.skills.join(', '),
-              bio: interviewerData.bio,
-              linkedin_url: interviewerData.linkedinUrl,
-              github_url: interviewerData.githubUrl
-            }
-          })
-        });
+        const sheetsData = {
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || user.email || '',
+          experience_years: interviewerData.experienceYears,
+          company: interviewerData.company,
+          position: interviewerData.position,
+          skills: interviewerData.skills.join(', '),
+          bio: interviewerData.bio,
+          linkedin_url: interviewerData.linkedinUrl,
+          github_url: interviewerData.githubUrl,
+          created_at: new Date().toISOString()
+        };
+
+        await syncInterviewerToGoogleSheets(sheetsData);
       } catch (sheetsError) {
-        console.error('Failed to sync to Google Sheets:', sheetsError);
+        console.error('Google Sheets sync failed:', sheetsError);
+        toast({
+          title: "Partial Success",
+          description: "Profile saved to database, but Google Sheets sync failed. Your data is safe.",
+          variant: "destructive"
+        });
+      } finally {
+        setSyncingToSheets(false);
       }
 
       setIsSubmitted(true);
-      toast({
-        title: "Profile Updated!",
-        description: "Your interviewer profile has been saved successfully."
-      });
     } catch (error: any) {
+      console.error('Database save failed:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to save profile. Please try again.",
@@ -381,14 +390,21 @@ const Interviewers = () => {
                   type="submit"
                   size="lg"
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                  disabled={loading}
+                  disabled={loading || syncingToSheets}
                 >
                   {loading ? (
                     <>
                       <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M12 4V2m0 16v2m8-8h2M4 12H2M17.66 6.34l1.42-1.42M6.34 17.66l-1.42 1.42M6.34 6.34L4.93 4.93M17.66 17.66l-1.42 1.42" />
                       </svg>
-                      Submitting...
+                      Saving Profile...
+                    </>
+                  ) : syncingToSheets ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 4V2m0 16v2m8-8h2M4 12H2M17.66 6.34l1.42-1.42M6.34 17.66l-1.42 1.42M6.34 6.34L4.93 4.93M17.66 17.66l-1.42 1.42" />
+                      </svg>
+                      Syncing to Google Sheets...
                     </>
                   ) : (
                     <>
