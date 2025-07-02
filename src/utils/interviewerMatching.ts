@@ -1,3 +1,4 @@
+
 export interface MatchingCandidate {
   targetRole: string;
   experience: string;
@@ -19,9 +20,9 @@ export interface MatchedInterviewer {
 
 // Enhanced skill mapping for better matching
 export const skillMapping: { [key: string]: string[] } = {
-  "Frontend Developer": ["Frontend Development", "React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer", "Next.js", "React.js", "Vue.js"],
-  "Backend Developer": ["Backend Development", "Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API", "Express.js", "Django", "Spring"],
-  "Full Stack Developer": ["Full Stack Development", "React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer", "MERN Stack", "MEAN Stack"],
+  "Frontend Developer": ["Frontend Development", "Full Stack Development", "React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer", "Next.js", "React.js", "Vue.js"],
+  "Backend Developer": ["Backend Development", "Full Stack Development", "Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API", "Express.js", "Django", "Spring"],
+  "Full Stack Developer": ["Full Stack Development", "Frontend Development", "Backend Development", "React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer", "MERN Stack", "MEAN Stack"],
   "Data Scientist": ["Data Science & AI", "Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
   "Data Engineer": ["Data Science & AI", "Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
   "DevOps Engineer": ["DevOps & Cloud", "Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
@@ -38,48 +39,100 @@ export const parseTimeSlot = (timeSlot: string) => {
     const date = new Date(timeSlot);
     const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
     const hour = date.getHours();
+    const minutes = date.getMinutes();
     
-    console.log('Parsed candidate time slot:', { dayOfWeek, hour, originalTimeSlot: timeSlot });
-    return { dayOfWeek, hour, date };
+    console.log('🕐 Parsed candidate time slot:', { 
+      dayOfWeek, 
+      hour, 
+      minutes, 
+      timeString: `${hour}:${minutes.toString().padStart(2, '0')}`,
+      originalTimeSlot: timeSlot 
+    });
+    return { dayOfWeek, hour, minutes, date };
   } catch (error) {
-    console.error('Error parsing time slot:', error);
+    console.error('❌ Error parsing time slot:', error);
     return null;
   }
 };
 
 export const checkTimeSlotMatch = (candidateTimeSlot: string, interviewerTimeSlots: any) => {
-  console.log('Checking time slot match:', { candidateTimeSlot, interviewerTimeSlots });
+  console.log('\n🔍 === TIME SLOT MATCHING DEBUG ===');
+  console.log('📅 Candidate time slot:', candidateTimeSlot);
+  console.log('📅 Interviewer time slots:', JSON.stringify(interviewerTimeSlots, null, 2));
   
   if (!candidateTimeSlot || !interviewerTimeSlots) {
-    console.log('Missing time slot data');
+    console.log('❌ Missing time slot data');
     return false;
   }
 
   const parsedCandidateTime = parseTimeSlot(candidateTimeSlot);
   if (!parsedCandidateTime) {
-    console.log('Could not parse candidate time slot');
+    console.log('❌ Could not parse candidate time slot');
     return false;
   }
 
-  const { dayOfWeek, hour } = parsedCandidateTime;
+  const { dayOfWeek, hour, minutes } = parsedCandidateTime;
+  const candidateTimeInMinutes = hour * 60 + minutes;
+
+  console.log(`🎯 Looking for availability on ${dayOfWeek} at ${hour}:${minutes.toString().padStart(2, '0')} (${candidateTimeInMinutes} minutes from midnight)`);
 
   // Check if interviewer has slots for this day
   const daySlots = interviewerTimeSlots[dayOfWeek];
   if (!daySlots || !Array.isArray(daySlots)) {
-    console.log(`No slots found for ${dayOfWeek}`);
+    console.log(`❌ No slots found for ${dayOfWeek}`);
+    console.log(`Available days: ${Object.keys(interviewerTimeSlots).join(', ')}`);
     return false;
   }
 
-  // Check if any slot matches the candidate's preferred hour
-  const hasMatchingSlot = daySlots.some((slot: string) => {
-    const slotHour = parseInt(slot.split(':')[0]);
-    const isMatch = Math.abs(slotHour - hour) <= 1; // Allow 1 hour flexibility
-    console.log(`Checking slot ${slot} (hour ${slotHour}) against candidate hour ${hour}: ${isMatch}`);
-    return isMatch;
-  });
+  console.log(`📋 Found ${daySlots.length} time slots for ${dayOfWeek}:`, daySlots);
 
-  console.log(`Time slot match result: ${hasMatchingSlot}`);
-  return hasMatchingSlot;
+  // Check each time slot to see if candidate's time falls within any range
+  for (let i = 0; i < daySlots.length; i++) {
+    const slot = daySlots[i];
+    console.log(`\n🔍 Checking slot ${i + 1}:`, slot);
+
+    // Handle different slot formats
+    let startTime, endTime;
+    
+    if (typeof slot === 'object' && slot.start && slot.end) {
+      // Object format: {start: "11:00", end: "17:00"}
+      startTime = slot.start;
+      endTime = slot.end;
+      console.log(`📊 Object format slot - Start: ${startTime}, End: ${endTime}`);
+    } else if (typeof slot === 'string') {
+      // String format: "11:00" (treat as 1-hour slot)
+      startTime = slot;
+      const [startHour, startMin] = slot.split(':').map(Number);
+      endTime = `${startHour + 1}:${startMin.toString().padStart(2, '0')}`;
+      console.log(`📊 String format slot - Start: ${startTime}, End: ${endTime} (assumed 1-hour duration)`);
+    } else {
+      console.log('❌ Unknown slot format, skipping');
+      continue;
+    }
+
+    // Parse start and end times
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const startTimeInMinutes = startHour * 60 + startMin;
+    const endTimeInMinutes = endHour * 60 + endMin;
+
+    console.log(`⏰ Time range: ${startHour}:${startMin.toString().padStart(2, '0')} - ${endHour}:${endMin.toString().padStart(2, '0')}`);
+    console.log(`🔢 Minutes range: ${startTimeInMinutes} - ${endTimeInMinutes}`);
+    console.log(`🎯 Candidate time: ${candidateTimeInMinutes} minutes`);
+
+    // Check if candidate's time falls within this slot
+    if (candidateTimeInMinutes >= startTimeInMinutes && candidateTimeInMinutes <= endTimeInMinutes) {
+      console.log(`✅ MATCH FOUND! Candidate time ${hour}:${minutes.toString().padStart(2, '0')} falls within slot ${startTime}-${endTime}`);
+      return true;
+    } else {
+      console.log(`❌ No match - candidate time ${candidateTimeInMinutes} is outside range ${startTimeInMinutes}-${endTimeInMinutes}`);
+    }
+  }
+
+  console.log(`❌ No matching time slots found for ${dayOfWeek}`);
+  console.log('=== END TIME SLOT MATCHING DEBUG ===\n');
+  return false;
 };
 
 export const getAlternativeTimeSlots = (interviewerTimeSlots: any): string[] => {
@@ -89,30 +142,34 @@ export const getAlternativeTimeSlots = (interviewerTimeSlots: any): string[] => 
   
   Object.entries(interviewerTimeSlots).forEach(([day, slots]) => {
     if (Array.isArray(slots)) {
-      slots.forEach((slot: string) => {
-        alternatives.push(`${day} ${slot}`);
+      slots.forEach((slot: any) => {
+        if (typeof slot === 'object' && slot.start && slot.end) {
+          alternatives.push(`${day} ${slot.start}-${slot.end}`);
+        } else if (typeof slot === 'string') {
+          alternatives.push(`${day} ${slot}`);
+        }
       });
     }
   });
   
-  return alternatives.slice(0, 3); // Return top 3 alternatives
+  return alternatives.slice(0, 5); // Return top 5 alternatives
 };
 
 export const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
-  console.log('=== SKILLS MATCHING DEBUG ===');
-  console.log('Candidate role:', candidateRole);
-  console.log('Interviewer skills field (categories):', interviewerSkills);
-  console.log('Interviewer technologies field (individual skills):', interviewerTechnologies);
+  console.log('\n🎯 === SKILLS MATCHING DEBUG ===');
+  console.log('👤 Candidate role:', candidateRole);
+  console.log('📋 Interviewer skill categories:', interviewerSkills);
+  console.log('🔧 Interviewer technologies:', interviewerTechnologies);
   
   const relevantSkills = skillMapping[candidateRole] || [candidateRole];
-  console.log('Relevant skills for matching:', relevantSkills);
+  console.log('🎯 Skills we\'re looking for:', relevantSkills);
 
   // Combine interviewer skills and technologies, ensuring we have arrays
   const skillsArray = Array.isArray(interviewerSkills) ? interviewerSkills : [];
   const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
   const allInterviewerSkills = [...skillsArray, ...technologiesArray];
   
-  console.log('All interviewer skills combined:', allInterviewerSkills);
+  console.log('🔍 All interviewer skills combined:', allInterviewerSkills);
 
   if (allInterviewerSkills.length === 0) {
     console.log('❌ No skills found for interviewer');
@@ -120,27 +177,38 @@ export const checkSkillsMatch = (candidateRole: string, interviewerSkills: strin
   }
 
   // Check for matches (case-insensitive and partial matches)
-  const hasMatch = relevantSkills.some(skill => 
-    allInterviewerSkills.some(interviewerSkill => {
-      const skillLower = skill.toLowerCase();
+  let matchFound = false;
+  const matches = [];
+
+  for (const relevantSkill of relevantSkills) {
+    for (const interviewerSkill of allInterviewerSkills) {
+      const skillLower = relevantSkill.toLowerCase();
       const interviewerSkillLower = interviewerSkill.toLowerCase();
       
-      // Exact match or contains match
-      const isMatch = skillLower === interviewerSkillLower || 
-                     skillLower.includes(interviewerSkillLower) || 
-                     interviewerSkillLower.includes(skillLower);
+      // More flexible matching: exact match, contains match, or word match
+      const isExactMatch = skillLower === interviewerSkillLower;
+      const isPartialMatch = skillLower.includes(interviewerSkillLower) || interviewerSkillLower.includes(skillLower);
+      const isWordMatch = skillLower.split(' ').some(word => 
+        interviewerSkillLower.split(' ').some(interviewerWord => 
+          word === interviewerWord && word.length > 2 // Avoid matching short words like "js"
+        )
+      );
       
-      if (isMatch) {
-        console.log(`✅ Skill match found: "${skill}" <-> "${interviewerSkill}"`);
+      if (isExactMatch || isPartialMatch || isWordMatch) {
+        matchFound = true;
+        matches.push(`"${relevantSkill}" ↔ "${interviewerSkill}"`);
+        console.log(`✅ SKILL MATCH: "${relevantSkill}" ↔ "${interviewerSkill}"`);
+        break; // Move to next relevant skill
       }
-      
-      return isMatch;
-    })
-  );
+    }
+  }
 
-  console.log('Final skills match result:', hasMatch);
-  console.log('=== END SKILLS MATCHING DEBUG ===');
-  return hasMatch;
+  console.log(`📊 Total matches found: ${matches.length}`);
+  console.log('🎯 Match details:', matches);
+  console.log('✅ Final skills match result:', matchFound);
+  console.log('=== END SKILLS MATCHING DEBUG ===\n');
+  
+  return matchFound;
 };
 
 export const parseExperience = (experienceStr: string): number => {
