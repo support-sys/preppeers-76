@@ -1,4 +1,3 @@
-
 export interface MatchingCandidate {
   targetRole: string;
   experience: string;
@@ -20,14 +19,14 @@ export interface MatchedInterviewer {
 
 // Enhanced skill mapping for better matching
 export const skillMapping: { [key: string]: string[] } = {
-  "Frontend Developer": ["React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer", "Next.js", "React.js", "Vue.js"],
-  "Backend Developer": ["Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API", "Express.js", "Django", "Spring"],
-  "Full Stack Developer": ["React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer", "MERN Stack", "MEAN Stack"],
-  "Data Scientist": ["Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
-  "Data Engineer": ["Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
-  "DevOps Engineer": ["Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
-  "Mobile Developer": ["React Native", "Flutter", "iOS", "Android", "Mobile", "Mobile Developer"],
-  "Machine Learning Engineer": ["Python", "TensorFlow", "PyTorch", "Machine Learning", "ML Engineer"],
+  "Frontend Developer": ["Frontend Development", "React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer", "Next.js", "React.js", "Vue.js"],
+  "Backend Developer": ["Backend Development", "Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API", "Express.js", "Django", "Spring"],
+  "Full Stack Developer": ["Full Stack Development", "React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer", "MERN Stack", "MEAN Stack"],
+  "Data Scientist": ["Data Science & AI", "Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
+  "Data Engineer": ["Data Science & AI", "Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
+  "DevOps Engineer": ["DevOps & Cloud", "Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
+  "Mobile Developer": ["Mobile Development", "React Native", "Flutter", "iOS", "Android", "Mobile", "Mobile Developer"],
+  "Machine Learning Engineer": ["Data Science & AI", "Python", "TensorFlow", "PyTorch", "Machine Learning", "ML Engineer"],
   "Product Manager": ["Product Management", "Agile", "Scrum", "Product Manager"],
   "QA Engineer": ["Testing", "Automation", "QA", "Quality Assurance", "QA Engineer"]
 };
@@ -102,8 +101,8 @@ export const getAlternativeTimeSlots = (interviewerTimeSlots: any): string[] => 
 export const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
   console.log('=== SKILLS MATCHING DEBUG ===');
   console.log('Candidate role:', candidateRole);
-  console.log('Interviewer skills field:', interviewerSkills);
-  console.log('Interviewer technologies field:', interviewerTechnologies);
+  console.log('Interviewer skills field (categories):', interviewerSkills);
+  console.log('Interviewer technologies field (individual skills):', interviewerTechnologies);
   
   const relevantSkills = skillMapping[candidateRole] || [candidateRole];
   console.log('Relevant skills for matching:', relevantSkills);

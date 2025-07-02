@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,17 +53,12 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
       .maybeSingle();
 
     if (data) {
-      // Determine selected categories based on skills
-      const selectedCategories = Object.keys(skillOptions).filter(category =>
-        skillOptions[category].some(skill => data.technologies?.includes(skill))
-      );
-
       setProfileData({
         experienceYears: data.experience_years?.toString() || "",
         company: data.company || "",
         position: data.position || "",
-        selectedCategories,
-        skills: data.technologies || [],
+        selectedCategories: data.skills || [], // Load categories from skills field
+        skills: data.technologies || [], // Load individual skills from technologies field
         bio: data.bio || "",
         linkedinUrl: data.linkedin_url || "",
         githubUrl: data.github_url || ""
@@ -133,8 +127,8 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
         experience_years: parseInt(profileData.experienceYears) || null,
         company: profileData.company || null,
         position: profileData.position || null,
-        skills: profileData.skills, // Store skills in the skills field
-        technologies: profileData.skills, // Also store in technologies for backward compatibility
+        skills: profileData.selectedCategories, // Store skill categories in the skills field
+        technologies: profileData.skills, // Store individual skills in technologies field
         bio: profileData.bio || null,
         linkedin_url: profileData.linkedinUrl || null,
         github_url: profileData.githubUrl || null

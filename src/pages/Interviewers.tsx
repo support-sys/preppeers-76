@@ -150,8 +150,8 @@ const Interviewers = () => {
         experience_years: parseInt(interviewerData.experienceYears),
         company: interviewerData.company,
         position: interviewerData.position,
-        skills: interviewerData.skills, // Store skills in the skills field
-        technologies: interviewerData.skills, // Also store in technologies for backward compatibility
+        skills: interviewerData.selectedCategories, // Store skill categories in the skills field
+        technologies: interviewerData.skills, // Store individual skills in technologies for backward compatibility
         availability_days: [],
         time_slots: {},
         hourly_rate: 0,
@@ -195,7 +195,7 @@ const Interviewers = () => {
           experience_years: interviewerData.experienceYears,
           company: interviewerData.company,
           position: interviewerData.position,
-          skills: interviewerData.skills.join(', '),
+          skills: interviewerData.selectedCategories.join(', '), // Send categories to sheets
           bio: interviewerData.bio,
           linkedin_url: interviewerData.linkedinUrl,
           github_url: interviewerData.githubUrl,
