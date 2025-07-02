@@ -100,14 +100,25 @@ export const getAlternativeTimeSlots = (interviewerTimeSlots: any): string[] => 
 };
 
 export const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
-  console.log('Checking skills match:', { candidateRole, interviewerSkills, interviewerTechnologies });
+  console.log('=== SKILLS MATCHING DEBUG ===');
+  console.log('Candidate role:', candidateRole);
+  console.log('Interviewer skills field:', interviewerSkills);
+  console.log('Interviewer technologies field:', interviewerTechnologies);
   
   const relevantSkills = skillMapping[candidateRole] || [candidateRole];
   console.log('Relevant skills for matching:', relevantSkills);
 
-  // Combine interviewer skills and technologies
-  const allInterviewerSkills = [...(interviewerSkills || []), ...(interviewerTechnologies || [])];
-  console.log('Interviewer all skills:', allInterviewerSkills);
+  // Combine interviewer skills and technologies, ensuring we have arrays
+  const skillsArray = Array.isArray(interviewerSkills) ? interviewerSkills : [];
+  const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
+  const allInterviewerSkills = [...skillsArray, ...technologiesArray];
+  
+  console.log('All interviewer skills combined:', allInterviewerSkills);
+
+  if (allInterviewerSkills.length === 0) {
+    console.log('❌ No skills found for interviewer');
+    return false;
+  }
 
   // Check for matches (case-insensitive and partial matches)
   const hasMatch = relevantSkills.some(skill => 
@@ -121,14 +132,15 @@ export const checkSkillsMatch = (candidateRole: string, interviewerSkills: strin
                      interviewerSkillLower.includes(skillLower);
       
       if (isMatch) {
-        console.log(`✓ Skill match found: ${skill} <-> ${interviewerSkill}`);
+        console.log(`✅ Skill match found: "${skill}" <-> "${interviewerSkill}"`);
       }
       
       return isMatch;
     })
   );
 
-  console.log('Skills match result:', hasMatch);
+  console.log('Final skills match result:', hasMatch);
+  console.log('=== END SKILLS MATCHING DEBUG ===');
   return hasMatch;
 };
 

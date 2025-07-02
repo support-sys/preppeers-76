@@ -133,7 +133,8 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
         experience_years: parseInt(profileData.experienceYears) || null,
         company: profileData.company || null,
         position: profileData.position || null,
-        technologies: profileData.skills,
+        skills: profileData.skills, // Store skills in the skills field
+        technologies: profileData.skills, // Also store in technologies for backward compatibility
         bio: profileData.bio || null,
         linkedin_url: profileData.linkedinUrl || null,
         github_url: profileData.githubUrl || null

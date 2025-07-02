@@ -150,8 +150,8 @@ const Interviewers = () => {
         experience_years: parseInt(interviewerData.experienceYears),
         company: interviewerData.company,
         position: interviewerData.position,
-        skills: [],
-        technologies: interviewerData.skills,
+        skills: interviewerData.skills, // Store skills in the skills field
+        technologies: interviewerData.skills, // Also store in technologies for backward compatibility
         availability_days: [],
         time_slots: {},
         hourly_rate: 0,

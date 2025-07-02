@@ -4,7 +4,7 @@ import { MatchingCandidate, MatchedInterviewer, checkSkillsMatch, checkTimeSlotM
 
 export const findMatchingInterviewer = async (candidateData: MatchingCandidate): Promise<MatchedInterviewer | null> => {
   try {
-    console.log('Finding matching interviewer for candidate:', candidateData);
+    console.log('🔍 Finding matching interviewer for candidate:', candidateData);
     
     // Get all interviewers first
     const { data: allInterviewers, error } = await supabase
@@ -12,31 +12,39 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       .select('*');
 
     if (error) {
-      console.error('Error fetching interviewers:', error);
+      console.error('❌ Error fetching interviewers:', error);
       return null;
     }
 
-    console.log('All interviewers found:', allInterviewers?.length);
+    console.log(`📋 Found ${allInterviewers?.length || 0} interviewers in database`);
 
     if (!allInterviewers || allInterviewers.length === 0) {
-      console.log('No interviewers found in database');
+      console.log('❌ No interviewers found in database');
       return null;
     }
 
+    // Log all interviewers data for debugging
+    allInterviewers.forEach((interviewer, index) => {
+      console.log(`\n📝 Interviewer ${index + 1}:`, {
+        company: interviewer.company,
+        skills: interviewer.skills,
+        technologies: interviewer.technologies,
+        experience_years: interviewer.experience_years,
+        current_time_slots: interviewer.current_time_slots
+      });
+    });
+
     const candidateExperience = parseExperience(candidateData.experience);
-    console.log('Candidate parsed experience:', candidateExperience);
+    console.log('👤 Candidate parsed experience:', candidateExperience);
 
     // Score and rank interviewers
     const scoredInterviewers = allInterviewers.map(interviewer => {
       let score = 0;
       const reasons = [];
 
-      console.log(`\n--- Evaluating interviewer: ${interviewer.company || 'Unknown'} ---`);
-      console.log('Interviewer skills:', interviewer.skills);
-      console.log('Interviewer technologies:', interviewer.technologies);
-      console.log('Interviewer time slots:', interviewer.current_time_slots);
+      console.log(`\n🔍 === Evaluating interviewer: ${interviewer.company || 'Unknown'} ===`);
 
-      // 1. Skills matching (40 points) - More lenient now
+      // 1. Skills matching (40 points) - More comprehensive now
       const skillsMatch = checkSkillsMatch(
         candidateData.targetRole, 
         interviewer.skills || [], 
@@ -45,19 +53,30 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       if (skillsMatch) {
         score += 40;
         reasons.push('Skills match');
+        console.log('✅ Skills match: +40 points');
+      } else {
+        console.log('❌ No skills match: +0 points');
       }
 
       // 2. Experience matching (30 points)
       const interviewerExp = interviewer.experience_years || 0;
+      console.log(`👨‍💼 Experience comparison: Interviewer ${interviewerExp} years vs Candidate ${candidateExperience} years`);
+      
       if (interviewerExp >= candidateExperience) {
         const expDiff = Math.abs(interviewerExp - candidateExperience);
         if (expDiff <= 2) {
           score += 30;
           reasons.push('Experience appropriate');
+          console.log('✅ Experience appropriate: +30 points');
         } else if (expDiff <= 5) {
           score += 20;
           reasons.push('Experience acceptable');
+          console.log('✅ Experience acceptable: +20 points');
+        } else {
+          console.log('⚠️ Experience gap too large: +0 points');
         }
+      } else {
+        console.log('❌ Insufficient experience: +0 points');
       }
 
       // 3. Time slot availability (30 points)
@@ -65,13 +84,17 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       if (timeMatch) {
         score += 30;
         reasons.push('Time available');
+        console.log('✅ Time available: +30 points');
+      } else {
+        console.log('❌ Time not available: +0 points');
       }
 
       // Get alternative time slots for this interviewer
       const alternativeTimeSlots = getAlternativeTimeSlots(interviewer.current_time_slots);
 
-      console.log(`Interviewer score: ${score}, reasons: ${reasons.join(', ')}`);
-      console.log(`Alternative slots: ${alternativeTimeSlots.join(', ')}`);
+      console.log(`🎯 Final score for ${interviewer.company}: ${score}/100`);
+      console.log(`📋 Reasons: ${reasons.join(', ')}`);
+      console.log(`⏰ Alternative slots: ${alternativeTimeSlots.join(', ')}`);
       
       return {
         ...interviewer,
@@ -84,15 +107,17 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
     // Sort by score descending
     scoredInterviewers.sort((a, b) => b.matchScore - a.matchScore);
     
-    console.log('Top 3 scored interviewers:');
+    console.log('\n🏆 === TOP 3 MATCHES ===');
     scoredInterviewers.slice(0, 3).forEach((interviewer, index) => {
-      console.log(`${index + 1}. ${interviewer.company || 'Unknown'} - Score: ${interviewer.matchScore}, Reasons: ${interviewer.matchReasons.join(', ')}`);
+      console.log(`${index + 1}. ${interviewer.company || 'Unknown'} - Score: ${interviewer.matchScore}/100`);
+      console.log(`   Reasons: ${interviewer.matchReasons.join(', ')}`);
+      console.log(`   Alternative slots: ${interviewer.alternativeTimeSlots.length}`);
     });
 
     // Return best match if score is reasonable (at least skills match OR has availability)
     const bestMatch = scoredInterviewers[0];
     if (bestMatch && (bestMatch.matchScore >= 40 || bestMatch.alternativeTimeSlots.length > 0)) {
-      console.log('Best match found:', bestMatch.company || 'Unknown', 'Score:', bestMatch.matchScore);
+      console.log(`✅ Best match selected: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
       return bestMatch;
     }
 
@@ -102,14 +127,14 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
     );
 
     if (skillsOnlyMatch) {
-      console.log('Skills-only match found:', skillsOnlyMatch.company || 'Unknown');
+      console.log(`⚠️ Fallback match (skills only): ${skillsOnlyMatch.company || 'Unknown'}`);
       return skillsOnlyMatch;
     }
 
-    console.log('No suitable interviewer found');
+    console.log('❌ No suitable interviewer found');
     return null;
   } catch (error) {
-    console.error('Error in findMatchingInterviewer:', error);
+    console.error('💥 Error in findMatchingInterviewer:', error);
     return null;
   }
 };
