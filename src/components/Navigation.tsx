@@ -9,17 +9,42 @@ import UserMenu from "./UserMenu";
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
-  const navItems = [
-    { name: "Home", path: "/" },
-    { name: "Book", path: "/book" },
-    { name: "Interviewers", path: "/interviewers" },
-    { name: "Pricing", path: "/pricing" },
-    { name: "FAQ", path: "/faq" },
-    { name: "Contact", path: "/contact" },
-  ];
+  // Different nav items based on authentication status
+  const getNavItems = () => {
+    if (user) {
+      const baseItems = [
+        { name: "Home", path: "/" },
+        { name: "Dashboard", path: "/dashboard" },
+      ];
 
+      if (userRole === 'interviewer') {
+        return [
+          ...baseItems,
+          { name: "Profile", path: "/interviewers" },
+          { name: "Contact", path: "/contact" },
+        ];
+      } else {
+        return [
+          ...baseItems,
+          { name: "Book", path: "/book" },
+          { name: "Contact", path: "/contact" },
+        ];
+      }
+    }
+
+    return [
+      { name: "Home", path: "/" },
+      { name: "Book", path: "/book" },
+      { name: "Interviewers", path: "/interviewers" },
+      { name: "Pricing", path: "/pricing" },
+      { name: "FAQ", path: "/faq" },
+      { name: "Contact", path: "/contact" },
+    ];
+  };
+
+  const navItems = getNavItems();
   const isActive = (path: string) => location.pathname === path;
 
   return (

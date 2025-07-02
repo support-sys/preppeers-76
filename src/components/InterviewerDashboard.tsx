@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, Edit, CalendarX } from 'lucide-react';
+import { Calendar, Clock, Users, Edit, CalendarX, Settings, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ScheduleEditor from './ScheduleEditor';
 import DateBlocker from './DateBlocker';
+import ProfileSettings from './ProfileSettings';
+import TimeSlotManager from './TimeSlotManager';
 
 interface Interview {
   id: string;
@@ -23,8 +25,7 @@ const InterviewerDashboard = () => {
   const { toast } = useToast();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showScheduleEditor, setShowScheduleEditor] = useState(false);
-  const [showDateBlocker, setShowDateBlocker] = useState(false);
+  const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'profile' | 'time-slots'>('dashboard');
 
   useEffect(() => {
     fetchInterviews();
@@ -32,7 +33,7 @@ const InterviewerDashboard = () => {
 
   const fetchInterviews = async () => {
     try {
-      // For now, we'll use mock data since we haven't created the interviews table yet
+      // Mock data for now
       const mockInterviews: Interview[] = [
         {
           id: '1',
@@ -79,45 +80,45 @@ const InterviewerDashboard = () => {
     );
   }
 
-  // Show Schedule Editor
-  if (showScheduleEditor) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-white">Edit Schedule</h1>
-        </div>
-        <ScheduleEditor onClose={() => setShowScheduleEditor(false)} />
-      </div>
-    );
+  // Render different views based on activeView
+  if (activeView === 'schedule') {
+    return <ScheduleEditor onClose={() => setActiveView('dashboard')} />;
   }
 
-  // Show Date Blocker
-  if (showDateBlocker) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-white">Block Dates</h1>
-        </div>
-        <DateBlocker onClose={() => setShowDateBlocker(false)} />
-      </div>
-    );
+  if (activeView === 'block-dates') {
+    return <DateBlocker onClose={() => setActiveView('dashboard')} />;
+  }
+
+  if (activeView === 'profile') {
+    return <ProfileSettings onClose={() => setActiveView('dashboard')} />;
+  }
+
+  if (activeView === 'time-slots') {
+    return <TimeSlotManager onClose={() => setActiveView('dashboard')} />;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Interviewer Dashboard</h1>
-        <div className="space-x-2">
+        <div className="flex space-x-2">
           <Button 
-            onClick={() => setShowScheduleEditor(true)}
-            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => setActiveView('profile')}
+            className="bg-purple-600 hover:bg-purple-700"
           >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Schedule
+            <User className="w-4 h-4 mr-2" />
+            Profile Settings
+          </Button>
+          <Button 
+            onClick={() => setActiveView('time-slots')}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            Manage Schedule
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => setShowDateBlocker(true)}
+            onClick={() => setActiveView('block-dates')}
             className="bg-white/10 border-white/20 text-white hover:bg-white/20"
           >
             <CalendarX className="w-4 h-4 mr-2" />
