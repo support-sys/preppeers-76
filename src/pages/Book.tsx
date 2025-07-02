@@ -231,7 +231,7 @@ const Book = () => {
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 ${
-                      currentStep === 'payment' ? 'bg-blue-500' : (currentStep === 'success' ? 'bg-green-500' : 'bg-gray-500')
+                      currentStep === 'payment' ? 'bg-blue-500' : (currentStep === 'form' ? 'bg-gray-500' : 'bg-green-500')
                     }`}>
                       2
                     </div>
@@ -242,7 +242,7 @@ const Book = () => {
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 ${
-                      currentStep === 'success' ? 'bg-green-500' : 'bg-gray-500'
+                      currentStep === 'form' || currentStep === 'payment' ? 'bg-gray-500' : 'bg-green-500'
                     }`}>
                       3
                     </div>
