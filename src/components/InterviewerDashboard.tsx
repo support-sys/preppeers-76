@@ -6,6 +6,8 @@ import { Calendar, Clock, Users, Edit, CalendarX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ScheduleEditor from './ScheduleEditor';
+import DateBlocker from './DateBlocker';
 
 interface Interview {
   id: string;
@@ -21,6 +23,8 @@ const InterviewerDashboard = () => {
   const { toast } = useToast();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showScheduleEditor, setShowScheduleEditor] = useState(false);
+  const [showDateBlocker, setShowDateBlocker] = useState(false);
 
   useEffect(() => {
     fetchInterviews();
@@ -75,16 +79,47 @@ const InterviewerDashboard = () => {
     );
   }
 
+  // Show Schedule Editor
+  if (showScheduleEditor) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-white">Edit Schedule</h1>
+        </div>
+        <ScheduleEditor onClose={() => setShowScheduleEditor(false)} />
+      </div>
+    );
+  }
+
+  // Show Date Blocker
+  if (showDateBlocker) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-white">Block Dates</h1>
+        </div>
+        <DateBlocker onClose={() => setShowDateBlocker(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Interviewer Dashboard</h1>
         <div className="space-x-2">
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            onClick={() => setShowScheduleEditor(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             <Edit className="w-4 h-4 mr-2" />
             Edit Schedule
           </Button>
-          <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowDateBlocker(true)}
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
             <CalendarX className="w-4 h-4 mr-2" />
             Block Dates
           </Button>
