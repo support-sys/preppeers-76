@@ -3,20 +3,38 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, Clock, Star } from 'lucide-react';
+import { Calendar, Users, Clock, Star, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import InterviewerDashboard from '@/components/InterviewerDashboard';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface Interview {
+  id: string;
+  interviewer_id: string;
+  candidate_name: string;
+  candidate_email: string;
+  interviewer_email: string;
+  target_role: string;
+  experience: string;
+  scheduled_time: string;
+  status: string;
+  resume_url?: string;
+}
 
 const Dashboard = () => {
   const { user, userRole } = useAuth();
+  const { toast } = useToast();
   const [profileComplete, setProfileComplete] = useState(false);
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user && userRole) {
       checkProfileCompletion();
+      fetchInterviews();
     }
   }, [user, userRole]);
 
@@ -32,6 +50,37 @@ const Dashboard = () => {
 
     setProfileComplete(!!data);
   };
+
+  const fetchInterviews = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('interviews')
+        .select('*')
+        .order('scheduled_time', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching interviews:', error);
+      } else {
+        setInterviews(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchInterviews:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const upcomingInterviews = interviews.filter(interview => {
+    const scheduledTime = new Date(interview.scheduled_time);
+    return scheduledTime > new Date() && interview.status === 'scheduled';
+  });
+
+  const pastInterviews = interviews.filter(interview => {
+    const scheduledTime = new Date(interview.scheduled_time);
+    return scheduledTime <= new Date() || interview.status === 'completed';
+  });
 
   // Show InterviewerDashboard for interviewers with complete profiles
   if (userRole === 'interviewer' && profileComplete) {
@@ -95,6 +144,39 @@ const Dashboard = () => {
             </Card>
           )}
 
+          {/* Scheduled Interviews Section */}
+          {upcomingInterviews.length > 0 && (
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 mb-8">
+              <CardHeader>
+                <CardTitle className="text-white">Upcoming Interviews</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Your scheduled interview sessions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {upcomingInterviews.map((interview) => (
+                    <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div>
+                        <h3 className="text-white font-semibold">{interview.target_role}</h3>
+                        <p className="text-slate-300">
+                          {new Date(interview.scheduled_time).toLocaleString()} • {interview.experience} experience
+                        </p>
+                        <p className="text-slate-400 text-sm">
+                          Interviewer: {interview.interviewer_email}
+                        </p>
+                      </div>
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                        <Video className="w-4 h-4 mr-2" />
+                        Join
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userRole === 'interviewer' ? (
               <>
@@ -106,7 +188,7 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold text-white">3</p>
+                    <p className="text-3xl font-bold text-white">{upcomingInterviews.length}</p>
                     <p className="text-slate-300">This week</p>
                   </CardContent>
                 </Card>
@@ -119,7 +201,7 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold text-white">24</p>
+                    <p className="text-3xl font-bold text-white">{interviews.length}</p>
                     <p className="text-slate-300">All time</p>
                   </CardContent>
                 </Card>
@@ -147,8 +229,8 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold text-white">2</p>
-                    <p className="text-slate-300">This week</p>
+                    <p className="text-3xl font-bold text-white">{upcomingInterviews.length}</p>
+                    <p className="text-slate-300">Upcoming</p>
                   </CardContent>
                 </Card>
 
@@ -160,8 +242,8 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold text-white">12</p>
-                    <p className="text-slate-300">Total</p>
+                    <p className="text-3xl font-bold text-white">{interviews.length}</p>
+                    <p className="text-slate-300">Total Sessions</p>
                   </CardContent>
                 </Card>
 
@@ -180,6 +262,38 @@ const Dashboard = () => {
               </>
             )}
           </div>
+
+          {/* Past Interviews Section */}
+          {pastInterviews.length > 0 && (
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 mt-8">
+              <CardHeader>
+                <CardTitle className="text-white">Past Interviews</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Your completed interview sessions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {pastInterviews.slice(0, 3).map((interview) => (
+                    <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div>
+                        <h3 className="text-white font-semibold">{interview.target_role}</h3>
+                        <p className="text-slate-300">
+                          {new Date(interview.scheduled_time).toLocaleString()} • {interview.experience} experience
+                        </p>
+                        <p className="text-slate-400 text-sm">
+                          Interviewer: {interview.interviewer_email}
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                        View Details
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
@@ -206,7 +320,7 @@ const Dashboard = () => {
                   <Link to="/book">
                     <Card className="bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/20 transition-colors cursor-pointer">
                       <CardContent className="p-6">
-                        <h3 className="text-xl font-semibold text-white mb-2">Book Interview</h3>
+                        <h3 className="text-xl font-semibent text-white mb-2">Book Interview</h3>
                         <p className="text-slate-300">Schedule a practice session with an expert</p>
                       </CardContent>
                     </Card>

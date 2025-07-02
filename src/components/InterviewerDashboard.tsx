@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, Edit, CalendarX, Settings, User } from 'lucide-react';
+import { Calendar, Clock, Users, Edit, CalendarX, Settings, User, Video } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,11 +13,13 @@ import TimeSlotManager from './TimeSlotManager';
 
 interface Interview {
   id: string;
-  date: string;
-  time: string;
-  candidate: string;
-  status: 'upcoming' | 'current' | 'completed';
-  duration: number;
+  candidate_name: string;
+  candidate_email: string;
+  target_role: string;
+  experience: string;
+  scheduled_time: string;
+  status: string;
+  resume_url?: string;
 }
 
 const InterviewerDashboard = () => {
@@ -32,45 +34,50 @@ const InterviewerDashboard = () => {
   }, []);
 
   const fetchInterviews = async () => {
+    if (!user) return;
+
     try {
-      // Mock data for now
-      const mockInterviews: Interview[] = [
-        {
-          id: '1',
-          date: '2025-01-08',
-          time: '10:00 AM',
-          candidate: 'John Doe',
-          status: 'upcoming',
-          duration: 60
-        },
-        {
-          id: '2',
-          date: '2025-01-10',
-          time: '2:00 PM',
-          candidate: 'Jane Smith',
-          status: 'upcoming',
-          duration: 45
-        },
-        {
-          id: '3',
-          date: '2025-01-05',
-          time: '3:00 PM',
-          candidate: 'Mike Johnson',
-          status: 'completed',
-          duration: 60
-        }
-      ];
-      
-      setInterviews(mockInterviews);
-      setLoading(false);
+      // First get the interviewer record to get the interviewer_id
+      const { data: interviewerData, error: interviewerError } = await supabase
+        .from('interviewers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (interviewerError) {
+        console.error('Error fetching interviewer data:', interviewerError);
+        setLoading(false);
+        return;
+      }
+
+      // Then fetch interviews for this interviewer
+      const { data: interviewsData, error: interviewsError } = await supabase
+        .from('interviews')
+        .select('*')
+        .eq('interviewer_id', interviewerData.id)
+        .order('scheduled_time', { ascending: true });
+
+      if (interviewsError) {
+        console.error('Error fetching interviews:', interviewsError);
+      } else {
+        setInterviews(interviewsData || []);
+      }
     } catch (error) {
-      console.error('Error fetching interviews:', error);
+      console.error('Error in fetchInterviews:', error);
+    } finally {
       setLoading(false);
     }
   };
 
-  const upcomingInterviews = interviews.filter(interview => interview.status === 'upcoming');
-  const pastInterviews = interviews.filter(interview => interview.status === 'completed');
+  const upcomingInterviews = interviews.filter(interview => {
+    const scheduledTime = new Date(interview.scheduled_time);
+    return scheduledTime > new Date() && interview.status === 'scheduled';
+  });
+
+  const pastInterviews = interviews.filter(interview => {
+    const scheduledTime = new Date(interview.scheduled_time);
+    return scheduledTime <= new Date() || interview.status === 'completed';
+  });
 
   if (loading) {
     return (
@@ -138,7 +145,7 @@ const InterviewerDashboard = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-white">{upcomingInterviews.length}</p>
-            <p className="text-slate-300">This week</p>
+            <p className="text-slate-300">Scheduled</p>
           </CardContent>
         </Card>
 
@@ -163,8 +170,8 @@ const InterviewerDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-white">12</p>
-            <p className="text-slate-300">Interview hours</p>
+            <p className="text-3xl font-bold text-white">{interviews.length}</p>
+            <p className="text-slate-300">Interview sessions</p>
           </CardContent>
         </Card>
       </div>
@@ -185,12 +192,16 @@ const InterviewerDashboard = () => {
               {upcomingInterviews.map((interview) => (
                 <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                   <div>
-                    <h3 className="text-white font-semibold">{interview.candidate}</h3>
+                    <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
                     <p className="text-slate-300">
-                      {interview.date} at {interview.time} • {interview.duration} minutes
+                      {new Date(interview.scheduled_time).toLocaleString()} • {interview.target_role}
+                    </p>
+                    <p className="text-slate-400 text-sm">
+                      Experience: {interview.experience} • {interview.candidate_email}
                     </p>
                   </div>
                   <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                    <Video className="w-4 h-4 mr-2" />
                     Join
                   </Button>
                 </div>
@@ -216,9 +227,12 @@ const InterviewerDashboard = () => {
               {pastInterviews.map((interview) => (
                 <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                   <div>
-                    <h3 className="text-white font-semibold">{interview.candidate}</h3>
+                    <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
                     <p className="text-slate-300">
-                      {interview.date} at {interview.time} • {interview.duration} minutes
+                      {new Date(interview.scheduled_time).toLocaleString()} • {interview.target_role}
+                    </p>
+                    <p className="text-slate-400 text-sm">
+                      Experience: {interview.experience} • {interview.candidate_email}
                     </p>
                   </div>
                   <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">

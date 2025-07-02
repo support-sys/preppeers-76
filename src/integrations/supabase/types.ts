@@ -129,6 +129,54 @@ export type Database = {
         }
         Relationships: []
       }
+      interviews: {
+        Row: {
+          candidate_email: string
+          candidate_id: string
+          candidate_name: string
+          created_at: string
+          experience: string | null
+          id: string
+          interviewer_email: string
+          interviewer_id: string
+          resume_url: string | null
+          scheduled_time: string
+          status: string
+          target_role: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_email: string
+          candidate_id: string
+          candidate_name: string
+          created_at?: string
+          experience?: string | null
+          id?: string
+          interviewer_email: string
+          interviewer_id: string
+          resume_url?: string | null
+          scheduled_time: string
+          status?: string
+          target_role: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_email?: string
+          candidate_id?: string
+          candidate_name?: string
+          created_at?: string
+          experience?: string | null
+          id?: string
+          interviewer_email?: string
+          interviewer_id?: string
+          resume_url?: string | null
+          scheduled_time?: string
+          status?: string
+          target_role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
