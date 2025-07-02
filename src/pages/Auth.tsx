@@ -17,6 +17,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [role, setRole] = useState<'interviewer' | 'interviewee'>('interviewee');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
@@ -52,7 +53,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(email, password, role, fullName);
+    const { error } = await signUp(email, password, role, fullName, mobileNumber);
     
     if (error) {
       toast({
@@ -144,6 +145,18 @@ const Auth = () => {
                         onChange={(e) => setFullName(e.target.value)}
                         className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                         placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="signup-mobile" className="text-white">Mobile Number</Label>
+                      <Input
+                        id="signup-mobile"
+                        type="tel"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value)}
+                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                        placeholder="Enter your mobile number"
                         required
                       />
                     </div>
