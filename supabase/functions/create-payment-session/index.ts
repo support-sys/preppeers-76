@@ -49,6 +49,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Using Cashfree App ID:', cashfreeAppId);
 
+    // Convert metadata to simple string key-value pairs for order_tags
+    const orderTags: Record<string, string> = {};
+    if (metadata) {
+      // Flatten metadata to simple string key-value pairs
+      orderTags.user_email = metadata.user_email || customer_email;
+      orderTags.user_name = metadata.user_name || customer_name;
+      if (metadata.candidate_data) {
+        orderTags.target_role = metadata.candidate_data.target_role || '';
+        orderTags.experience = metadata.candidate_data.experience || '';
+        orderTags.notice_period = metadata.candidate_data.noticePeriod || '';
+      }
+    }
+
+    console.log('Order tags:', orderTags);
+
     // Create payment session with Cashfree
     const paymentSessionData = {
       order_id,
@@ -66,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
         payment_methods: ''
       },
       order_note: 'Mock Interview Payment',
-      order_tags: metadata ? JSON.stringify(metadata) : null
+      order_tags: orderTags
     };
 
     console.log('Sending request to Cashfree with data:', JSON.stringify(paymentSessionData, null, 2));
