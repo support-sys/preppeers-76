@@ -20,14 +20,24 @@ const UserMenu = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast({
-        title: "Sign Out Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+    try {
+      const { error } = await signOut();
+      
+      if (error) {
+        toast({
+          title: "Sign Out Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Signed Out",
+          description: "You have been signed out successfully.",
+        });
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('Unexpected error during sign out:', err);
       toast({
         title: "Signed Out",
         description: "You have been signed out successfully.",
