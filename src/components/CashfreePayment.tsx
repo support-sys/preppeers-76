@@ -56,7 +56,11 @@ const CashfreePayment = ({
           return_url: `${window.location.origin}/book`,
           notify_url: `${window.location.origin}/supabase/functions/v1/payment-webhook`,
           metadata: {
-            candidate_data: candidateData,
+            candidate_data: {
+              target_role: candidateData?.targetRole || candidateData?.target_role || '',
+              experience: candidateData?.experience || '',
+              noticePeriod: candidateData?.noticePeriod || candidateData?.notice_period || ''
+            },
             user_email: userEmail,
             user_name: userName
           }
@@ -145,7 +149,7 @@ const CashfreePayment = ({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-300">Target Role</span>
-            <span className="text-white">{candidateData?.targetRole}</span>
+            <span className="text-white">{candidateData?.targetRole || candidateData?.target_role}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-300">Experience Level</span>
