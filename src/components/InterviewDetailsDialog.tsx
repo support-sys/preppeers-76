@@ -15,9 +15,8 @@ interface InterviewDetailsDialogProps {
 const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: InterviewDetailsDialogProps) => {
   // Mock data for demonstration - in real app, this would come from database
   const interviewerDetails = {
-    name: "Senior Software Engineer",
+    name: "John Smith",
     designation: "Tech Lead",
-    company: "Infosys",
     rating: 4.8,
     experience: "8+ years"
   };
@@ -68,11 +67,6 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
                   <div>
                     <label className="text-slate-400 text-sm">Designation</label>
                     <p className="text-white">{interviewerDetails.designation}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-slate-400 text-sm">Company</label>
-                    <p className="text-white">{interviewerDetails.company}</p>
                   </div>
                   
                   <div>
