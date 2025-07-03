@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { findMatchingInterviewer, scheduleInterview } from '@/services/interviewScheduling';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDateTimeIST } from '@/utils/dateUtils';
 
 interface Interview {
   id: string;
@@ -155,7 +155,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
               <strong>Role:</strong> {interview.target_role}
             </p>
             <p className="text-slate-300 text-sm">
-              <strong>Scheduled:</strong> {new Date(interview.scheduled_time).toLocaleString()}
+              <strong>Scheduled:</strong> {formatDateTimeIST(interview.scheduled_time)}
             </p>
             <p className="text-slate-300 text-sm">
               <strong>Candidate:</strong> {interview.candidate_name}

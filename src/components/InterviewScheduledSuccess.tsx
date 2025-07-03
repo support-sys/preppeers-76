@@ -1,10 +1,10 @@
-
 import { CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
+import { formatDateTimeIST } from "@/utils/dateUtils";
 
 interface InterviewScheduledSuccessProps {
   matchedInterviewer: any;
@@ -59,7 +59,9 @@ const InterviewScheduledSuccess = ({ matchedInterviewer, formData, userEmail }: 
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Your Preferred Time:</span>
-                <span className="text-white">{formData?.timeSlot ? new Date(formData.timeSlot).toLocaleString() : "To be confirmed"}</span>
+                <span className="text-white">
+                  {formData?.timeSlot ? formatDateTimeIST(formData.timeSlot) : "To be confirmed"}
+                </span>
               </div>
               {!hasExactTimeMatch && hasAlternativeSlots && (
                 <div className="mt-4 pt-4 border-t border-white/10">

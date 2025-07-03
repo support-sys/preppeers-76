@@ -10,6 +10,7 @@ import InterviewerDashboard from '@/components/InterviewerDashboard';
 import InterviewRescheduleDialog from '@/components/InterviewRescheduleDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatDateTimeIST } from '@/utils/dateUtils';
 
 interface Interview {
   id: string;
@@ -168,7 +169,6 @@ const Dashboard = () => {
     return scheduledTime <= new Date() || interview.status === 'completed' || interview.status === 'cancelled';
   });
 
-  // Show InterviewerDashboard for interviewers with complete profiles
   if (userRole === 'interviewer' && profileComplete) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -246,7 +246,7 @@ const Dashboard = () => {
                       <div className="flex-1">
                         <h3 className="text-white font-semibold">{interview.target_role}</h3>
                         <p className="text-slate-300">
-                          {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
+                          {formatDateTimeIST(interview.scheduled_time)} • {interview.experience} experience
                         </p>
                         <p className="text-slate-400 text-sm">
                           {userRole === 'interviewer' 
@@ -317,7 +317,6 @@ const Dashboard = () => {
             </Card>
           )}
 
-          {/* ... keep existing code (stats cards section) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userRole === 'interviewer' ? (
               <>
@@ -420,7 +419,7 @@ const Dashboard = () => {
                       <div>
                         <h3 className="text-white font-semibold">{interview.target_role}</h3>
                         <p className="text-slate-300">
-                          {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
+                          {formatDateTimeIST(interview.scheduled_time)} • {interview.experience} experience
                         </p>
                         <p className="text-slate-400 text-sm">
                           {userRole === 'interviewer' 
@@ -442,7 +441,6 @@ const Dashboard = () => {
             </Card>
           )}
 
-          {/* ... keep existing code (quick actions section) */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

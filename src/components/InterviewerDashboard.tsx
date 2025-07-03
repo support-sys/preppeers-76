@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import DateBlocker from './DateBlocker';
 import ProfileSettings from './ProfileSettings';
 import TimeSlotManager from './TimeSlotManager';
 import InterviewRescheduleDialog from './InterviewRescheduleDialog';
+import { formatDateTimeIST } from '@/utils/dateUtils';
 
 interface Interview {
   id: string;
@@ -277,7 +277,7 @@ const InterviewerDashboard = () => {
                   <div className="flex-1">
                     <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
                     <p className="text-slate-300">
-                      {formatDateTime(interview.scheduled_time)} • {interview.target_role}
+                      {formatDateTimeIST(interview.scheduled_time)} • {interview.target_role}
                     </p>
                     <p className="text-slate-400 text-sm">
                       Experience: {interview.experience} • {interview.candidate_email}
@@ -372,7 +372,7 @@ const InterviewerDashboard = () => {
                   <div>
                     <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
                     <p className="text-slate-300">
-                      {formatDateTime(interview.scheduled_time)} • {interview.target_role}
+                      {formatDateTimeIST(interview.scheduled_time)} • {interview.target_role}
                     </p>
                     <p className="text-slate-400 text-sm">
                       Experience: {interview.experience} • {interview.candidate_email}
