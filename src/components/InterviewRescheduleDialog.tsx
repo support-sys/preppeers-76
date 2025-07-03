@@ -67,7 +67,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
           targetRole: interview.target_role,
           experience: interview.experience,
           timeSlot: '', // Will be matched with available slots
-          resume: interview.resume_url ? 'uploaded' : null
+          resume: interview.resume_url ? undefined : undefined // Fix: don't pass resume as string, pass undefined
         };
 
         // Find matching interviewer
