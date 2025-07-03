@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Star, User, Calendar, Clock, Building, FileText, Code, Award } from 'lucide-react';
 import { formatDateTimeIST } from '@/utils/dateUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface InterviewDetailsDialogProps {
   interview: any;
@@ -13,12 +15,55 @@ interface InterviewDetailsDialogProps {
 }
 
 const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: InterviewDetailsDialogProps) => {
-  // Mock data for demonstration - in real app, this would come from database
-  const interviewerDetails = {
-    name: "John Smith",
-    designation: "Tech Lead",
+  const { user } = useAuth();
+  const [interviewerDetails, setInterviewerDetails] = useState({
+    name: "Loading...",
+    designation: "Loading...",
     rating: 4.8,
-    experience: "8+ years"
+    experience: "Loading..."
+  });
+
+  useEffect(() => {
+    if (open && interview?.interviewer_id) {
+      fetchInterviewerDetails();
+    }
+  }, [open, interview?.interviewer_id]);
+
+  const fetchInterviewerDetails = async () => {
+    try {
+      // First get the interviewer data
+      const { data: interviewerData, error: interviewerError } = await supabase
+        .from('interviewers')
+        .select('user_id, position, experience_years')
+        .eq('id', interview.interviewer_id)
+        .single();
+
+      if (interviewerError) {
+        console.error('Error fetching interviewer:', interviewerError);
+        return;
+      }
+
+      // Then get the profile data to get the name
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', interviewerData.user_id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return;
+      }
+
+      setInterviewerDetails({
+        name: profileData.full_name || "Interviewer",
+        designation: interviewerData.position || "Senior Professional",
+        rating: 4.8, // This could be calculated from feedback in the future
+        experience: interviewerData.experience_years ? `${interviewerData.experience_years}+ years` : "Experienced"
+      });
+    } catch (error) {
+      console.error('Error fetching interviewer details:', error);
+    }
   };
 
   const candidateDetails = {
