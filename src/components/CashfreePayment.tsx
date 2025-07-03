@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Loader2, Shield, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CashfreePaymentProps {
   amount: number;
@@ -39,13 +40,11 @@ const CashfreePayment = ({
         return;
       }
 
-      // Create payment session
-      const response = await fetch('/api/create-payment-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      console.log('Creating payment session...');
+
+      // Create payment session using Supabase edge function
+      const { data: sessionData, error } = await supabase.functions.invoke('create-payment-session', {
+        body: {
           amount: amount,
           currency: 'INR',
           customer_id: userEmail,
@@ -53,20 +52,21 @@ const CashfreePayment = ({
           customer_email: userEmail,
           order_id: `ORDER_${Date.now()}`,
           return_url: `${window.location.origin}/book`,
-          notify_url: `${window.location.origin}/api/payment-webhook`,
+          notify_url: `${window.location.origin}/supabase/functions/v1/payment-webhook`,
           metadata: {
             candidate_data: candidateData,
             user_email: userEmail,
             user_name: userName
           }
-        }),
+        }
       });
 
-      const sessionData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(sessionData.message || 'Failed to create payment session');
+      if (error) {
+        console.error('Error creating payment session:', error);
+        throw new Error(error.message || 'Failed to create payment session');
       }
+
+      console.log('Payment session created:', sessionData);
 
       // Initialize Cashfree payment
       const cashfree = new (window as any).Cashfree({
@@ -78,7 +78,11 @@ const CashfreePayment = ({
         returnUrl: `${window.location.origin}/book`,
       };
 
+      console.log('Initializing Cashfree checkout...');
+
       cashfree.checkout(checkoutOptions).then((result: any) => {
+        console.log('Cashfree checkout result:', result);
+        
         if (result.error) {
           console.error("Payment failed:", result.error);
           onError(result.error);
@@ -92,7 +96,12 @@ const CashfreePayment = ({
           // Handle redirect if needed
         } else {
           console.log("Payment successful:", result.paymentDetails);
-          onSuccess(result.paymentDetails);
+          onSuccess({
+            payment_id: result.paymentDetails?.paymentId || sessionData.order_id,
+            order_id: sessionData.order_id,
+            amount: amount,
+            ...result.paymentDetails
+          });
           toast({
             title: "Payment Successful",
             description: "Your payment has been processed successfully!",
@@ -106,11 +115,9 @@ const CashfreePayment = ({
           description: "Unable to process payment. Please try again.",
           variant: "destructive",
         });
-      }).finally(() => {
-        setIsLoading(false);
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment initialization error:", error);
       onError(error);
       toast({
@@ -118,6 +125,7 @@ const CashfreePayment = ({
         description: "Unable to initialize payment. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
