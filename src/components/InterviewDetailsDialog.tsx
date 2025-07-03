@@ -31,6 +31,8 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
 
   const fetchInterviewerDetails = async () => {
     try {
+      console.log('Fetching interviewer details for ID:', interview.interviewer_id);
+      
       // First get the interviewer data
       const { data: interviewerData, error: interviewerError } = await supabase
         .from('interviewers')
@@ -40,29 +42,44 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
 
       if (interviewerError) {
         console.error('Error fetching interviewer:', interviewerError);
+        setInterviewerDetails({
+          name: "Interviewer",
+          designation: "Professional",
+          rating: 4.8,
+          experience: "Experienced"
+        });
         return;
       }
 
-      // Then get the profile data to get the name
+      console.log('Interviewer data:', interviewerData);
+
+      // Try to get the profile data using maybeSingle() to handle no results gracefully
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', interviewerData.user_id)
-        .single();
+        .maybeSingle();
 
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return;
-      }
+      console.log('Profile data:', profileData);
+      console.log('Profile error:', profileError);
 
+      // Set interviewer details with fallbacks
       setInterviewerDetails({
-        name: profileData.full_name || "Interviewer",
+        name: profileData?.full_name || "Interviewer",
         designation: interviewerData.position || "Senior Professional",
         rating: 4.8, // This could be calculated from feedback in the future
         experience: interviewerData.experience_years ? `${interviewerData.experience_years}+ years` : "Experienced"
       });
+
     } catch (error) {
       console.error('Error fetching interviewer details:', error);
+      // Set fallback values
+      setInterviewerDetails({
+        name: "Interviewer",
+        designation: "Professional",
+        rating: 4.8,
+        experience: "Experienced"
+      });
     }
   };
 
