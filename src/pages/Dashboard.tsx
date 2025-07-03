@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, Clock, Star, Video, ExternalLink, FileText, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Users, Clock, Star, Video, ExternalLink, FileText, Edit, Trash2, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import InterviewerDashboard from '@/components/InterviewerDashboard';
 import InterviewRescheduleDialog from '@/components/InterviewRescheduleDialog';
+import InterviewDetailsDialog from '@/components/InterviewDetailsDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateTimeIST } from '@/utils/dateUtils';
@@ -35,6 +36,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   useEffect(() => {
     if (user && userRole) {
@@ -97,20 +99,6 @@ const Dashboard = () => {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZoneName: 'short'
-    });
-  };
-
   const handleJoinMeeting = (meetLink: string) => {
     if (meetLink) {
       window.open(meetLink, '_blank');
@@ -157,6 +145,11 @@ const Dashboard = () => {
   const handleReschedule = (interview: Interview) => {
     setSelectedInterview(interview);
     setShowRescheduleDialog(true);
+  };
+
+  const handleViewDetails = (interview: Interview) => {
+    setSelectedInterview(interview);
+    setShowDetailsDialog(true);
   };
 
   const upcomingInterviews = interviews.filter(interview => {
@@ -268,6 +261,15 @@ const Dashboard = () => {
                         )}
                       </div>
                       <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                          onClick={() => handleViewDetails(interview)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Details
+                        </Button>
                         {interview.google_meet_link ? (
                           <Button 
                             size="sm" 
@@ -431,9 +433,17 @@ const Dashboard = () => {
                           Status: {interview.status}
                         </p>
                       </div>
-                      <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                        View Details
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                          onClick={() => handleViewDetails(interview)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Details
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -496,6 +506,19 @@ const Dashboard = () => {
           onSuccess={() => {
             fetchInterviews();
             setShowRescheduleDialog(false);
+            setSelectedInterview(null);
+          }}
+        />
+      )}
+
+      {/* Interview Details Dialog */}
+      {showDetailsDialog && selectedInterview && (
+        <InterviewDetailsDialog
+          interview={selectedInterview}
+          userRole={userRole || 'interviewee'}
+          open={showDetailsDialog}
+          onClose={() => {
+            setShowDetailsDialog(false);
             setSelectedInterview(null);
           }}
         />
