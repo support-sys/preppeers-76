@@ -29,9 +29,11 @@ const CashfreePayment = ({
   const handlePayment = async () => {
     try {
       setIsLoading(true);
+      console.log('Starting payment process...');
 
       // Check if Cashfree SDK is loaded
       if (!(window as any).Cashfree) {
+        console.error('Cashfree SDK not loaded');
         toast({
           title: "Payment Service Unavailable",
           description: "Please refresh the page and try again.",
@@ -68,6 +70,11 @@ const CashfreePayment = ({
 
       console.log('Payment session created:', sessionData);
 
+      if (!sessionData.payment_session_id) {
+        console.error('No payment session ID received');
+        throw new Error('Invalid payment session response');
+      }
+
       // Initialize Cashfree payment
       const cashfree = new (window as any).Cashfree({
         mode: "sandbox" // Change to "production" for live environment
@@ -78,51 +85,42 @@ const CashfreePayment = ({
         returnUrl: `${window.location.origin}/book`,
       };
 
-      console.log('Initializing Cashfree checkout...');
+      console.log('Initializing Cashfree checkout with options:', checkoutOptions);
 
-      cashfree.checkout(checkoutOptions).then((result: any) => {
-        console.log('Cashfree checkout result:', result);
-        
-        if (result.error) {
-          console.error("Payment failed:", result.error);
-          onError(result.error);
-          toast({
-            title: "Payment Failed",
-            description: result.error.message || "Payment could not be processed.",
-            variant: "destructive",
-          });
-        } else if (result.redirect) {
-          console.log("Payment requires redirect");
-          // Handle redirect if needed
-        } else {
-          console.log("Payment successful:", result.paymentDetails);
-          onSuccess({
-            payment_id: result.paymentDetails?.paymentId || sessionData.order_id,
-            order_id: sessionData.order_id,
-            amount: amount,
-            ...result.paymentDetails
-          });
-          toast({
-            title: "Payment Successful",
-            description: "Your payment has been processed successfully!",
-          });
-        }
-      }).catch((error: any) => {
-        console.error("Payment error:", error);
-        onError(error);
+      const result = await cashfree.checkout(checkoutOptions);
+      console.log('Cashfree checkout result:', result);
+      
+      if (result.error) {
+        console.error("Payment failed:", result.error);
+        onError(result.error);
         toast({
-          title: "Payment Error",
-          description: "Unable to process payment. Please try again.",
+          title: "Payment Failed",
+          description: result.error.message || "Payment could not be processed.",
           variant: "destructive",
         });
-      });
+      } else if (result.redirect) {
+        console.log("Payment requires redirect - this is normal for some payment methods");
+        // Redirect will be handled automatically by Cashfree
+      } else {
+        console.log("Payment successful:", result.paymentDetails);
+        onSuccess({
+          payment_id: result.paymentDetails?.paymentId || sessionData.order_id,
+          order_id: sessionData.order_id,
+          amount: amount,
+          ...result.paymentDetails
+        });
+        toast({
+          title: "Payment Successful",
+          description: "Your payment has been processed successfully!",
+        });
+      }
 
     } catch (error: any) {
       console.error("Payment initialization error:", error);
       onError(error);
       toast({
         title: "Payment Error",
-        description: "Unable to initialize payment. Please try again.",
+        description: error.message || "Unable to initialize payment. Please try again.",
         variant: "destructive",
       });
     } finally {

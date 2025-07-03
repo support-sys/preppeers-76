@@ -43,8 +43,11 @@ const handler = async (req: Request): Promise<Response> => {
     const cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY');
 
     if (!cashfreeAppId || !cashfreeSecretKey) {
+      console.error('Cashfree credentials not found');
       throw new Error('Cashfree credentials not configured');
     }
+
+    console.log('Using Cashfree App ID:', cashfreeAppId);
 
     // Create payment session with Cashfree
     const paymentSessionData = {
@@ -55,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
         customer_id,
         customer_name,
         customer_email,
-        customer_phone: '9999999999' // Default phone number
+        customer_phone: '9999999999' // Default phone number for demo
       },
       order_meta: {
         return_url,
@@ -65,6 +68,8 @@ const handler = async (req: Request): Promise<Response> => {
       order_note: 'Mock Interview Payment',
       order_tags: metadata ? JSON.stringify(metadata) : null
     };
+
+    console.log('Sending request to Cashfree with data:', JSON.stringify(paymentSessionData, null, 2));
 
     const response = await fetch('https://sandbox.cashfree.com/pg/orders', {
       method: 'POST',
@@ -78,6 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const responseData = await response.json();
+    console.log('Cashfree API response:', responseData);
 
     if (!response.ok) {
       console.error('Cashfree API error:', responseData);
