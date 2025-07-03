@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, Clock, Star, Video } from 'lucide-react';
+import { Calendar, Users, Clock, Star, Video, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -22,6 +21,8 @@ interface Interview {
   scheduled_time: string;
   status: string;
   resume_url?: string;
+  google_meet_link?: string;
+  google_calendar_event_id?: string;
 }
 
 const Dashboard = () => {
@@ -74,7 +75,6 @@ const Dashboard = () => {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    // Create a more readable format that shows the actual date and time
     return date.toLocaleString('en-US', {
       weekday: 'short',
       year: 'numeric',
@@ -85,6 +85,18 @@ const Dashboard = () => {
       hour12: true,
       timeZoneName: 'short'
     });
+  };
+
+  const handleJoinMeeting = (meetLink: string) => {
+    if (meetLink) {
+      window.open(meetLink, '_blank');
+    } else {
+      toast({
+        title: "No Meeting Link",
+        description: "Google Meet link is not available for this interview.",
+        variant: "destructive",
+      });
+    }
   };
 
   const upcomingInterviews = interviews.filter(interview => {
@@ -172,7 +184,7 @@ const Dashboard = () => {
                 <div className="space-y-4">
                   {upcomingInterviews.map((interview) => (
                     <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="text-white font-semibold">{interview.target_role}</h3>
                         <p className="text-slate-300">
                           {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
@@ -180,11 +192,36 @@ const Dashboard = () => {
                         <p className="text-slate-400 text-sm">
                           Interviewer: {interview.interviewer_email}
                         </p>
+                        {interview.google_meet_link && (
+                          <p className="text-green-400 text-sm flex items-center mt-1">
+                            <Video className="w-3 h-3 mr-1" />
+                            Google Meet ready
+                          </p>
+                        )}
                       </div>
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        <Video className="w-4 h-4 mr-2" />
-                        Join
-                      </Button>
+                      <div className="flex space-x-2">
+                        {interview.google_meet_link ? (
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleJoinMeeting(interview.google_meet_link!)}
+                          >
+                            <Video className="w-4 h-4 mr-2" />
+                            Join Meet
+                            <ExternalLink className="w-3 h-3 ml-1" />
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                            disabled
+                          >
+                            <Video className="w-4 h-4 mr-2" />
+                            No Link
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

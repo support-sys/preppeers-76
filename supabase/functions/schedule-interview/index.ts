@@ -34,6 +34,30 @@ serve(async (req) => {
     const interviewData: InterviewData = await req.json();
     console.log("Received interview data:", interviewData);
 
+    // Create Google Meet link
+    console.log("Creating Google Meet link...");
+    const meetResponse = await supabaseClient.functions.invoke('create-google-meet', {
+      body: {
+        interviewId: `interview-${Date.now()}`,
+        summary: `Mock Interview: ${interviewData.target_role}`,
+        description: `Mock interview session for ${interviewData.candidate_name} applying for ${interviewData.target_role}`,
+        startTime: interviewData.scheduled_time,
+        endTime: new Date(new Date(interviewData.scheduled_time).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour later
+        attendees: [interviewData.candidate_email, interviewData.interviewer_email],
+      }
+    });
+
+    let meetLink = "https://meet.google.com/new"; // fallback
+    let calendarEventId = null;
+
+    if (meetResponse.data && meetResponse.data.success) {
+      meetLink = meetResponse.data.meetLink;
+      calendarEventId = meetResponse.data.eventId;
+      console.log("Google Meet link created:", meetLink);
+    } else {
+      console.log("Using fallback Google Meet link");
+    }
+
     // Create interview record in database
     const { data: interview, error: interviewError } = await supabaseClient
       .from("interviews")
@@ -48,26 +72,62 @@ serve(async (req) => {
         scheduled_time: interviewData.scheduled_time,
         status: interviewData.status,
         resume_url: interviewData.resume_url,
+        google_meet_link: meetLink,
+        google_calendar_event_id: calendarEventId,
+        email_confirmation_sent: false,
       })
       .select()
       .single();
 
     if (interviewError) {
       console.error("Error creating interview record:", interviewError);
-      // For now, continue even if database insert fails
-      // This allows the matching to work while we set up the interviews table
+      throw new Error("Failed to create interview record");
     }
 
     console.log("Interview record created:", interview);
 
-    // TODO: Send email notifications here when email service is set up
-    // For now, just return success response
+    // Get interviewer details for email
+    const { data: interviewerData } = await supabaseClient
+      .from("interviewers")
+      .select("company, position")
+      .eq("id", interviewData.interviewer_id)
+      .single();
+
+    const interviewerName = interviewerData?.company || "Professional Interviewer";
+
+    // Send confirmation emails
+    console.log("Sending confirmation emails...");
+    const emailResponse = await supabaseClient.functions.invoke('send-interview-emails', {
+      body: {
+        candidateEmail: interviewData.candidate_email,
+        candidateName: interviewData.candidate_name,
+        interviewerEmail: interviewData.interviewer_email,
+        interviewerName: interviewerName,
+        targetRole: interviewData.target_role,
+        scheduledTime: interviewData.scheduled_time,
+        meetLink: meetLink,
+        type: 'confirmation',
+      }
+    });
+
+    // Update email confirmation status
+    if (emailResponse.data && emailResponse.data.success) {
+      await supabaseClient
+        .from("interviews")
+        .update({ email_confirmation_sent: true })
+        .eq("id", interview.id);
+      
+      console.log("Confirmation emails sent successfully");
+    } else {
+      console.log("Failed to send confirmation emails, but interview was created");
+    }
     
     return new Response(
       JSON.stringify({
         success: true,
         message: "Interview scheduled successfully",
         interview: interview,
+        meetLink: meetLink,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
