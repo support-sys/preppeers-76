@@ -4,6 +4,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { findMatchingInterviewer, scheduleInterview } from '@/services/interviewScheduling';
@@ -33,6 +38,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
   const { user } = useAuth();
   const { toast } = useToast();
   const [reason, setReason] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date>();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleReschedule = async () => {
@@ -45,20 +51,28 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
       return;
     }
 
+    if (userRole === 'interviewee' && !selectedDate) {
+      toast({
+        title: "Date Required",
+        description: "Please select your preferred date for rescheduling.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
-      // Cancel the current interview
-      const { error: cancelError } = await supabase
+      // Update the current interview status to rescheduled
+      const { error: updateError } = await supabase
         .from('interviews')
         .update({ 
-          status: 'rescheduled',
-          // You could add a reschedule_reason field to track this
+          status: 'rescheduled'
         })
         .eq('id', interview.id);
 
-      if (cancelError) {
-        throw cancelError;
+      if (updateError) {
+        throw updateError;
       }
 
       // If it's a candidate rescheduling, find a new interviewer and schedule
@@ -66,8 +80,8 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
         const candidateData = {
           targetRole: interview.target_role,
           experience: interview.experience,
-          timeSlot: '', // Will be matched with available slots
-          resume: interview.resume_url ? undefined : undefined // Fix: don't pass resume as string, pass undefined
+          timeSlot: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
+          resume: undefined
         };
 
         // Find matching interviewer
@@ -76,7 +90,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
         if (!matchedInterviewer) {
           toast({
             title: "No Available Interviewer",
-            description: "We couldn't find an available interviewer at this time. Please try booking again later.",
+            description: "We couldn't find an available interviewer for your selected date. Please try a different date.",
             variant: "destructive",
           });
           setIsProcessing(false);
@@ -116,6 +130,9 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
     }
   };
 
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 1); // Tomorrow
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="bg-slate-800 border-slate-600">
@@ -126,7 +143,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
           <DialogDescription className="text-slate-300">
             {userRole === 'interviewer' 
               ? 'Please provide a reason for cancelling this interview. The candidate will be notified.'
-              : 'Please provide a reason for rescheduling. We\'ll find you a new interviewer based on your preferences.'
+              : 'Please provide a reason for rescheduling and select your preferred date. We\'ll find you a new interviewer based on your preferences.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -144,6 +161,38 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
               <strong>Candidate:</strong> {interview.candidate_name}
             </p>
           </div>
+
+          {userRole === 'interviewee' && (
+            <div className="space-y-2">
+              <Label htmlFor="date" className="text-white">
+                Preferred Date for Rescheduling
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600",
+                      !selectedDate && "text-slate-400"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-600" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => date < minDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto text-white")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="reason" className="text-white">
@@ -170,7 +219,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
             </Button>
             <Button
               onClick={handleReschedule}
-              disabled={isProcessing || !reason.trim()}
+              disabled={isProcessing || !reason.trim() || (userRole === 'interviewee' && !selectedDate)}
               className={userRole === 'interviewer' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}
             >
               {isProcessing 

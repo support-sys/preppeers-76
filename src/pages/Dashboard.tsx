@@ -82,9 +82,10 @@ const Dashboard = () => {
       if (error) {
         console.error('Error fetching interviews:', error);
       } else {
-        // Remove duplicates based on interview id
+        // Remove duplicates and filter out rescheduled interviews
         const uniqueInterviews = data?.filter((interview, index, self) => 
-          index === self.findIndex(i => i.id === interview.id)
+          index === self.findIndex(i => i.id === interview.id) && 
+          interview.status !== 'rescheduled'
         ) || [];
         setInterviews(uniqueInterviews);
       }
@@ -297,15 +298,17 @@ const Dashboard = () => {
                           <Edit className="w-4 h-4 mr-2" />
                           Reschedule
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
-                          onClick={() => handleDeleteInterview(interview)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Cancel
-                        </Button>
+                        {userRole === 'interviewer' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
+                            onClick={() => handleDeleteInterview(interview)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Cancel
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}

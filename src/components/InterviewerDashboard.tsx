@@ -55,7 +55,7 @@ const InterviewerDashboard = () => {
         return;
       }
 
-      // Then fetch interviews for this interviewer - fix duplicate issue by adding distinct
+      // Then fetch interviews for this interviewer
       const { data: interviewsData, error: interviewsError } = await supabase
         .from('interviews')
         .select('*')
@@ -65,9 +65,10 @@ const InterviewerDashboard = () => {
       if (interviewsError) {
         console.error('Error fetching interviews:', interviewsError);
       } else {
-        // Remove duplicates based on interview id
+        // Remove duplicates and filter out rescheduled interviews
         const uniqueInterviews = interviewsData?.filter((interview, index, self) => 
-          index === self.findIndex(i => i.id === interview.id)
+          index === self.findIndex(i => i.id === interview.id) && 
+          interview.status !== 'rescheduled'
         ) || [];
         setInterviews(uniqueInterviews);
       }
