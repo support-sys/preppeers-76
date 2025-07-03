@@ -169,6 +169,12 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
   try {
     console.log("Scheduling interview with:", { interviewer: interviewer.company, candidate: userFullName });
     
+    // Select the best available time slot
+    let selectedTimeSlot = candidate.timeSlot;
+    if (!selectedTimeSlot && interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
+      selectedTimeSlot = interviewer.alternativeTimeSlots[0];
+    }
+    
     // Create interview record data
     const interviewData = {
       interviewer_id: interviewer.id,
@@ -178,7 +184,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       interviewer_email: interviewer.user_id, // This should be the interviewer's email
       target_role: candidate.targetRole,
       experience: candidate.experience,
-      scheduled_time: candidate.timeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
+      scheduled_time: selectedTimeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
       status: 'scheduled',
       resume_url: candidate.resume ? 'uploaded' : null
     };
@@ -195,10 +201,57 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       throw error;
     }
 
+    // Block the time slot for the interviewer after successful booking
+    if (selectedTimeSlot) {
+      await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot);
+    }
+
     console.log("Interview scheduled successfully:", data);
     return data;
   } catch (error) {
     console.error('Error in scheduleInterview:', error);
     throw error;
+  }
+};
+
+// New function to block interviewer time slots
+export const blockInterviewerTimeSlot = async (interviewerId: string, timeSlot: string) => {
+  try {
+    console.log(`Blocking time slot ${timeSlot} for interviewer ${interviewerId}`);
+    
+    // Get current time slots
+    const { data: interviewer, error: fetchError } = await supabase
+      .from('interviewers')
+      .select('current_time_slots')
+      .eq('id', interviewerId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching interviewer time slots:', fetchError);
+      return;
+    }
+
+    // Remove the booked time slot from available slots
+    const currentSlots = interviewer.current_time_slots || [];
+    const updatedSlots = Array.isArray(currentSlots) 
+      ? currentSlots.filter(slot => slot !== timeSlot)
+      : [];
+
+    // Update the interviewer's available time slots
+    const { error: updateError } = await supabase
+      .from('interviewers')
+      .update({ 
+        current_time_slots: updatedSlots,
+        schedule_last_updated: new Date().toISOString()
+      })
+      .eq('id', interviewerId);
+
+    if (updateError) {
+      console.error('Error updating interviewer time slots:', updateError);
+    } else {
+      console.log(`Successfully blocked time slot ${timeSlot} for interviewer ${interviewerId}`);
+    }
+  } catch (error) {
+    console.error('Error in blockInterviewerTimeSlot:', error);
   }
 };

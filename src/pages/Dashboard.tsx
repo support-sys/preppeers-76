@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, Clock, Star, Video, ExternalLink } from 'lucide-react';
+import { Calendar, Users, Clock, Star, Video, ExternalLink, FileText, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import InterviewerDashboard from '@/components/InterviewerDashboard';
+import InterviewRescheduleDialog from '@/components/InterviewRescheduleDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,6 +32,8 @@ const Dashboard = () => {
   const [profileComplete, setProfileComplete] = useState(false);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
 
   useEffect(() => {
     if (user && userRole) {
@@ -56,15 +59,34 @@ const Dashboard = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('interviews')
-        .select('*')
-        .order('scheduled_time', { ascending: true });
+      let query = supabase.from('interviews').select('*');
+      
+      if (userRole === 'interviewer') {
+        // Get interviewer's interviews
+        const { data: interviewerData } = await supabase
+          .from('interviewers')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (interviewerData) {
+          query = query.eq('interviewer_id', interviewerData.id);
+        }
+      } else {
+        // Get candidate's interviews
+        query = query.or(`candidate_email.eq.${user.email},candidate_id.eq.${user.id}`);
+      }
+
+      const { data, error } = await query.order('scheduled_time', { ascending: true });
 
       if (error) {
         console.error('Error fetching interviews:', error);
       } else {
-        setInterviews(data || []);
+        // Remove duplicates based on interview id
+        const uniqueInterviews = data?.filter((interview, index, self) => 
+          index === self.findIndex(i => i.id === interview.id)
+        ) || [];
+        setInterviews(uniqueInterviews);
       }
     } catch (error) {
       console.error('Error in fetchInterviews:', error);
@@ -99,6 +121,42 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteInterview = async (interview: Interview) => {
+    if (!confirm('Are you sure you want to cancel this interview?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('interviews')
+        .update({ status: 'cancelled' })
+        .eq('id', interview.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Interview Cancelled",
+        description: "The interview has been cancelled successfully.",
+      });
+
+      fetchInterviews(); // Refresh the list
+    } catch (error) {
+      console.error('Error cancelling interview:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the interview. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReschedule = (interview: Interview) => {
+    setSelectedInterview(interview);
+    setShowRescheduleDialog(true);
+  };
+
   const upcomingInterviews = interviews.filter(interview => {
     const scheduledTime = new Date(interview.scheduled_time);
     return scheduledTime > new Date() && interview.status === 'scheduled';
@@ -106,7 +164,7 @@ const Dashboard = () => {
 
   const pastInterviews = interviews.filter(interview => {
     const scheduledTime = new Date(interview.scheduled_time);
-    return scheduledTime <= new Date() || interview.status === 'completed';
+    return scheduledTime <= new Date() || interview.status === 'completed' || interview.status === 'cancelled';
   });
 
   // Show InterviewerDashboard for interviewers with complete profiles
@@ -190,12 +248,21 @@ const Dashboard = () => {
                           {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
                         </p>
                         <p className="text-slate-400 text-sm">
-                          Interviewer: {interview.interviewer_email}
+                          {userRole === 'interviewer' 
+                            ? `Candidate: ${interview.candidate_email}`
+                            : `Interviewer: ${interview.interviewer_email}`
+                          }
                         </p>
                         {interview.google_meet_link && (
                           <p className="text-green-400 text-sm flex items-center mt-1">
                             <Video className="w-3 h-3 mr-1" />
                             Google Meet ready
+                          </p>
+                        )}
+                        {interview.resume_url && userRole === 'interviewer' && (
+                          <p className="text-blue-400 text-sm flex items-center mt-1">
+                            <FileText className="w-3 h-3 mr-1" />
+                            Resume available
                           </p>
                         )}
                       </div>
@@ -221,6 +288,24 @@ const Dashboard = () => {
                             No Link
                           </Button>
                         )}
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-yellow-600/20 border-yellow-400/30 text-yellow-300 hover:bg-yellow-600/30"
+                          onClick={() => handleReschedule(interview)}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Reschedule
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
+                          onClick={() => handleDeleteInterview(interview)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -229,6 +314,7 @@ const Dashboard = () => {
             </Card>
           )}
 
+          {/* ... keep existing code (stats cards section) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userRole === 'interviewer' ? (
               <>
@@ -334,7 +420,13 @@ const Dashboard = () => {
                           {formatDateTime(interview.scheduled_time)} • {interview.experience} experience
                         </p>
                         <p className="text-slate-400 text-sm">
-                          Interviewer: {interview.interviewer_email}
+                          {userRole === 'interviewer' 
+                            ? `Candidate: ${interview.candidate_email}`
+                            : `Interviewer: ${interview.interviewer_email}`
+                          }
+                        </p>
+                        <p className="text-slate-400 text-sm capitalize">
+                          Status: {interview.status}
                         </p>
                       </div>
                       <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
@@ -347,6 +439,7 @@ const Dashboard = () => {
             </Card>
           )}
 
+          {/* ... keep existing code (quick actions section) */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -389,6 +482,23 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      {/* Reschedule Dialog */}
+      {showRescheduleDialog && selectedInterview && (
+        <InterviewRescheduleDialog
+          interview={selectedInterview}
+          userRole={userRole || 'interviewee'}
+          onClose={() => {
+            setShowRescheduleDialog(false);
+            setSelectedInterview(null);
+          }}
+          onSuccess={() => {
+            fetchInterviews();
+            setShowRescheduleDialog(false);
+            setSelectedInterview(null);
+          }}
+        />
+      )}
       
       <Footer />
     </div>

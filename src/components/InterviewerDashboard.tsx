@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, Edit, CalendarX, Settings, User, Video, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, Users, Edit, CalendarX, Settings, User, Video, ExternalLink, FileText, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,7 @@ import ScheduleEditor from './ScheduleEditor';
 import DateBlocker from './DateBlocker';
 import ProfileSettings from './ProfileSettings';
 import TimeSlotManager from './TimeSlotManager';
+import InterviewRescheduleDialog from './InterviewRescheduleDialog';
 
 interface Interview {
   id: string;
@@ -30,6 +31,8 @@ const InterviewerDashboard = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'profile' | 'time-slots'>('dashboard');
+  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
 
   useEffect(() => {
     fetchInterviews();
@@ -52,7 +55,7 @@ const InterviewerDashboard = () => {
         return;
       }
 
-      // Then fetch interviews for this interviewer
+      // Then fetch interviews for this interviewer - fix duplicate issue by adding distinct
       const { data: interviewsData, error: interviewsError } = await supabase
         .from('interviews')
         .select('*')
@@ -62,7 +65,11 @@ const InterviewerDashboard = () => {
       if (interviewsError) {
         console.error('Error fetching interviews:', interviewsError);
       } else {
-        setInterviews(interviewsData || []);
+        // Remove duplicates based on interview id
+        const uniqueInterviews = interviewsData?.filter((interview, index, self) => 
+          index === self.findIndex(i => i.id === interview.id)
+        ) || [];
+        setInterviews(uniqueInterviews);
       }
     } catch (error) {
       console.error('Error in fetchInterviews:', error);
@@ -97,6 +104,53 @@ const InterviewerDashboard = () => {
     }
   };
 
+  const handleViewResume = (resumeUrl: string) => {
+    if (resumeUrl && resumeUrl !== 'uploaded') {
+      window.open(resumeUrl, '_blank');
+    } else {
+      toast({
+        title: "Resume Available",
+        description: "Candidate has uploaded a resume but URL is not accessible.",
+      });
+    }
+  };
+
+  const handleDeleteInterview = async (interview: Interview) => {
+    if (!confirm('Are you sure you want to cancel this interview?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('interviews')
+        .update({ status: 'cancelled' })
+        .eq('id', interview.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Interview Cancelled",
+        description: "The interview has been cancelled successfully.",
+      });
+
+      fetchInterviews(); // Refresh the list
+    } catch (error) {
+      console.error('Error cancelling interview:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the interview. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReschedule = (interview: Interview) => {
+    setSelectedInterview(interview);
+    setShowRescheduleDialog(true);
+  };
+
   const upcomingInterviews = interviews.filter(interview => {
     const scheduledTime = new Date(interview.scheduled_time);
     return scheduledTime > new Date() && interview.status === 'scheduled';
@@ -104,7 +158,7 @@ const InterviewerDashboard = () => {
 
   const pastInterviews = interviews.filter(interview => {
     const scheduledTime = new Date(interview.scheduled_time);
-    return scheduledTime <= new Date() || interview.status === 'completed';
+    return scheduledTime <= new Date() || interview.status === 'completed' || interview.status === 'cancelled';
   });
 
   if (loading) {
@@ -233,8 +287,25 @@ const InterviewerDashboard = () => {
                         Google Meet ready
                       </p>
                     )}
+                    {interview.resume_url && (
+                      <p className="text-blue-400 text-sm flex items-center mt-1">
+                        <FileText className="w-3 h-3 mr-1" />
+                        Resume available
+                      </p>
+                    )}
                   </div>
                   <div className="flex space-x-2">
+                    {interview.resume_url && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                        onClick={() => handleViewResume(interview.resume_url!)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Resume
+                      </Button>
+                    )}
                     {interview.google_meet_link ? (
                       <Button 
                         size="sm" 
@@ -256,6 +327,24 @@ const InterviewerDashboard = () => {
                         No Link
                       </Button>
                     )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="bg-yellow-600/20 border-yellow-400/30 text-yellow-300 hover:bg-yellow-600/30"
+                      onClick={() => handleReschedule(interview)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Reschedule
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
+                      onClick={() => handleDeleteInterview(interview)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Cancel
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -287,16 +376,49 @@ const InterviewerDashboard = () => {
                     <p className="text-slate-400 text-sm">
                       Experience: {interview.experience} • {interview.candidate_email}
                     </p>
+                    <p className="text-slate-400 text-sm capitalize">
+                      Status: {interview.status}
+                    </p>
                   </div>
-                  <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                    View Details
-                  </Button>
+                  <div className="flex space-x-2">
+                    {interview.resume_url && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                        onClick={() => handleViewResume(interview.resume_url!)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Resume
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                      View Details
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Reschedule Dialog */}
+      {showRescheduleDialog && selectedInterview && (
+        <InterviewRescheduleDialog
+          interview={selectedInterview}
+          userRole="interviewer"
+          onClose={() => {
+            setShowRescheduleDialog(false);
+            setSelectedInterview(null);
+          }}
+          onSuccess={() => {
+            fetchInterviews();
+            setShowRescheduleDialog(false);
+            setSelectedInterview(null);
+          }}
+        />
+      )}
     </div>
   );
 };
