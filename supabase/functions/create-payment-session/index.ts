@@ -25,6 +25,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const requestBody = await req.json();
+    console.log('Full request body received:', JSON.stringify(requestBody, null, 2));
+
     const {
       amount,
       currency,
@@ -35,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
       return_url,
       notify_url,
       metadata
-    }: PaymentSessionRequest = await req.json();
+    }: PaymentSessionRequest = requestBody;
 
     console.log('Creating payment session for:', { order_id, amount, customer_email });
 
@@ -48,21 +51,25 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log('Using Cashfree App ID:', cashfreeAppId);
+    console.log('Cashfree Secret Key exists:', !!cashfreeSecretKey);
 
     // Convert metadata to simple string key-value pairs for order_tags
     const orderTags: Record<string, string> = {};
     if (metadata) {
+      console.log('Processing metadata:', JSON.stringify(metadata, null, 2));
+      
       // Flatten metadata to simple string key-value pairs
       orderTags.user_email = metadata.user_email || customer_email;
       orderTags.user_name = metadata.user_name || customer_name;
+      
       if (metadata.candidate_data) {
-        orderTags.target_role = metadata.candidate_data.target_role || '';
-        orderTags.experience = metadata.candidate_data.experience || '';
-        orderTags.notice_period = metadata.candidate_data.noticePeriod || '';
+        orderTags.target_role = String(metadata.candidate_data.target_role || '');
+        orderTags.experience = String(metadata.candidate_data.experience || '');
+        orderTags.notice_period = String(metadata.candidate_data.noticePeriod || '');
       }
     }
 
-    console.log('Order tags:', orderTags);
+    console.log('Final order tags:', JSON.stringify(orderTags, null, 2));
 
     // Create payment session with Cashfree
     const paymentSessionData = {
@@ -86,7 +93,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Sending request to Cashfree with data:', JSON.stringify(paymentSessionData, null, 2));
 
-    const response = await fetch('https://sandbox.cashfree.com/pg/orders', {
+    const cashfreeUrl = 'https://sandbox.cashfree.com/pg/orders';
+    console.log('Making request to:', cashfreeUrl);
+
+    const response = await fetch(cashfreeUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,12 +107,35 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify(paymentSessionData)
     });
 
-    const responseData = await response.json();
-    console.log('Cashfree API response:', responseData);
+    console.log('Cashfree response status:', response.status);
+    console.log('Cashfree response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Cashfree raw response:', responseText);
+
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse Cashfree response as JSON:', parseError);
+      throw new Error(`Invalid JSON response from Cashfree: ${responseText}`);
+    }
+
+    console.log('Cashfree parsed response:', JSON.stringify(responseData, null, 2));
 
     if (!response.ok) {
-      console.error('Cashfree API error:', responseData);
-      throw new Error(responseData.message || 'Failed to create payment session');
+      console.error('Cashfree API error details:');
+      console.error('Status:', response.status);
+      console.error('Status Text:', response.statusText);
+      console.error('Response:', responseData);
+      
+      // Return detailed error information
+      throw new Error(`Cashfree API Error (${response.status}): ${JSON.stringify(responseData)}`);
+    }
+
+    if (!responseData.payment_session_id) {
+      console.error('No payment_session_id in response:', responseData);
+      throw new Error('Invalid payment session response - missing payment_session_id');
     }
 
     console.log('Payment session created successfully:', responseData.order_id);
@@ -120,11 +153,14 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error('Error creating payment session:', error);
+    console.error('Detailed error in create-payment-session:', error);
+    console.error('Error stack:', error.stack);
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        message: 'Failed to create payment session'
+        message: 'Failed to create payment session',
+        details: error.toString()
       }),
       {
         status: 500,
