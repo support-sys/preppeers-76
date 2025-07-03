@@ -135,10 +135,14 @@ export type Database = {
           candidate_id: string
           candidate_name: string
           created_at: string
+          email_confirmation_sent: boolean | null
           experience: string | null
+          google_calendar_event_id: string | null
+          google_meet_link: string | null
           id: string
           interviewer_email: string
           interviewer_id: string
+          reminder_emails_sent: Json | null
           resume_url: string | null
           scheduled_time: string
           status: string
@@ -150,10 +154,14 @@ export type Database = {
           candidate_id: string
           candidate_name: string
           created_at?: string
+          email_confirmation_sent?: boolean | null
           experience?: string | null
+          google_calendar_event_id?: string | null
+          google_meet_link?: string | null
           id?: string
           interviewer_email: string
           interviewer_id: string
+          reminder_emails_sent?: Json | null
           resume_url?: string | null
           scheduled_time: string
           status?: string
@@ -165,10 +173,14 @@ export type Database = {
           candidate_id?: string
           candidate_name?: string
           created_at?: string
+          email_confirmation_sent?: boolean | null
           experience?: string | null
+          google_calendar_event_id?: string | null
+          google_meet_link?: string | null
           id?: string
           interviewer_email?: string
           interviewer_id?: string
+          reminder_emails_sent?: Json | null
           resume_url?: string | null
           scheduled_time?: string
           status?: string
