@@ -1,10 +1,14 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Loader2, Shield, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import PaymentErrorDisplay from "./payment/PaymentErrorDisplay";
+import PaymentDetails from "./payment/PaymentDetails";
+import PaymentSecurityFeatures from "./payment/PaymentSecurityFeatures";
+import PaymentButton from "./payment/PaymentButton";
+import PaymentMethodsInfo from "./payment/PaymentMethodsInfo";
+import PaymentContainer from "./payment/PaymentContainer";
 
 interface CashfreePaymentProps {
   amount: number;
@@ -235,101 +239,30 @@ const CashfreePayment = ({
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Error Display */}
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-red-400 font-medium">Payment Error</h4>
-                <p className="text-red-300 text-sm mt-1">{error}</p>
-              </div>
-            </div>
-          )}
+          {error && <PaymentErrorDisplay error={error} />}
 
           {/* Payment Details */}
-          <div className="bg-white/5 rounded-lg p-4 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-300">Mock Interview Session</span>
-              <span className="text-white font-semibold">₹{amount}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-300">Target Role</span>
-              <span className="text-white">{candidateData?.targetRole || candidateData?.target_role}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-300">Experience Level</span>
-              <span className="text-white">{candidateData?.experience}</span>
-            </div>
-            <hr className="border-white/20" />
-            <div className="flex justify-between items-center text-lg font-semibold">
-              <span className="text-white">Total Amount</span>
-              <span className="text-green-400">₹{amount}</span>
-            </div>
-          </div>
+          <PaymentDetails amount={amount} candidateData={candidateData} />
 
           {/* Security Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center space-x-2 text-slate-300">
-              <Shield className="w-5 h-5 text-green-400" />
-              <span className="text-sm">Secure Payment</span>
-            </div>
-            <div className="flex items-center space-x-2 text-slate-300">
-              <Clock className="w-5 h-5 text-blue-400" />
-              <span className="text-sm">Instant Matching</span>
-            </div>
-            <div className="flex items-center space-x-2 text-slate-300">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-              <span className="text-sm">Guaranteed Session</span>
-            </div>
-          </div>
+          <PaymentSecurityFeatures />
 
           {/* Payment Button */}
           {!showPaymentForm && (
-            <Button
-              onClick={handlePayment}
-              disabled={isLoading}
-              size="lg"
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating Payment Session...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="w-5 h-5 mr-2" />
-                  Pay ₹{amount} & Book Interview
-                </>
-              )}
-            </Button>
+            <PaymentButton
+              isLoading={isLoading}
+              amount={amount}
+              onPayment={handlePayment}
+            />
           )}
 
           {/* Payment Methods Info */}
-          <div className="text-center text-sm text-slate-400">
-            <p>We accept all major credit cards, debit cards, UPI, and net banking</p>
-            <p className="mt-1">Powered by Cashfree - Secure & Reliable</p>
-          </div>
+          <PaymentMethodsInfo />
         </CardContent>
       </Card>
 
       {/* Embedded Payment Container */}
-      {showPaymentForm && (
-        <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-          <CardHeader className="text-center">
-            <CardTitle className="text-white text-xl">Complete Your Payment</CardTitle>
-            <CardDescription className="text-slate-300">
-              Choose your preferred payment method below
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div 
-              ref={paymentContainerRef}
-              className="min-h-[400px] bg-white rounded-lg"
-              style={{ width: '100%' }}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <PaymentContainer showPaymentForm={showPaymentForm} />
     </div>
   );
 };
