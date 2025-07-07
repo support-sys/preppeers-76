@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Loader2, Shield, Clock, CheckCircle } from "lucide-react";
+import { CreditCard, Loader2, Shield, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,19 +24,23 @@ const CashfreePayment = ({
   onError 
 }: CashfreePaymentProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handlePayment = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       console.log('Starting payment process...');
 
       // Check if Cashfree SDK is loaded
       if (!(window as any).Cashfree) {
         console.error('Cashfree SDK not loaded');
+        const errorMsg = "Payment service is not available. Please refresh the page and try again.";
+        setError(errorMsg);
         toast({
           title: "Payment Service Unavailable",
-          description: "Please refresh the page and try again.",
+          description: errorMsg,
           variant: "destructive",
         });
         return;
@@ -45,7 +49,7 @@ const CashfreePayment = ({
       console.log('Creating payment session...');
 
       // Create payment session using Supabase edge function
-      const { data: sessionData, error } = await supabase.functions.invoke('create-payment-session', {
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke('create-payment-session', {
         body: {
           amount: amount,
           currency: 'INR',
@@ -67,16 +71,20 @@ const CashfreePayment = ({
         }
       });
 
-      if (error) {
-        console.error('Error creating payment session:', error);
-        throw new Error(error.message || 'Failed to create payment session');
+      if (sessionError) {
+        console.error('Error creating payment session:', sessionError);
+        const errorMsg = sessionError.message || 'Failed to create payment session';
+        setError(errorMsg);
+        throw new Error(errorMsg);
       }
 
       console.log('Payment session created:', sessionData);
 
       if (!sessionData.payment_session_id) {
         console.error('No payment session ID received');
-        throw new Error('Invalid payment session response');
+        const errorMsg = 'Invalid payment session response';
+        setError(errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Initialize Cashfree payment
@@ -96,10 +104,12 @@ const CashfreePayment = ({
       
       if (result.error) {
         console.error("Payment failed:", result.error);
+        const errorMsg = result.error.message || "Payment could not be processed.";
+        setError(errorMsg);
         onError(result.error);
         toast({
           title: "Payment Failed",
-          description: result.error.message || "Payment could not be processed.",
+          description: errorMsg,
           variant: "destructive",
         });
       } else if (result.redirect) {
@@ -121,10 +131,12 @@ const CashfreePayment = ({
 
     } catch (error: any) {
       console.error("Payment initialization error:", error);
+      const errorMsg = error.message || "Unable to initialize payment. Please try again.";
+      setError(errorMsg);
       onError(error);
       toast({
         title: "Payment Error",
-        description: error.message || "Unable to initialize payment. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -141,6 +153,17 @@ const CashfreePayment = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-red-400 font-medium">Payment Error</h4>
+              <p className="text-red-300 text-sm mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Payment Details */}
         <div className="bg-white/5 rounded-lg p-4 space-y-3">
           <div className="flex justify-between items-center">

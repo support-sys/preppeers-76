@@ -18,6 +18,11 @@ interface PaymentSessionRequest {
   metadata?: any;
 }
 
+// Function to sanitize customer_id for Cashfree requirements
+const sanitizeCustomerId = (email: string): string => {
+  return email.replace(/@/g, '_at_').replace(/\./g, '_dot_').replace(/[^a-zA-Z0-9_-]/g, '_');
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -56,6 +61,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Using Cashfree App ID:', cashfreeAppId);
 
+    // Sanitize customer_id to meet Cashfree requirements
+    const sanitizedCustomerId = sanitizeCustomerId(customer_email);
+    console.log('Original customer_id:', customer_id);
+    console.log('Sanitized customer_id:', sanitizedCustomerId);
+
     // Prepare order tags - flatten metadata to simple strings
     const orderTags: Record<string, string> = {};
     if (metadata) {
@@ -80,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
       order_amount: Number(amount),
       order_currency: currency,
       customer_details: {
-        customer_id,
+        customer_id: sanitizedCustomerId, // Use sanitized customer_id
         customer_name,
         customer_email,
         customer_phone: '9999999999' // Required field
@@ -103,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
       'Content-Type': 'application/json',
       'x-client-id': cashfreeAppId,
       'x-client-secret': cashfreeSecretKey,
-      'x-api-version': '2023-08-01' // Updated to latest API version
+      'x-api-version': '2023-08-01'
     };
 
     console.log('Request headers (without secrets):', {
@@ -144,11 +154,20 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error Response:', responseData);
       
       // Provide detailed error information
-      const errorMessage = responseData?.message || 'Unknown error';
-      const errorCode = responseData?.code || 'unknown_error';
+      const errorMessage = responseData?.message || responseData?.error_description || 'Unknown error';
+      const errorCode = responseData?.code || responseData?.error_code || 'unknown_error';
       const errorType = responseData?.type || 'api_error';
       
-      throw new Error(`Cashfree API Error (${response.status}): ${errorMessage} (${errorCode})`);
+      // Handle specific error cases
+      if (response.status === 400) {
+        throw new Error(`Cashfree Validation Error: ${errorMessage} (${errorCode})`);
+      } else if (response.status === 401) {
+        throw new Error(`Cashfree Authentication Error: Please check your API credentials`);
+      } else if (response.status === 403) {
+        throw new Error(`Cashfree Authorization Error: ${errorMessage}`);
+      } else {
+        throw new Error(`Cashfree API Error (${response.status}): ${errorMessage} (${errorCode})`);
+      }
     }
 
     if (!responseData.payment_session_id) {
