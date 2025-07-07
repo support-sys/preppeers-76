@@ -14,40 +14,61 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('=== Payment Webhook Called ===');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.url);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
     const webhookData = await req.json();
-    console.log('Payment webhook received:', webhookData);
+    console.log('Payment webhook received:', JSON.stringify(webhookData, null, 2));
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Process payment status
+    // Handle different webhook types
     if (webhookData.type === 'PAYMENT_SUCCESS_WEBHOOK') {
+      console.log('=== Processing Payment Success Webhook ===');
       const { order_id, payment_id, order_amount, payment_status } = webhookData.data;
       
-      console.log('Payment successful:', { order_id, payment_id, order_amount });
+      console.log('Payment successful:', { order_id, payment_id, order_amount, payment_status });
       
       // Extract payment session ID from order_id (format: ORDER_{session_id})
       const sessionId = order_id.replace('ORDER_', '');
+      console.log('Extracted session ID:', sessionId);
       
-      // Update payment session status
-      const { error: updateError } = await supabase
+      // Update payment session status to successful
+      const { data: updateData, error: updateError } = await supabase
         .from('payment_sessions')
         .update({
           payment_status: 'successful',
           cashfree_payment_id: payment_id
         })
-        .eq('id', sessionId);
+        .eq('id', sessionId)
+        .select();
 
       if (updateError) {
         console.error('Error updating payment session:', updateError);
+        return new Response(JSON.stringify({ 
+          status: 'error',
+          message: 'Failed to update payment session',
+          error: updateError.message
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
       } else {
-        console.log('Payment session updated successfully');
+        console.log('Payment session updated successfully:', updateData);
       }
       
       return new Response(JSON.stringify({ 
         status: 'success',
-        message: 'Payment webhook processed successfully'
+        message: 'Payment webhook processed successfully',
+        session_id: sessionId,
+        updated_records: updateData?.length || 0
       }), {
         status: 200,
         headers: {
@@ -58,31 +79,47 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (webhookData.type === 'PAYMENT_FAILED_WEBHOOK') {
+      console.log('=== Processing Payment Failed Webhook ===');
       const { order_id, payment_id, failure_reason } = webhookData.data;
       
       console.log('Payment failed:', { order_id, payment_id, failure_reason });
       
       // Extract payment session ID from order_id
       const sessionId = order_id.replace('ORDER_', '');
+      console.log('Extracted session ID:', sessionId);
       
-      // Update payment session status
-      const { error: updateError } = await supabase
+      // Update payment session status to failed
+      const { data: updateData, error: updateError } = await supabase
         .from('payment_sessions')
         .update({
           payment_status: 'failed',
           cashfree_payment_id: payment_id
         })
-        .eq('id', sessionId);
+        .eq('id', sessionId)
+        .select();
 
       if (updateError) {
         console.error('Error updating payment session:', updateError);
+        return new Response(JSON.stringify({ 
+          status: 'error',
+          message: 'Failed to update payment session',
+          error: updateError.message
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
       } else {
-        console.log('Payment session marked as failed');
+        console.log('Payment session marked as failed:', updateData);
       }
       
       return new Response(JSON.stringify({ 
         status: 'failed',
-        message: 'Payment failed webhook processed'
+        message: 'Payment failed webhook processed',
+        session_id: sessionId,
+        updated_records: updateData?.length || 0
       }), {
         status: 200,
         headers: {
@@ -92,9 +129,59 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Handle test mode webhooks or manual webhook calls
+    if (webhookData.order_id && webhookData.payment_status) {
+      console.log('=== Processing Manual/Test Webhook ===');
+      const { order_id, payment_status, payment_id } = webhookData;
+      
+      const sessionId = order_id.replace('ORDER_', '');
+      console.log('Manual webhook for session ID:', sessionId);
+      
+      const { data: updateData, error: updateError } = await supabase
+        .from('payment_sessions')
+        .update({
+          payment_status: payment_status,
+          cashfree_payment_id: payment_id || 'TEST_PAYMENT'
+        })
+        .eq('id', sessionId)
+        .select();
+
+      if (updateError) {
+        console.error('Error updating payment session:', updateError);
+        return new Response(JSON.stringify({ 
+          status: 'error',
+          message: 'Failed to update payment session',
+          error: updateError.message
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
+      }
+
+      return new Response(JSON.stringify({ 
+        status: 'success',
+        message: 'Manual/Test webhook processed',
+        session_id: sessionId,
+        updated_records: updateData?.length || 0
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
+    console.log('=== Webhook Type Not Recognized ===');
+    console.log('Webhook data:', webhookData);
+    
     return new Response(JSON.stringify({ 
       status: 'received',
-      message: 'Webhook received but not processed'
+      message: 'Webhook received but not processed - unknown type',
+      webhook_type: webhookData.type || 'unknown'
     }), {
       status: 200,
       headers: {
@@ -104,7 +191,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error('Error processing payment webhook:', error);
+    console.error('=== Error Processing Payment Webhook ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,

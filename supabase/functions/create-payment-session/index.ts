@@ -93,6 +93,10 @@ const handler = async (req: Request): Promise<Response> => {
     const sanitizedCustomerId = sanitizeCustomerId(customer_email);
     console.log('Sanitized customer_id:', sanitizedCustomerId);
 
+    // Use correct Supabase edge function URL for webhook
+    const webhookUrl = 'https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook';
+    console.log('Webhook URL:', webhookUrl);
+
     // Prepare order tags - flatten metadata to simple strings
     const orderTags: Record<string, string> = {};
     if (metadata) {
@@ -120,11 +124,11 @@ const handler = async (req: Request): Promise<Response> => {
         customer_id: sanitizedCustomerId,
         customer_name: customer_name || 'Customer',
         customer_email,
-        customer_phone: '9999999999' // Required field
+        customer_phone: '9999999999' // Required field for test mode
       },
       order_meta: {
         return_url: return_url || `${new URL(req.url).origin}/book?payment=success`,
-        notify_url: notify_url || `${new URL(req.url).origin}/supabase/functions/v1/payment-webhook`,
+        notify_url: webhookUrl, // Use the correct webhook URL
       },
       order_note: 'Mock Interview Payment',
       order_tags: orderTags

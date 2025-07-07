@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePaymentStatusPolling } from "@/hooks/usePaymentStatusPolling";
 import PaymentErrorDisplay from "./payment/PaymentErrorDisplay";
 import PaymentDetails from "./payment/PaymentDetails";
 import PaymentSecurityFeatures from "./payment/PaymentSecurityFeatures";
@@ -33,6 +34,9 @@ const CashfreePayment = ({
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const paymentContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Use the polling hook for payment status
+  const { isPolling, startPolling, manualStatusCheck } = usePaymentStatusPolling(paymentSessionId);
 
   const createPaymentSession = async () => {
     try {
@@ -96,7 +100,7 @@ const CashfreePayment = ({
           customer_email: userEmail,
           order_id: `ORDER_${dbSession.id}`,
           return_url: `${window.location.origin}/book?payment=success&session_id=${dbSession.id}`,
-          notify_url: `${window.location.origin}/supabase/functions/v1/payment-webhook`,
+          notify_url: `https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook`,
           metadata: {
             payment_session_id: dbSession.id,
             candidate_data: {
@@ -146,6 +150,9 @@ const CashfreePayment = ({
         })
         .eq('id', dbSession.id);
 
+      // Start polling for payment status updates
+      startPolling();
+
       // Initialize Cashfree payment with embedded checkout
       const cashfree = new (window as any).Cashfree({
         mode: "sandbox" // Change to "production" for live environment
@@ -161,7 +168,7 @@ const CashfreePayment = ({
           console.log("Payment successful:", data);
           
           try {
-            // Update payment session status to successful
+            // First try to update the status directly
             await supabase
               .from('payment_sessions')
               .update({ 
@@ -170,14 +177,22 @@ const CashfreePayment = ({
               })
               .eq('id', dbSession.id);
             
-            onSuccess(data);
+            // Also check status manually after a short delay
+            setTimeout(async () => {
+              const updatedSession = await manualStatusCheck();
+              if (updatedSession?.payment_status === 'successful') {
+                onSuccess(data);
+                toast({
+                  title: "Payment Successful!",
+                  description: "Your payment has been processed successfully.",
+                });
+              }
+            }, 2000);
             
-            toast({
-              title: "Payment Successful!",
-              description: "Your payment has been processed successfully.",
-            });
           } catch (updateError) {
             console.error('Error updating payment status:', updateError);
+            // Still call onSuccess as payment was successful
+            onSuccess(data);
           }
         },
         onFailure: async (error: any) => {
@@ -250,10 +265,19 @@ const CashfreePayment = ({
           {/* Payment Button */}
           {!showPaymentForm && (
             <PaymentButton
-              isLoading={isLoading}
+              isLoading={isLoading || isPolling}
               amount={amount}
               onPayment={handlePayment}
             />
+          )}
+
+          {/* Polling Status */}
+          {isPolling && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-center">
+              <p className="text-blue-400 text-sm">
+                Checking payment status... Please wait.
+              </p>
+            </div>
           )}
 
           {/* Payment Methods Info */}
