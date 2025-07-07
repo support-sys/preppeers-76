@@ -57,7 +57,7 @@ const CashfreePayment = ({
           customer_name: userName,
           customer_email: userEmail,
           order_id: `ORDER_${Date.now()}`,
-          return_url: `${window.location.origin}/book`,
+          return_url: `${window.location.origin}/book?payment=success`,
           notify_url: `${window.location.origin}/supabase/functions/v1/payment-webhook`,
           metadata: {
             candidate_data: {
@@ -94,7 +94,8 @@ const CashfreePayment = ({
 
       const checkoutOptions = {
         paymentSessionId: sessionData.payment_session_id,
-        returnUrl: `${window.location.origin}/book`,
+        returnUrl: `${window.location.origin}/book?payment=success`,
+        redirectTarget: "_self"
       };
 
       console.log('Initializing Cashfree checkout with options:', checkoutOptions);
@@ -113,8 +114,8 @@ const CashfreePayment = ({
           variant: "destructive",
         });
       } else if (result.redirect) {
-        console.log("Payment requires redirect - this is normal for some payment methods");
-        // Redirect will be handled automatically by Cashfree
+        console.log("Payment redirecting - this is normal for web payments");
+        // The redirect will happen automatically and come back to our return URL
       } else {
         console.log("Payment successful:", result.paymentDetails);
         onSuccess({

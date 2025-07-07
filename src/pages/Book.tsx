@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
@@ -22,6 +22,19 @@ const Book = () => {
   const { toast } = useToast();
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
+
+  // Check for payment success on page load
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus === 'success' && formData) {
+      console.log('Payment successful, starting matching process...');
+      handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [formData]);
 
   const handleFormSubmit = async (data: any) => {
     setFormData(data);
