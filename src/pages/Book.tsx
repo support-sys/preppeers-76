@@ -27,22 +27,37 @@ const Book = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     
+    console.log('Page loaded, checking for payment status:', paymentStatus);
+    console.log('Current URL:', window.location.href);
+    
     if (paymentStatus === 'success') {
-      console.log('Payment successful detected, checking for stored form data...');
+      console.log('Payment success detected from URL parameter');
+      
+      // Check if payment was in progress
+      const paymentInProgress = sessionStorage.getItem('paymentInProgress');
+      console.log('Payment in progress flag:', paymentInProgress);
       
       // Retrieve stored form data from sessionStorage
       const storedFormData = sessionStorage.getItem('candidateFormData');
+      console.log('Stored form data found:', !!storedFormData);
+      
       if (storedFormData) {
         try {
           const parsedFormData = JSON.parse(storedFormData);
-          console.log('Retrieved stored form data:', parsedFormData);
+          console.log('Successfully parsed stored form data:', parsedFormData);
           setFormData(parsedFormData);
           
+          // Clean up payment in progress flag
+          sessionStorage.removeItem('paymentInProgress');
+          
           // Start matching process immediately
+          console.log('Starting matching process after payment success...');
           handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' }, parsedFormData);
           
-          // Clean up
+          // Clean up stored data after successful processing
           sessionStorage.removeItem('candidateFormData');
+          
+          // Clean up URL
           window.history.replaceState({}, document.title, window.location.pathname);
         } catch (error) {
           console.error('Error parsing stored form data:', error);
@@ -51,34 +66,50 @@ const Book = () => {
             description: "There was an issue processing your payment. Please try again.",
             variant: "destructive",
           });
+          // Clean up on error
+          sessionStorage.removeItem('candidateFormData');
+          sessionStorage.removeItem('paymentInProgress');
           setCurrentStep('form');
         }
       } else {
-        console.log('No stored form data found');
+        console.log('No stored form data found after payment success');
         toast({
           title: "Error",
           description: "Payment was successful but form data was lost. Please try booking again.",
           variant: "destructive",
         });
+        // Clean up on error
+        sessionStorage.removeItem('paymentInProgress');
         setCurrentStep('form');
+      }
+    } else {
+      // Check if there's any leftover session data and clean it up
+      const hasStoredData = sessionStorage.getItem('candidateFormData');
+      const paymentInProgress = sessionStorage.getItem('paymentInProgress');
+      
+      if (hasStoredData && !paymentInProgress) {
+        console.log('Cleaning up orphaned session data');
+        sessionStorage.removeItem('candidateFormData');
       }
     }
   }, []);
 
   const handleFormSubmit = async (data: any) => {
-    console.log('Form submitted, storing data and proceeding to payment...');
+    console.log('Form submitted with data:', data);
     setFormData(data);
     
-    // Store form data in sessionStorage before payment
+    // Store form data in sessionStorage before payment (backup)
     sessionStorage.setItem('candidateFormData', JSON.stringify(data));
+    console.log('Form data stored in session storage');
     
     setCurrentStep('payment');
   };
 
   const handlePaymentSuccess = async (paymentData: any, candidateData?: any) => {
     const dataToUse = candidateData || formData;
-    console.log('Payment successful:', paymentData);
-    console.log('Using candidate data:', dataToUse);
+    console.log('handlePaymentSuccess called with:');
+    console.log('- Payment data:', paymentData);
+    console.log('- Candidate data to use:', dataToUse);
     
     if (!dataToUse) {
       console.error('No candidate data available for matching');
@@ -91,6 +122,7 @@ const Book = () => {
       return;
     }
 
+    console.log('Setting step to matching and starting process...');
     setCurrentStep('matching');
     setIsLoading(true);
 
@@ -160,6 +192,7 @@ const Book = () => {
     console.error("Payment failed:", error);
     // Clean up stored data on payment failure
     sessionStorage.removeItem('candidateFormData');
+    sessionStorage.removeItem('paymentInProgress');
     toast({
       title: "Payment Failed",
       description: "Please try again or contact support if the issue persists.",
@@ -174,6 +207,7 @@ const Book = () => {
     setMatchedInterviewer(null);
     // Clean up any stored data
     sessionStorage.removeItem('candidateFormData');
+    sessionStorage.removeItem('paymentInProgress');
   };
 
   // Render different states

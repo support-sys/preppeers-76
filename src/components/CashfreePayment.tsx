@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +47,17 @@ const CashfreePayment = ({
 
       console.log('Creating payment session...');
 
+      // Store form data before payment to ensure it persists
+      console.log('Storing candidate data before payment:', candidateData);
+      sessionStorage.setItem('candidateFormData', JSON.stringify(candidateData));
+      sessionStorage.setItem('paymentInProgress', 'true');
+
+      // Get the current origin for return URL
+      const currentOrigin = window.location.origin;
+      const returnUrl = `${currentOrigin}/book?payment=success`;
+      
+      console.log('Using return URL:', returnUrl);
+
       // Create payment session using Supabase edge function
       const { data: sessionData, error: sessionError } = await supabase.functions.invoke('create-payment-session', {
         body: {
@@ -57,8 +67,8 @@ const CashfreePayment = ({
           customer_name: userName,
           customer_email: userEmail,
           order_id: `ORDER_${Date.now()}`,
-          return_url: `${window.location.origin}/book?payment=success`,
-          notify_url: `${window.location.origin}/supabase/functions/v1/payment-webhook`,
+          return_url: returnUrl,
+          notify_url: `${currentOrigin}/supabase/functions/v1/payment-webhook`,
           metadata: {
             candidate_data: {
               target_role: candidateData?.targetRole || candidateData?.target_role || '',
@@ -94,7 +104,7 @@ const CashfreePayment = ({
 
       const checkoutOptions = {
         paymentSessionId: sessionData.payment_session_id,
-        returnUrl: `${window.location.origin}/book?payment=success`,
+        returnUrl: returnUrl,
         redirectTarget: "_self"
       };
 
@@ -107,6 +117,8 @@ const CashfreePayment = ({
         console.error("Payment failed:", result.error);
         const errorMsg = result.error.message || "Payment could not be processed.";
         setError(errorMsg);
+        sessionStorage.removeItem('candidateFormData');
+        sessionStorage.removeItem('paymentInProgress');
         onError(result.error);
         toast({
           title: "Payment Failed",
@@ -116,8 +128,11 @@ const CashfreePayment = ({
       } else if (result.redirect) {
         console.log("Payment redirecting - this is normal for web payments");
         // The redirect will happen automatically and come back to our return URL
+        // Don't remove session storage here as we need it after redirect
       } else {
         console.log("Payment successful:", result.paymentDetails);
+        // Clean up session storage
+        sessionStorage.removeItem('paymentInProgress');
         onSuccess({
           payment_id: result.paymentDetails?.paymentId || sessionData.order_id,
           order_id: sessionData.order_id,
@@ -134,6 +149,9 @@ const CashfreePayment = ({
       console.error("Payment initialization error:", error);
       const errorMsg = error.message || "Unable to initialize payment. Please try again.";
       setError(errorMsg);
+      // Clean up session storage on error
+      sessionStorage.removeItem('candidateFormData');
+      sessionStorage.removeItem('paymentInProgress');
       onError(error);
       toast({
         title: "Payment Error",
