@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('=== Payment Session Creation Started ===');
     
     const requestBody = await req.json();
-    console.log('Full request body received:', JSON.stringify(requestBody, null, 2));
+    console.log('Request body received:', JSON.stringify(requestBody, null, 2));
 
     const {
       amount,
@@ -47,6 +47,24 @@ const handler = async (req: Request): Promise<Response> => {
       metadata
     }: PaymentSessionRequest = requestBody;
 
+    // Validate required fields
+    if (!amount || !customer_email || !order_id) {
+      console.error('Missing required fields:', { amount, customer_email, order_id });
+      return new Response(
+        JSON.stringify({ 
+          error: 'Missing required fields: amount, customer_email, or order_id',
+          message: 'Validation failed'
+        }),
+        {
+          status: 400,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
+    }
+
     console.log('Creating payment session for:', { order_id, amount, customer_email });
 
     const cashfreeAppId = Deno.env.get('CASHFREE_APP_ID');
@@ -54,16 +72,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!cashfreeAppId || !cashfreeSecretKey) {
       console.error('Missing Cashfree credentials');
-      console.error('App ID exists:', !!cashfreeAppId);
-      console.error('Secret Key exists:', !!cashfreeSecretKey);
-      throw new Error('Cashfree credentials not configured');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Payment service configuration error',
+          message: 'Cashfree credentials not configured'
+        }),
+        {
+          status: 500,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
     }
 
     console.log('Using Cashfree App ID:', cashfreeAppId);
 
     // Sanitize customer_id to meet Cashfree requirements
     const sanitizedCustomerId = sanitizeCustomerId(customer_email);
-    console.log('Original customer_id:', customer_id);
     console.log('Sanitized customer_id:', sanitizedCustomerId);
 
     // Prepare order tags - flatten metadata to simple strings
@@ -88,16 +115,16 @@ const handler = async (req: Request): Promise<Response> => {
     const paymentSessionData = {
       order_id,
       order_amount: Number(amount),
-      order_currency: currency,
+      order_currency: currency || 'INR',
       customer_details: {
-        customer_id: sanitizedCustomerId, // Use sanitized customer_id
-        customer_name,
+        customer_id: sanitizedCustomerId,
+        customer_name: customer_name || 'Customer',
         customer_email,
         customer_phone: '9999999999' // Required field
       },
       order_meta: {
-        return_url,
-        notify_url,
+        return_url: return_url || `${new URL(req.url).origin}/book?payment=success`,
+        notify_url: notify_url || `${new URL(req.url).origin}/supabase/functions/v1/payment-webhook`,
       },
       order_note: 'Mock Interview Payment',
       order_tags: orderTags
@@ -116,13 +143,6 @@ const handler = async (req: Request): Promise<Response> => {
       'x-api-version': '2023-08-01'
     };
 
-    console.log('Request headers (without secrets):', {
-      'Content-Type': requestHeaders['Content-Type'],
-      'x-api-version': requestHeaders['x-api-version'],
-      'x-client-id': requestHeaders['x-client-id'],
-      'x-client-secret-length': requestHeaders['x-client-secret'].length
-    });
-
     const response = await fetch(cashfreeUrl, {
       method: 'POST',
       headers: requestHeaders,
@@ -132,7 +152,6 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('=== Cashfree API Response ===');
     console.log('Response status:', response.status);
     console.log('Response status text:', response.statusText);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     const responseText = await response.text();
     console.log('Raw response body:', responseText);
@@ -143,36 +162,58 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('Parsed response:', JSON.stringify(responseData, null, 2));
     } catch (parseError) {
       console.error('Failed to parse JSON response:', parseError);
-      console.error('Raw response was:', responseText);
-      throw new Error(`Invalid JSON response from Cashfree: ${responseText.substring(0, 200)}`);
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid response from payment service',
+          message: 'Failed to parse payment service response'
+        }),
+        {
+          status: 500,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
     }
 
     if (!response.ok) {
       console.error('=== Cashfree API Error ===');
       console.error('Status:', response.status);
-      console.error('Status Text:', response.statusText);
       console.error('Error Response:', responseData);
       
-      // Provide detailed error information
-      const errorMessage = responseData?.message || responseData?.error_description || 'Unknown error';
-      const errorCode = responseData?.code || responseData?.error_code || 'unknown_error';
-      const errorType = responseData?.type || 'api_error';
+      const errorMessage = responseData?.message || responseData?.error_description || 'Payment service error';
       
-      // Handle specific error cases
-      if (response.status === 400) {
-        throw new Error(`Cashfree Validation Error: ${errorMessage} (${errorCode})`);
-      } else if (response.status === 401) {
-        throw new Error(`Cashfree Authentication Error: Please check your API credentials`);
-      } else if (response.status === 403) {
-        throw new Error(`Cashfree Authorization Error: ${errorMessage}`);
-      } else {
-        throw new Error(`Cashfree API Error (${response.status}): ${errorMessage} (${errorCode})`);
-      }
+      return new Response(
+        JSON.stringify({
+          error: errorMessage,
+          message: 'Failed to create payment session'
+        }),
+        {
+          status: response.status,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
     }
 
     if (!responseData.payment_session_id) {
       console.error('Missing payment_session_id in response:', responseData);
-      throw new Error('Invalid payment session response - missing payment_session_id');
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid payment session response',
+          message: 'Missing payment session ID'
+        }),
+        {
+          status: 500,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
     }
 
     console.log('=== Payment Session Created Successfully ===');
@@ -199,18 +240,12 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('=== Function Error ===');
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    console.error('Error object:', error);
-    
-    const errorResponse = {
-      error: error.message,
-      message: 'Failed to create payment session',
-      details: error.toString()
-    };
-
-    console.log('Returning error response:', errorResponse);
     
     return new Response(
-      JSON.stringify(errorResponse),
+      JSON.stringify({
+        error: error.message || 'Internal server error',
+        message: 'Failed to create payment session'
+      }),
       {
         status: 500,
         headers: { 

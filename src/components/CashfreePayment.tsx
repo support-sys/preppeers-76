@@ -125,7 +125,7 @@ const CashfreePayment = ({
 
       console.log('Cashfree session created:', cashfreeData);
 
-      if (!cashfreeData.payment_session_id) {
+      if (!cashfreeData?.payment_session_id) {
         console.error('No payment session ID received from Cashfree');
         await supabase
           .from('payment_sessions')
@@ -262,7 +262,10 @@ const CashfreePayment = ({
       </Card>
 
       {/* Embedded Payment Container */}
-      <PaymentContainer showPaymentForm={showPaymentForm} />
+      <PaymentContainer 
+        showPaymentForm={showPaymentForm} 
+        paymentContainerRef={paymentContainerRef}
+      />
     </div>
   );
 };
