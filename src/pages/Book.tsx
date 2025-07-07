@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -26,8 +27,10 @@ const Book = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
+    const isNewWindow = urlParams.get('newWindow');
     
     console.log('Page loaded, checking for payment status:', paymentStatus);
+    console.log('Is new window:', isNewWindow);
     console.log('Current URL:', window.location.href);
     
     if (paymentStatus === 'success') {
@@ -50,15 +53,26 @@ const Book = () => {
           // Clean up payment in progress flag
           sessionStorage.removeItem('paymentInProgress');
           
-          // Start matching process immediately
-          console.log('Starting matching process after payment success...');
-          handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' }, parsedFormData);
-          
-          // Clean up stored data after successful processing
-          sessionStorage.removeItem('candidateFormData');
-          
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname);
+          // If this is a new window (from payment redirect), show matching immediately
+          if (isNewWindow === 'true') {
+            console.log('Payment successful in new window - starting matching process...');
+            // Change the page title to indicate matching is in progress
+            document.title = 'Finding Your Perfect Interviewer...';
+            
+            // Start matching process immediately
+            handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' }, parsedFormData);
+            
+            // Clean up stored data after successful processing
+            sessionStorage.removeItem('candidateFormData');
+            
+            // Clean up URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else {
+            // Regular flow - start matching
+            handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' }, parsedFormData);
+            sessionStorage.removeItem('candidateFormData');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         } catch (error) {
           console.error('Error parsing stored form data:', error);
           toast({
@@ -163,6 +177,8 @@ const Book = () => {
         await syncCandidateToGoogleSheets(candidateDataForSheets);
         
         setCurrentStep('success');
+        // Update page title for success
+        document.title = 'Interview Scheduled Successfully!';
         toast({
           title: "Interview Scheduled!",
           description: "Payment confirmed and interview scheduled successfully!",
@@ -170,6 +186,7 @@ const Book = () => {
       } else {
         console.log('No interviewer found, showing no-match state');
         setCurrentStep('no-match');
+        document.title = 'Finding Your Interviewer...';
         toast({
           title: "No Interviewer Available",
           description: "Payment confirmed. We're finding the best interviewer for you!",
@@ -208,6 +225,8 @@ const Book = () => {
     // Clean up any stored data
     sessionStorage.removeItem('candidateFormData');
     sessionStorage.removeItem('paymentInProgress');
+    // Reset page title
+    document.title = 'Book Your Mock Interview';
   };
 
   // Render different states

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,9 +53,9 @@ const CashfreePayment = ({
       sessionStorage.setItem('candidateFormData', JSON.stringify(candidateData));
       sessionStorage.setItem('paymentInProgress', 'true');
 
-      // Get the current origin for return URL
+      // Get the current origin for return URL - this will open in a new window
       const currentOrigin = window.location.origin;
-      const returnUrl = `${currentOrigin}/book?payment=success`;
+      const returnUrl = `${currentOrigin}/book?payment=success&newWindow=true`;
       
       console.log('Using return URL:', returnUrl);
 
@@ -105,7 +106,7 @@ const CashfreePayment = ({
       const checkoutOptions = {
         paymentSessionId: sessionData.payment_session_id,
         returnUrl: returnUrl,
-        redirectTarget: "_self"
+        redirectTarget: "_blank" // Open in new window/tab
       };
 
       console.log('Initializing Cashfree checkout with options:', checkoutOptions);
@@ -126,9 +127,18 @@ const CashfreePayment = ({
           variant: "destructive",
         });
       } else if (result.redirect) {
-        console.log("Payment redirecting - this is normal for web payments");
-        // The redirect will happen automatically and come back to our return URL
+        console.log("Payment redirecting to new window - this is normal for web payments");
+        // The redirect will happen in a new window and come back to our return URL
         // Don't remove session storage here as we need it after redirect
+        
+        // Show success message in current window
+        toast({
+          title: "Payment Window Opened",
+          description: "Complete your payment in the new window. The matching process will start automatically after payment.",
+        });
+        
+        // Reset loading state since payment is now in progress in new window
+        setIsLoading(false);
       } else {
         console.log("Payment successful:", result.paymentDetails);
         // Clean up session storage
@@ -159,7 +169,10 @@ const CashfreePayment = ({
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      // Don't set loading to false here if payment window opened successfully
+      if (!sessionStorage.getItem('paymentInProgress')) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -244,6 +257,7 @@ const CashfreePayment = ({
         <div className="text-center text-sm text-slate-400">
           <p>We accept all major credit cards, debit cards, UPI, and net banking</p>
           <p className="mt-1">Powered by Cashfree - Secure & Reliable</p>
+          <p className="mt-2 text-blue-400">Payment will open in a new window for security</p>
         </div>
       </CardContent>
     </Card>
