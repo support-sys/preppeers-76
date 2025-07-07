@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cf-signature',
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -19,8 +19,38 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Request URL:', req.url);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
 
+    // Only allow POST requests for webhooks
+    if (req.method !== 'POST') {
+      console.log('Invalid request method:', req.method);
+      return new Response(JSON.stringify({ 
+        error: 'Method not allowed',
+        message: 'Only POST requests are accepted'
+      }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
     const webhookData = await req.json();
     console.log('Payment webhook received:', JSON.stringify(webhookData, null, 2));
+
+    // Basic validation - ensure we have some webhook data
+    if (!webhookData || typeof webhookData !== 'object') {
+      console.error('Invalid webhook data received');
+      return new Response(JSON.stringify({ 
+        error: 'Invalid webhook data',
+        message: 'Webhook data is missing or invalid'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -175,13 +205,15 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('=== Webhook Type Not Recognized ===');
-    console.log('Webhook data:', webhookData);
+    // Handle Cashfree test webhook calls - they might not have the expected structure
+    console.log('=== Processing Test Webhook Call ===');
+    console.log('Webhook data structure:', Object.keys(webhookData));
     
+    // For test calls, just return success to pass Cashfree's validation
     return new Response(JSON.stringify({ 
-      status: 'received',
-      message: 'Webhook received but not processed - unknown type',
-      webhook_type: webhookData.type || 'unknown'
+      status: 'success',
+      message: 'Webhook endpoint is working correctly',
+      received_data: Object.keys(webhookData)
     }), {
       status: 200,
       headers: {
@@ -197,8 +229,9 @@ const handler = async (req: Request): Promise<Response> => {
     
     return new Response(
       JSON.stringify({ 
+        status: 'error',
         error: error.message,
-        message: 'Failed to process payment webhook'
+        message: 'Webhook processing failed'
       }),
       {
         status: 500,
