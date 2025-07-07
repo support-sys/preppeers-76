@@ -48,14 +48,16 @@ const CashfreePayment = ({
 
       console.log('Creating payment session...');
 
-      // Store form data before payment to ensure it persists
+      // Store form data before payment
       console.log('Storing candidate data before payment:', candidateData);
       sessionStorage.setItem('candidateFormData', JSON.stringify(candidateData));
-      sessionStorage.setItem('paymentInProgress', 'true');
+      sessionStorage.setItem('paymentAmount', amount.toString());
+      sessionStorage.setItem('userEmail', userEmail);
+      sessionStorage.setItem('userName', userName);
 
-      // Get the current origin for return URL - this will open in a new window
+      // Get the current origin for return URL
       const currentOrigin = window.location.origin;
-      const returnUrl = `${currentOrigin}/book?payment=success&newWindow=true`;
+      const returnUrl = `${currentOrigin}/book?payment=success`;
       
       console.log('Using return URL:', returnUrl);
 
@@ -105,8 +107,7 @@ const CashfreePayment = ({
 
       const checkoutOptions = {
         paymentSessionId: sessionData.payment_session_id,
-        returnUrl: returnUrl,
-        redirectTarget: "_blank" // Open in new window/tab
+        returnUrl: returnUrl
       };
 
       console.log('Initializing Cashfree checkout with options:', checkoutOptions);
@@ -118,40 +119,23 @@ const CashfreePayment = ({
         console.error("Payment failed:", result.error);
         const errorMsg = result.error.message || "Payment could not be processed.";
         setError(errorMsg);
+        // Clean up session storage on error
         sessionStorage.removeItem('candidateFormData');
-        sessionStorage.removeItem('paymentInProgress');
+        sessionStorage.removeItem('paymentAmount');
+        sessionStorage.removeItem('userEmail');
+        sessionStorage.removeItem('userName');
         onError(result.error);
         toast({
           title: "Payment Failed",
           description: errorMsg,
           variant: "destructive",
         });
-      } else if (result.redirect) {
-        console.log("Payment redirecting to new window - this is normal for web payments");
-        // The redirect will happen in a new window and come back to our return URL
-        // Don't remove session storage here as we need it after redirect
-        
-        // Show success message in current window
-        toast({
-          title: "Payment Window Opened",
-          description: "Complete your payment in the new window. The matching process will start automatically after payment.",
-        });
-        
-        // Reset loading state since payment is now in progress in new window
-        setIsLoading(false);
       } else {
-        console.log("Payment successful:", result.paymentDetails);
-        // Clean up session storage
-        sessionStorage.removeItem('paymentInProgress');
-        onSuccess({
-          payment_id: result.paymentDetails?.paymentId || sessionData.order_id,
-          order_id: sessionData.order_id,
-          amount: amount,
-          ...result.paymentDetails
-        });
+        console.log("Payment processing initiated");
+        // Don't call onSuccess here - let the redirect handle it
         toast({
-          title: "Payment Successful",
-          description: "Your payment has been processed successfully!",
+          title: "Payment Processing",
+          description: "You will be redirected to complete the payment process.",
         });
       }
 
@@ -161,7 +145,9 @@ const CashfreePayment = ({
       setError(errorMsg);
       // Clean up session storage on error
       sessionStorage.removeItem('candidateFormData');
-      sessionStorage.removeItem('paymentInProgress');
+      sessionStorage.removeItem('paymentAmount');
+      sessionStorage.removeItem('userEmail');
+      sessionStorage.removeItem('userName');
       onError(error);
       toast({
         title: "Payment Error",
@@ -169,10 +155,7 @@ const CashfreePayment = ({
         variant: "destructive",
       });
     } finally {
-      // Don't set loading to false here if payment window opened successfully
-      if (!sessionStorage.getItem('paymentInProgress')) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
@@ -257,7 +240,6 @@ const CashfreePayment = ({
         <div className="text-center text-sm text-slate-400">
           <p>We accept all major credit cards, debit cards, UPI, and net banking</p>
           <p className="mt-1">Powered by Cashfree - Secure & Reliable</p>
-          <p className="mt-2 text-blue-400">Payment will open in a new window for security</p>
         </div>
       </CardContent>
     </Card>

@@ -1,11 +1,126 @@
-
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, DollarSign, Clock, Network } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import InstantMatchingButton from "@/components/InstantMatchingButton";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
+import { useGoogleSheets } from "@/hooks/useGoogleSheets";
+import MatchingLoader from "@/components/MatchingLoader";
 
 const Index = () => {
+  const [showInstantMatching, setShowInstantMatching] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
+  const [candidateData, setCandidateData] = useState<any>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number>(999);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { syncCandidateToGoogleSheets } = useGoogleSheets();
+
+  useEffect(() => {
+    // Check if there's a pending interview matching
+    const pendingMatching = localStorage.getItem('pendingInterviewMatching');
+    const storedCandidateData = localStorage.getItem('candidateFormData');
+    const storedAmount = localStorage.getItem('paymentAmount');
+
+    if (pendingMatching === 'true' && storedCandidateData) {
+      setShowInstantMatching(true);
+      setCandidateData(JSON.parse(storedCandidateData));
+      if (storedAmount) {
+        setPaymentAmount(parseInt(storedAmount));
+      }
+    }
+  }, []);
+
+  const handleStartMatching = async () => {
+    if (!candidateData || !user) {
+      toast({
+        title: "Error",
+        description: "Missing candidate data. Please try booking again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsMatching(true);
+
+    try {
+      console.log('Starting matching process from homepage...');
+      
+      // Find matching interviewer
+      const interviewer = await findMatchingInterviewer(candidateData);
+      
+      if (interviewer) {
+        console.log('Interviewer found, scheduling interview...');
+        
+        // Schedule the interview and send emails
+        await scheduleInterview(
+          interviewer, 
+          candidateData, 
+          user?.email || '',
+          user?.user_metadata?.full_name || user?.email || ''
+        );
+        
+        // Sync to Google Sheets with payment info
+        const candidateDataForSheets = {
+          name: user?.user_metadata?.full_name || user?.email || "Unknown",
+          email: user?.email || "Unknown",
+          experience: candidateData.experience,
+          noticePeriod: candidateData.noticePeriod,
+          targetRole: candidateData.targetRole,
+          timeSlot: candidateData.timeSlot || "To be confirmed",
+          resumeUploaded: candidateData.resume ? "Yes" : "No",
+          resumeFileName: candidateData.resume?.name || "Not provided",
+          matchedInterviewer: interviewer.company || "Unknown Company",
+          paymentId: "payment_successful",
+          paymentAmount: paymentAmount.toString(),
+          submissionDate: new Date().toISOString()
+        };
+
+        await syncCandidateToGoogleSheets(candidateDataForSheets);
+        
+        // Clear the pending matching flag
+        localStorage.removeItem('pendingInterviewMatching');
+        localStorage.removeItem('candidateFormData');
+        localStorage.removeItem('paymentAmount');
+        setShowInstantMatching(false);
+        
+        toast({
+          title: "Interview Scheduled!",
+          description: "Your interview has been scheduled successfully!",
+        });
+
+        // Navigate to dashboard or success page
+        navigate('/dashboard');
+      } else {
+        console.log('No interviewer found');
+        toast({
+          title: "No Interviewer Available",
+          description: "We're finding the best interviewer for you! We'll contact you soon.",
+        });
+        
+        // Keep the button visible for retry
+        setIsMatching(false);
+      }
+    } catch (error) {
+      console.error("Error processing matching:", error);
+      toast({
+        title: "Processing Error",
+        description: "There was an issue with matching. We'll contact you soon!",
+        variant: "destructive",
+      });
+      setIsMatching(false);
+    }
+  };
+
+  if (isMatching) {
+    return <MatchingLoader />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
@@ -26,6 +141,16 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
+          {/* Show Instant Matching Button if payment is done */}
+          {showInstantMatching && (
+            <div className="mb-12">
+              <InstantMatchingButton 
+                onStartMatching={handleStartMatching}
+                isLoading={isMatching}
+              />
+            </div>
+          )}
+
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
             Crack Your IT Interviews with{" "}
