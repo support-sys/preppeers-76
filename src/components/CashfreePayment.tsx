@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Loader2, Shield, Clock, CheckCircle, AlertCircle } from "lucide-react";
@@ -26,14 +26,43 @@ const CashfreePayment = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const paymentContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const createPaymentSession = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Create payment session in database
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('payment_sessions')
+        .insert({
+          user_id: user.id,
+          candidate_data: candidateData,
+          amount: amount,
+          payment_status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      console.log('Payment session created in database:', sessionData);
+      setPaymentSessionId(sessionData.id);
+      return sessionData;
+    } catch (error: any) {
+      console.error('Error creating payment session:', error);
+      throw error;
+    }
+  };
 
   const handlePayment = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Starting embedded payment process...');
+      console.log('Starting payment process...');
 
       // Check if Cashfree SDK is loaded
       if (!(window as any).Cashfree) {
@@ -48,27 +77,24 @@ const CashfreePayment = ({
         return;
       }
 
-      console.log('Creating payment session...');
+      // Create payment session in database first
+      const dbSession = await createPaymentSession();
 
-      // Store form data before payment
-      console.log('Storing candidate data before payment:', candidateData);
-      sessionStorage.setItem('candidateFormData', JSON.stringify(candidateData));
-      sessionStorage.setItem('paymentAmount', amount.toString());
-      sessionStorage.setItem('userEmail', userEmail);
-      sessionStorage.setItem('userName', userName);
+      console.log('Creating Cashfree payment session...');
 
       // Create payment session using Supabase edge function
-      const { data: sessionData, error: sessionError } = await supabase.functions.invoke('create-payment-session', {
+      const { data: cashfreeData, error: cashfreeError } = await supabase.functions.invoke('create-payment-session', {
         body: {
           amount: amount,
           currency: 'INR',
           customer_id: userEmail,
           customer_name: userName,
           customer_email: userEmail,
-          order_id: `ORDER_${Date.now()}`,
-          return_url: `${window.location.origin}/book?payment=success`,
+          order_id: `ORDER_${dbSession.id}`,
+          return_url: `${window.location.origin}/book?payment=success&session_id=${dbSession.id}`,
           notify_url: `${window.location.origin}/supabase/functions/v1/payment-webhook`,
           metadata: {
+            payment_session_id: dbSession.id,
             candidate_data: {
               target_role: candidateData?.targetRole || candidateData?.target_role || '',
               experience: candidateData?.experience || '',
@@ -80,21 +106,41 @@ const CashfreePayment = ({
         }
       });
 
-      if (sessionError) {
-        console.error('Error creating payment session:', sessionError);
-        const errorMsg = sessionError.message || 'Failed to create payment session';
+      if (cashfreeError) {
+        console.error('Error creating Cashfree session:', cashfreeError);
+        // Update payment session status to failed
+        await supabase
+          .from('payment_sessions')
+          .update({ payment_status: 'failed' })
+          .eq('id', dbSession.id);
+        
+        const errorMsg = cashfreeError.message || 'Failed to create payment session';
         setError(errorMsg);
         throw new Error(errorMsg);
       }
 
-      console.log('Payment session created:', sessionData);
+      console.log('Cashfree session created:', cashfreeData);
 
-      if (!sessionData.payment_session_id) {
-        console.error('No payment session ID received');
+      if (!cashfreeData.payment_session_id) {
+        console.error('No payment session ID received from Cashfree');
+        await supabase
+          .from('payment_sessions')
+          .update({ payment_status: 'failed' })
+          .eq('id', dbSession.id);
+        
         const errorMsg = 'Invalid payment session response';
         setError(errorMsg);
         throw new Error(errorMsg);
       }
+
+      // Update database with Cashfree order ID
+      await supabase
+        .from('payment_sessions')
+        .update({ 
+          cashfree_order_id: cashfreeData.order_id,
+          payment_status: 'processing'
+        })
+        .eq('id', dbSession.id);
 
       // Initialize Cashfree payment with embedded checkout
       const cashfree = new (window as any).Cashfree({
@@ -105,40 +151,46 @@ const CashfreePayment = ({
       setShowPaymentForm(true);
 
       const checkoutOptions = {
-        paymentSessionId: sessionData.payment_session_id,
-        // Use embedded checkout instead of redirect
+        paymentSessionId: cashfreeData.payment_session_id,
         container: paymentContainerRef.current,
-        onSuccess: (data: any) => {
+        onSuccess: async (data: any) => {
           console.log("Payment successful:", data);
           
-          // Set payment success flag for homepage button
-          localStorage.setItem('pendingInterviewMatching', 'true');
-          localStorage.setItem('candidateFormData', JSON.stringify(candidateData));
-          localStorage.setItem('paymentAmount', amount.toString());
-          
-          // Clean up session storage
-          sessionStorage.removeItem('candidateFormData');
-          sessionStorage.removeItem('paymentAmount');
-          sessionStorage.removeItem('userEmail');
-          sessionStorage.removeItem('userName');
-          
-          onSuccess(data);
-          
-          toast({
-            title: "Payment Successful!",
-            description: "Your payment has been processed successfully.",
-          });
+          try {
+            // Update payment session status to successful
+            await supabase
+              .from('payment_sessions')
+              .update({ 
+                payment_status: 'successful',
+                cashfree_payment_id: data.payment_id || data.order_id
+              })
+              .eq('id', dbSession.id);
+            
+            onSuccess(data);
+            
+            toast({
+              title: "Payment Successful!",
+              description: "Your payment has been processed successfully.",
+            });
+          } catch (updateError) {
+            console.error('Error updating payment status:', updateError);
+          }
         },
-        onFailure: (error: any) => {
+        onFailure: async (error: any) => {
           console.error("Payment failed:", error);
+          
+          try {
+            // Update payment status to failed
+            await supabase
+              .from('payment_sessions')
+              .update({ payment_status: 'failed' })
+              .eq('id', dbSession.id);
+          } catch (updateError) {
+            console.error('Error updating payment status:', updateError);
+          }
+          
           const errorMsg = error.message || "Payment could not be processed.";
           setError(errorMsg);
-          
-          // Clean up session storage on error
-          sessionStorage.removeItem('candidateFormData');
-          sessionStorage.removeItem('paymentAmount');
-          sessionStorage.removeItem('userEmail');
-          sessionStorage.removeItem('userName');
           
           onError(error);
           toast({
@@ -158,12 +210,6 @@ const CashfreePayment = ({
       console.error("Payment initialization error:", error);
       const errorMsg = error.message || "Unable to initialize payment. Please try again.";
       setError(errorMsg);
-      
-      // Clean up session storage on error
-      sessionStorage.removeItem('candidateFormData');
-      sessionStorage.removeItem('paymentAmount');
-      sessionStorage.removeItem('userEmail');
-      sessionStorage.removeItem('userName');
       
       onError(error);
       toast({
@@ -247,7 +293,7 @@ const CashfreePayment = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Loading Payment...
+                  Creating Payment Session...
                 </>
               ) : (
                 <>

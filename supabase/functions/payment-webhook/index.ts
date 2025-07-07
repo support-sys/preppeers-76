@@ -21,17 +21,29 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify webhook signature (implement this based on Cashfree docs)
-    const cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY');
-    
     // Process payment status
     if (webhookData.type === 'PAYMENT_SUCCESS_WEBHOOK') {
       const { order_id, payment_id, order_amount, payment_status } = webhookData.data;
       
       console.log('Payment successful:', { order_id, payment_id, order_amount });
       
-      // You can store payment details in your database here
-      // For now, we'll just log the success
+      // Extract payment session ID from order_id (format: ORDER_{session_id})
+      const sessionId = order_id.replace('ORDER_', '');
+      
+      // Update payment session status
+      const { error: updateError } = await supabase
+        .from('payment_sessions')
+        .update({
+          payment_status: 'successful',
+          cashfree_payment_id: payment_id
+        })
+        .eq('id', sessionId);
+
+      if (updateError) {
+        console.error('Error updating payment session:', updateError);
+      } else {
+        console.log('Payment session updated successfully');
+      }
       
       return new Response(JSON.stringify({ 
         status: 'success',
@@ -49,6 +61,24 @@ const handler = async (req: Request): Promise<Response> => {
       const { order_id, payment_id, failure_reason } = webhookData.data;
       
       console.log('Payment failed:', { order_id, payment_id, failure_reason });
+      
+      // Extract payment session ID from order_id
+      const sessionId = order_id.replace('ORDER_', '');
+      
+      // Update payment session status
+      const { error: updateError } = await supabase
+        .from('payment_sessions')
+        .update({
+          payment_status: 'failed',
+          cashfree_payment_id: payment_id
+        })
+        .eq('id', sessionId);
+
+      if (updateError) {
+        console.error('Error updating payment session:', updateError);
+      } else {
+        console.log('Payment session marked as failed');
+      }
       
       return new Response(JSON.stringify({ 
         status: 'failed',

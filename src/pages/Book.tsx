@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
 import CandidateRegistrationForm from "@/components/CandidateRegistrationForm";
 import CashfreePayment from "@/components/CashfreePayment";
-import PaymentSuccessMessage from "@/components/PaymentSuccessMessage";
+import InstantMatchingButton from "@/components/InstantMatchingButton";
 import MatchingLoader from "@/components/MatchingLoader";
 import InterviewScheduledSuccess from "@/components/InterviewScheduledSuccess";
 import NoMatchFound from "@/components/NoMatchFound";
@@ -13,86 +13,27 @@ import ProcessOverview from "@/components/ProcessOverview";
 import { useToast } from "@/hooks/use-toast";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
 
 const Book = () => {
-  const [currentStep, setCurrentStep] = useState<'form' | 'payment' | 'payment-success' | 'matching' | 'success' | 'no-match'>('form');
+  const [currentStep, setCurrentStep] = useState<'form' | 'payment' | 'matching' | 'success' | 'no-match'>('form');
   const [formData, setFormData] = useState<any>(null);
   const [matchedInterviewer, setMatchedInterviewer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState<number>(999);
+  const [paymentAmount] = useState<number>(999);
   const { toast } = useToast();
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
+  const { paymentSession, hasSuccessfulPayment, markInterviewMatched, isLoading: paymentLoading } = usePaymentStatus();
 
-  // Check for payment success on page load
+  // Check if we should show the form or payment based on existing data
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
-    
-    console.log('Page loaded, checking for payment status:', paymentStatus);
-    console.log('Current URL:', window.location.href);
-    
-    if (paymentStatus === 'success') {
-      console.log('Payment success detected from URL parameter');
-      
-      // Retrieve stored data from sessionStorage
-      const storedFormData = sessionStorage.getItem('candidateFormData');
-      const storedAmount = sessionStorage.getItem('paymentAmount');
-      const storedUserEmail = sessionStorage.getItem('userEmail');
-      const storedUserName = sessionStorage.getItem('userName');
-      
-      console.log('Stored form data found:', !!storedFormData);
-      
-      if (storedFormData && storedAmount) {
-        try {
-          const parsedFormData = JSON.parse(storedFormData);
-          console.log('Successfully parsed stored form data:', parsedFormData);
-          
-          setFormData(parsedFormData);
-          setPaymentAmount(parseInt(storedAmount));
-          
-          // Set payment success flag for homepage button
-          localStorage.setItem('pendingInterviewMatching', 'true');
-          localStorage.setItem('candidateFormData', JSON.stringify(parsedFormData));
-          localStorage.setItem('paymentAmount', storedAmount);
-          
-          // Show payment success message
-          setCurrentStep('payment-success');
-          
-          // Clean up URL parameters
-          window.history.replaceState({}, document.title, window.location.pathname);
-          
-          toast({
-            title: "Payment Successful!",
-            description: "Your payment has been processed. Click the button to start matching.",
-          });
-        } catch (error) {
-          console.error('Error parsing stored form data:', error);
-          toast({
-            title: "Error",
-            description: "There was an issue processing your payment. Please try again.",
-            variant: "destructive",
-          });
-          setCurrentStep('form');
-        }
-      } else {
-        console.log('No stored form data found after payment success');
-        toast({
-          title: "Error",
-          description: "Payment was successful but form data was lost. Please try booking again.",
-          variant: "destructive",
-        });
-        setCurrentStep('form');
-      }
-      
-      // Clean up session storage
-      sessionStorage.removeItem('candidateFormData');
-      sessionStorage.removeItem('paymentAmount');
-      sessionStorage.removeItem('userEmail');
-      sessionStorage.removeItem('userName');
+    if (hasSuccessfulPayment && paymentSession) {
+      setFormData(paymentSession.candidate_data);
+      // Don't automatically set to payment step - let user see the instant matching button
     }
-  }, []);
+  }, [hasSuccessfulPayment, paymentSession]);
 
   const handleFormSubmit = async (data: any) => {
     console.log('Form submitted with data:', data);
@@ -102,7 +43,11 @@ const Book = () => {
 
   const handlePaymentSuccess = (paymentData: any) => {
     console.log('Payment success callback called:', paymentData);
-    // This will be handled by the URL redirect now
+    toast({
+      title: "Payment Successful!",
+      description: "You can now start matching with interviewers.",
+    });
+    // The payment status will be updated automatically and the button will appear
   };
 
   const handlePaymentError = (error: any) => {
@@ -112,10 +57,11 @@ const Book = () => {
       description: "Please try again or contact support if the issue persists.",
       variant: "destructive",
     });
-    setCurrentStep('form');
   };
 
   const handleStartMatching = async () => {
+    if (!paymentSession) return;
+
     console.log('Starting matching process...');
     setCurrentStep('matching');
     setIsLoading(true);
@@ -124,7 +70,7 @@ const Book = () => {
       console.log('Finding matching interviewer...');
       
       // Find matching interviewer
-      const interviewer = await findMatchingInterviewer(formData);
+      const interviewer = await findMatchingInterviewer(paymentSession.candidate_data);
       
       if (interviewer) {
         console.log('Interviewer found, scheduling interview...');
@@ -133,7 +79,7 @@ const Book = () => {
         // Schedule the interview and send emails
         await scheduleInterview(
           interviewer, 
-          formData, 
+          paymentSession.candidate_data, 
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || ''
         );
@@ -142,24 +88,22 @@ const Book = () => {
         const candidateDataForSheets = {
           name: user?.user_metadata?.full_name || user?.email || "Unknown",
           email: user?.email || "Unknown",
-          experience: formData.experience,
-          noticePeriod: formData.noticePeriod,
-          targetRole: formData.targetRole,
-          timeSlot: formData.timeSlot || "To be confirmed",
-          resumeUploaded: formData.resume ? "Yes" : "No",
-          resumeFileName: formData.resume?.name || "Not provided",
+          experience: paymentSession.candidate_data.experience,
+          noticePeriod: paymentSession.candidate_data.noticePeriod,
+          targetRole: paymentSession.candidate_data.targetRole,
+          timeSlot: paymentSession.candidate_data.timeSlot || "To be confirmed",
+          resumeUploaded: paymentSession.candidate_data.resume ? "Yes" : "No",
+          resumeFileName: paymentSession.candidate_data.resume?.name || "Not provided",
           matchedInterviewer: interviewer.company || "Unknown Company",
-          paymentId: "payment_successful",
-          paymentAmount: paymentAmount.toString(),
+          paymentId: paymentSession.id,
+          paymentAmount: paymentSession.amount.toString(),
           submissionDate: new Date().toISOString()
         };
 
         await syncCandidateToGoogleSheets(candidateDataForSheets);
         
-        // Clear the pending matching flag
-        localStorage.removeItem('pendingInterviewMatching');
-        localStorage.removeItem('candidateFormData');
-        localStorage.removeItem('paymentAmount');
+        // Mark interview as matched in database
+        await markInterviewMatched(paymentSession.id);
         
         setCurrentStep('success');
         document.title = 'Interview Scheduled Successfully!';
@@ -183,7 +127,7 @@ const Book = () => {
         description: "There was an issue with matching. We'll contact you soon!",
         variant: "destructive",
       });
-      setCurrentStep('payment-success');
+      setCurrentStep('form');
     } finally {
       setIsLoading(false);
     }
@@ -193,10 +137,6 @@ const Book = () => {
     setCurrentStep('form');
     setFormData(null);
     setMatchedInterviewer(null);
-    // Clear any stored data
-    localStorage.removeItem('pendingInterviewMatching');
-    localStorage.removeItem('candidateFormData');
-    localStorage.removeItem('paymentAmount');
     document.title = 'Book Your Mock Interview';
   };
 
@@ -222,15 +162,6 @@ const Book = () => {
 
   if (currentStep === 'matching') {
     return <MatchingLoader />;
-  }
-
-  if (currentStep === 'payment-success') {
-    return (
-      <PaymentSuccessMessage
-        amount={paymentAmount}
-        onStartMatching={handleStartMatching}
-      />
-    );
   }
 
   if (currentStep === 'payment') {
@@ -278,17 +209,56 @@ const Book = () => {
               Book Your Mock Interview
             </h1>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Fill out the form below and we'll match you with an experienced interviewer instantly.
+              {hasSuccessfulPayment 
+                ? "Your payment is confirmed! Click below to find your perfect interviewer."
+                : "Fill out the form below and we'll match you with an experienced interviewer instantly."
+              }
             </p>
           </div>
+
+          {/* Show Instant Matching Button if payment is successful */}
+          {hasSuccessfulPayment && !paymentLoading && (
+            <div className="mb-8">
+              <InstantMatchingButton
+                onStartMatching={handleStartMatching}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              <CandidateRegistrationForm
-                onSubmit={handleFormSubmit}
-                isLoading={isLoading}
-              />
+              {!hasSuccessfulPayment && (
+                <CandidateRegistrationForm
+                  onSubmit={handleFormSubmit}
+                  isLoading={isLoading}
+                />
+              )}
+              
+              {hasSuccessfulPayment && (
+                <div className="bg-white/10 backdrop-blur-lg border-white/20 rounded-lg p-6">
+                  <h2 className="text-2xl font-bold text-white mb-4">Your Interview Details</h2>
+                  <div className="space-y-3 text-slate-300">
+                    <div className="flex justify-between">
+                      <span>Target Role:</span>
+                      <span className="text-white">{paymentSession?.candidate_data?.targetRole}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Experience:</span>
+                      <span className="text-white">{paymentSession?.candidate_data?.experience}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Notice Period:</span>
+                      <span className="text-white">{paymentSession?.candidate_data?.noticePeriod}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Amount Paid:</span>
+                      <span className="text-green-400">₹{paymentSession?.amount}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sidebar */}

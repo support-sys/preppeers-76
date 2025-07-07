@@ -194,6 +194,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_sessions: {
+        Row: {
+          amount: number
+          candidate_data: Json
+          cashfree_order_id: string | null
+          cashfree_payment_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          interview_matched: boolean
+          payment_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          candidate_data: Json
+          cashfree_order_id?: string | null
+          cashfree_payment_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          interview_matched?: boolean
+          payment_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          candidate_data?: Json
+          cashfree_order_id?: string | null
+          cashfree_payment_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          interview_matched?: boolean
+          payment_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
