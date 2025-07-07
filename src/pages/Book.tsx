@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -23,26 +22,75 @@ const Book = () => {
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
 
-  // Check for payment success on page load
+  // Check for payment success on page load and restore form data
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     
-    if (paymentStatus === 'success' && formData) {
-      console.log('Payment successful, starting matching process...');
-      handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' });
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+    if (paymentStatus === 'success') {
+      console.log('Payment successful detected, checking for stored form data...');
+      
+      // Retrieve stored form data from sessionStorage
+      const storedFormData = sessionStorage.getItem('candidateFormData');
+      if (storedFormData) {
+        try {
+          const parsedFormData = JSON.parse(storedFormData);
+          console.log('Retrieved stored form data:', parsedFormData);
+          setFormData(parsedFormData);
+          
+          // Start matching process immediately
+          handlePaymentSuccess({ payment_id: 'cashfree_redirect_success' }, parsedFormData);
+          
+          // Clean up
+          sessionStorage.removeItem('candidateFormData');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (error) {
+          console.error('Error parsing stored form data:', error);
+          toast({
+            title: "Error",
+            description: "There was an issue processing your payment. Please try again.",
+            variant: "destructive",
+          });
+          setCurrentStep('form');
+        }
+      } else {
+        console.log('No stored form data found');
+        toast({
+          title: "Error",
+          description: "Payment was successful but form data was lost. Please try booking again.",
+          variant: "destructive",
+        });
+        setCurrentStep('form');
+      }
     }
-  }, [formData]);
+  }, []);
 
   const handleFormSubmit = async (data: any) => {
+    console.log('Form submitted, storing data and proceeding to payment...');
     setFormData(data);
+    
+    // Store form data in sessionStorage before payment
+    sessionStorage.setItem('candidateFormData', JSON.stringify(data));
+    
     setCurrentStep('payment');
   };
 
-  const handlePaymentSuccess = async (paymentData: any) => {
+  const handlePaymentSuccess = async (paymentData: any, candidateData?: any) => {
+    const dataToUse = candidateData || formData;
     console.log('Payment successful:', paymentData);
+    console.log('Using candidate data:', dataToUse);
+    
+    if (!dataToUse) {
+      console.error('No candidate data available for matching');
+      toast({
+        title: "Error",
+        description: "Missing candidate information. Please try booking again.",
+        variant: "destructive",
+      });
+      setCurrentStep('form');
+      return;
+    }
+
     setCurrentStep('matching');
     setIsLoading(true);
 
@@ -50,7 +98,7 @@ const Book = () => {
       console.log('Starting matching process after payment...');
       
       // Find matching interviewer
-      const interviewer = await findMatchingInterviewer(formData);
+      const interviewer = await findMatchingInterviewer(dataToUse);
       
       if (interviewer) {
         console.log('Interviewer found, scheduling interview...');
@@ -59,28 +107,28 @@ const Book = () => {
         // Schedule the interview and send emails
         await scheduleInterview(
           interviewer, 
-          formData, 
+          dataToUse, 
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || ''
         );
         
         // Sync to Google Sheets with payment info
-        const candidateData = {
+        const candidateDataForSheets = {
           name: user?.user_metadata?.full_name || user?.email || "Unknown",
           email: user?.email || "Unknown",
-          experience: formData.experience,
-          noticePeriod: formData.noticePeriod,
-          targetRole: formData.targetRole,
-          timeSlot: formData.timeSlot || "To be confirmed",
-          resumeUploaded: formData.resume ? "Yes" : "No",
-          resumeFileName: formData.resume?.name || "Not provided",
+          experience: dataToUse.experience,
+          noticePeriod: dataToUse.noticePeriod,
+          targetRole: dataToUse.targetRole,
+          timeSlot: dataToUse.timeSlot || "To be confirmed",
+          resumeUploaded: dataToUse.resume ? "Yes" : "No",
+          resumeFileName: dataToUse.resume?.name || "Not provided",
           matchedInterviewer: interviewer.company || "Unknown Company",
           paymentId: paymentData.payment_id || "N/A",
           paymentAmount: "999",
           submissionDate: new Date().toISOString()
         };
 
-        await syncCandidateToGoogleSheets(candidateData);
+        await syncCandidateToGoogleSheets(candidateDataForSheets);
         
         setCurrentStep('success');
         toast({
@@ -110,6 +158,8 @@ const Book = () => {
 
   const handlePaymentError = (error: any) => {
     console.error("Payment failed:", error);
+    // Clean up stored data on payment failure
+    sessionStorage.removeItem('candidateFormData');
     toast({
       title: "Payment Failed",
       description: "Please try again or contact support if the issue persists.",
@@ -122,6 +172,8 @@ const Book = () => {
     setCurrentStep('form');
     setFormData(null);
     setMatchedInterviewer(null);
+    // Clean up any stored data
+    sessionStorage.removeItem('candidateFormData');
   };
 
   // Render different states
