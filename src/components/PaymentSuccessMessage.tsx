@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, ArrowRight, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface PaymentSuccessMessageProps {
@@ -23,26 +23,28 @@ const PaymentSuccessMessage = ({ amount, onStartMatching }: PaymentSuccessMessag
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
-            <h3 className="text-green-400 font-semibold mb-2">Next Step</h3>
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-center">
+            <h3 className="text-blue-400 font-semibold mb-2">Next Step</h3>
             <p className="text-slate-300 text-sm">
-              Click the button below to start the instant matching process and find your perfect interviewer!
+              Go to the homepage where you'll see the "Find My Interviewer" button to start the instant matching process!
             </p>
           </div>
 
-          <Button
-            onClick={onStartMatching}
-            size="lg"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
-          >
-            Start Instant Matching
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <Link to="/">
+            <Button
+              size="lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
+            >
+              <Home className="mr-2 w-5 h-5" />
+              Go to Homepage & Start Matching
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </Link>
 
           <div className="text-center">
-            <Link to="/" className="text-slate-400 hover:text-white text-sm underline">
-              Go to Homepage
-            </Link>
+            <p className="text-slate-400 text-sm">
+              The instant matching button will be visible on the homepage
+            </p>
           </div>
         </CardContent>
       </Card>
