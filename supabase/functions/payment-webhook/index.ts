@@ -59,7 +59,22 @@ const handler = async (req: Request): Promise<Response> => {
     // Handle different webhook types
     if (webhookData.type === 'PAYMENT_SUCCESS_WEBHOOK') {
       console.log('=== Processing Payment Success Webhook ===');
-      const { order_id, payment_id, order_amount, payment_status } = webhookData.data;
+      const { order_id, payment_id, order_amount, payment_status } = webhookData.data || {};
+      
+      // Validate required fields
+      if (!order_id) {
+        console.error('Missing order_id in payment success webhook');
+        return new Response(JSON.stringify({ 
+          error: 'Missing order_id',
+          message: 'order_id is required for payment success webhook'
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
+      }
       
       console.log('Payment successful:', { order_id, payment_id, order_amount, payment_status });
       
@@ -110,7 +125,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (webhookData.type === 'PAYMENT_FAILED_WEBHOOK') {
       console.log('=== Processing Payment Failed Webhook ===');
-      const { order_id, payment_id, failure_reason } = webhookData.data;
+      const { order_id, payment_id, failure_reason } = webhookData.data || {};
+      
+      // Validate required fields
+      if (!order_id) {
+        console.error('Missing order_id in payment failed webhook');
+        return new Response(JSON.stringify({ 
+          error: 'Missing order_id',
+          message: 'order_id is required for payment failed webhook'
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
+      }
       
       console.log('Payment failed:', { order_id, payment_id, failure_reason });
       
