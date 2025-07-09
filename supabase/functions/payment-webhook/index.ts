@@ -52,18 +52,25 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Check if this is a Cashfree test webhook (they usually have minimal data)
-    const isTestWebhook = !webhookData.type && (!webhookData.data || Object.keys(webhookData).length < 3);
+    // Check various conditions that indicate this is a test webhook from Cashfree
+    const isTestWebhook = (
+      !webhookData.type ||                                    // No webhook type
+      Object.keys(webhookData).length < 3 ||                 // Very few fields
+      !webhookData.data ||                                    // No data field
+      (webhookData.data && !webhookData.data.order_id)       // Data exists but no order_id
+    );
     
     if (isTestWebhook) {
       console.log('=== Processing Cashfree Test Webhook ===');
-      console.log('Test webhook data:', Object.keys(webhookData));
+      console.log('Test webhook data keys:', Object.keys(webhookData));
+      console.log('Webhook data structure:', JSON.stringify(webhookData, null, 2));
       
       // Return success for test calls to pass Cashfree's validation
       return new Response(JSON.stringify({ 
         status: 'success',
         message: 'Webhook endpoint is working correctly',
-        test_response: true
+        test_response: true,
+        received_keys: Object.keys(webhookData)
       }), {
         status: 200,
         headers: {
@@ -77,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Handle different webhook types
+    // Handle different webhook types for actual payment events
     if (webhookData.type === 'PAYMENT_SUCCESS_WEBHOOK') {
       console.log('=== Processing Payment Success Webhook ===');
       const { order_id, payment_id, order_amount, payment_status } = webhookData.data || {};
@@ -210,7 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Handle test mode webhooks or manual webhook calls
+    // Handle manual test mode webhooks with order_id
     if (webhookData.order_id && webhookData.payment_status) {
       console.log('=== Processing Manual/Test Webhook ===');
       const { order_id, payment_status, payment_id } = webhookData;
@@ -256,11 +263,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Handle any other webhook calls - likely test calls from Cashfree
+    // Handle any other webhook calls - return success for validation
     console.log('=== Processing Generic Webhook Call ===');
     console.log('Webhook data structure:', Object.keys(webhookData));
     
-    // For any other calls, just return success to pass validation
     return new Response(JSON.stringify({ 
       status: 'success',
       message: 'Webhook endpoint is working correctly',
