@@ -52,6 +52,27 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Check if this is a Cashfree test webhook (they usually have minimal data)
+    const isTestWebhook = !webhookData.type && (!webhookData.data || Object.keys(webhookData).length < 3);
+    
+    if (isTestWebhook) {
+      console.log('=== Processing Cashfree Test Webhook ===');
+      console.log('Test webhook data:', Object.keys(webhookData));
+      
+      // Return success for test calls to pass Cashfree's validation
+      return new Response(JSON.stringify({ 
+        status: 'success',
+        message: 'Webhook endpoint is working correctly',
+        test_response: true
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -235,11 +256,11 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Handle Cashfree test webhook calls - they might not have the expected structure
-    console.log('=== Processing Test Webhook Call ===');
+    // Handle any other webhook calls - likely test calls from Cashfree
+    console.log('=== Processing Generic Webhook Call ===');
     console.log('Webhook data structure:', Object.keys(webhookData));
     
-    // For test calls, just return success to pass Cashfree's validation
+    // For any other calls, just return success to pass validation
     return new Response(JSON.stringify({ 
       status: 'success',
       message: 'Webhook endpoint is working correctly',
