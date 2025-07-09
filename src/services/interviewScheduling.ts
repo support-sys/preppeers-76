@@ -169,6 +169,20 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
   try {
     console.log("Scheduling interview with:", { interviewer: interviewer.company, candidate: userFullName });
     
+    // Get the interviewer's profile to get their email
+    const { data: interviewerProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', interviewer.user_id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching interviewer profile:', profileError);
+    }
+
+    const interviewerEmail = interviewerProfile?.email || 'noreply@interviewscheduler.com';
+    const interviewerName = interviewerProfile?.full_name || interviewer.company || 'Professional Interviewer';
+    
     // Select the best available time slot
     let selectedTimeSlot = candidate.timeSlot;
     if (!selectedTimeSlot && interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
@@ -178,10 +192,11 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     // Create interview record data
     const interviewData = {
       interviewer_id: interviewer.id,
-      candidate_id: candidate.user_id || userEmail, // Use email as fallback if user_id not available
-      candidate_name: userFullName || userEmail,
+      candidate_id: userEmail, // Use email as consistent identifier
+      candidate_name: userFullName || userEmail.split('@')[0],
       candidate_email: userEmail,
-      interviewer_email: interviewer.user_id, // This should be the interviewer's email
+      interviewer_email: interviewerEmail,
+      interviewer_name: interviewerName,
       target_role: candidate.targetRole,
       experience: candidate.experience,
       scheduled_time: selectedTimeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow

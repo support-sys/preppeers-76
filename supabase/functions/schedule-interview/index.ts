@@ -13,6 +13,7 @@ interface InterviewData {
   candidate_name: string;
   candidate_email: string;
   interviewer_email: string;
+  interviewer_name?: string;
   target_role: string;
   experience: string;
   scheduled_time: string;
@@ -93,7 +94,7 @@ serve(async (req) => {
       .eq("id", interviewData.interviewer_id)
       .single();
 
-    const interviewerName = interviewerData?.company || "Professional Interviewer";
+    const interviewerName = interviewData.interviewer_name || interviewerData?.company || "Professional Interviewer";
 
     // Send confirmation emails
     console.log("Sending confirmation emails...");
