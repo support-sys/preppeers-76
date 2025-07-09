@@ -29,22 +29,30 @@ export const usePaymentStatus = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      // First, get the most recent payment session regardless of status
+      const { data: recentSession, error: recentError } = await supabase
         .from('payment_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('payment_status', 'successful')
-        .eq('interview_matched', false)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching payment status:', error);
+      if (recentError) {
+        console.error('Error fetching recent payment session:', recentError);
         return;
       }
 
-      setPaymentSession(data);
+      // If we have a recent session that's successful and not matched, use it
+      if (recentSession && recentSession.payment_status === 'successful' && !recentSession.interview_matched) {
+        setPaymentSession(recentSession);
+      } 
+      // If we have a recent session that's processing, also show it for debugging
+      else if (recentSession && recentSession.payment_status === 'processing') {
+        setPaymentSession(recentSession);
+      } else {
+        setPaymentSession(null);
+      }
     } catch (error) {
       console.error('Error in fetchPaymentStatus:', error);
     } finally {
@@ -88,15 +96,19 @@ export const usePaymentStatus = () => {
             table: 'payment_sessions',
             filter: `user_id=eq.${user.id}`
           },
-          (payload) => {
-            console.log('Payment status updated:', payload);
-            const updatedSession = payload.new as PaymentSession;
-            
-            // Update local state immediately
-            if (updatedSession.payment_status === 'successful' && !updatedSession.interview_matched) {
-              setPaymentSession(updatedSession);
-            }
-          }
+           (payload) => {
+             console.log('Payment status updated:', payload);
+             const updatedSession = payload.new as PaymentSession;
+             
+             // Update local state for any recent session (successful or processing)
+             if (updatedSession.user_id === user.id) {
+               if (updatedSession.payment_status === 'successful' && !updatedSession.interview_matched) {
+                 setPaymentSession(updatedSession);
+               } else if (updatedSession.payment_status === 'processing') {
+                 setPaymentSession(updatedSession);
+               }
+             }
+           }
         )
         .subscribe();
 
