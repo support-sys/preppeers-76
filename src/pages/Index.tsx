@@ -4,7 +4,7 @@ import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, File
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import InstantMatchingFlow from "@/components/InstantMatchingFlow";
+
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
@@ -21,26 +21,12 @@ const Index = () => {
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { paymentSession, hasSuccessfulPayment } = usePaymentStatus();
 
-  // Debug function to manually trigger payment success for testing
-  const triggerPaymentSuccess = async () => {
-    if (!paymentSession) return;
-    
-    console.log('Manually triggering payment success for session:', paymentSession.id);
-    
-    const { data, error } = await supabase
-      .from('payment_sessions')
-      .update({ 
-        payment_status: 'successful',
-        cashfree_payment_id: 'TEST_PAYMENT_' + Date.now()
-      })
-      .eq('id', paymentSession.id);
-    
-    if (error) {
-      console.error('Error updating payment status:', error);
-    } else {
-      console.log('Payment status updated successfully:', data);
+  // Redirect to payment processing page if there's an active payment session
+  useEffect(() => {
+    if (paymentSession && !paymentSession.interview_matched) {
+      navigate('/payment-processing');
     }
-  };
+  }, [paymentSession, navigate]);
 
   const handleStartMatching = async () => {
     if (!paymentSession || !user) {
@@ -144,12 +130,6 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Show Instant Matching Flow if payment is successful or processing */}
-          {(hasSuccessfulPayment || (paymentSession && paymentSession.payment_status === 'processing')) && (
-            <div className="mb-12">
-              <InstantMatchingFlow onStartMatching={handleStartMatching} triggerPaymentSuccess={triggerPaymentSuccess} />
-            </div>
-          )}
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">

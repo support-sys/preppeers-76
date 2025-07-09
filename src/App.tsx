@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Book from "./pages/Book";
 import Interviewers from "./pages/Interviewers";
 import InterviewerPayment from "./pages/InterviewerPayment";
+import PaymentProcessing from "./pages/PaymentProcessing";
 import Pricing from "./pages/Pricing";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
@@ -59,6 +60,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireRole="interviewer">
                   <InterviewerPayment />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payment-processing" 
+              element={
+                <ProtectedRoute>
+                  <PaymentProcessing />
                 </ProtectedRoute>
               } 
             />

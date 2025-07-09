@@ -6,13 +6,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import InstantMatchingButton from './InstantMatchingButton';
 import MatchingLoader from './MatchingLoader';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InstantMatchingFlowProps {
   onStartMatching?: () => void;
-  triggerPaymentSuccess?: () => void;
 }
 
-const InstantMatchingFlow = ({ onStartMatching, triggerPaymentSuccess }: InstantMatchingFlowProps) => {
+const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { paymentSession, hasSuccessfulPayment, markInterviewMatched, isLoading } = usePaymentStatus();
@@ -30,6 +30,29 @@ const InstantMatchingFlow = ({ onStartMatching, triggerPaymentSuccess }: Instant
       });
     }
   }, [hasSuccessfulPayment, showSuccess, toast]);
+
+  const triggerPaymentSuccess = () => {
+    // This simulates a successful payment by updating the payment session
+    console.log('Manually triggering payment success for session:', paymentSession?.id);
+    
+    if (paymentSession?.id) {
+      // Update the payment session to successful status
+      supabase
+        .from('payment_sessions')
+        .update({ 
+          payment_status: 'successful',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', paymentSession.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error updating payment session:', error);
+          } else {
+            console.log('Payment status updated successfully:', error);
+          }
+        });
+    }
+  };
 
   const handleStartMatching = async () => {
     if (!paymentSession) return;
