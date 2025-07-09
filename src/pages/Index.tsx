@@ -4,43 +4,27 @@ import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, File
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import InstantMatchingButton from "@/components/InstantMatchingButton";
+import InstantMatchingFlow from "@/components/InstantMatchingFlow";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
+import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
 
 const Index = () => {
-  const [showInstantMatching, setShowInstantMatching] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
-  const [candidateData, setCandidateData] = useState<any>(null);
-  const [paymentAmount, setPaymentAmount] = useState<number>(999);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
-
-  useEffect(() => {
-    // Check if there's a pending interview matching
-    const pendingMatching = localStorage.getItem('pendingInterviewMatching');
-    const storedCandidateData = localStorage.getItem('candidateFormData');
-    const storedAmount = localStorage.getItem('paymentAmount');
-
-    if (pendingMatching === 'true' && storedCandidateData) {
-      setShowInstantMatching(true);
-      setCandidateData(JSON.parse(storedCandidateData));
-      if (storedAmount) {
-        setPaymentAmount(parseInt(storedAmount));
-      }
-    }
-  }, []);
+  const { paymentSession, hasSuccessfulPayment } = usePaymentStatus();
 
   const handleStartMatching = async () => {
-    if (!candidateData || !user) {
+    if (!paymentSession || !user) {
       toast({
         title: "Error",
-        description: "Missing candidate data. Please try booking again.",
+        description: "Missing payment information. Please try booking again.",
         variant: "destructive",
       });
       return;
@@ -50,6 +34,9 @@ const Index = () => {
 
     try {
       console.log('Starting matching process from homepage...');
+      
+      // Get candidate data from payment session
+      const candidateData = paymentSession.candidate_data;
       
       // Find matching interviewer
       const interviewer = await findMatchingInterviewer(candidateData);
@@ -76,18 +63,12 @@ const Index = () => {
           resumeUploaded: candidateData.resume ? "Yes" : "No",
           resumeFileName: candidateData.resume?.name || "Not provided",
           matchedInterviewer: interviewer.company || "Unknown Company",
-          paymentId: "payment_successful",
-          paymentAmount: paymentAmount.toString(),
+          paymentId: paymentSession.cashfree_payment_id || "payment_successful",
+          paymentAmount: paymentSession.amount.toString(),
           submissionDate: new Date().toISOString()
         };
 
         await syncCandidateToGoogleSheets(candidateDataForSheets);
-        
-        // Clear the pending matching flag
-        localStorage.removeItem('pendingInterviewMatching');
-        localStorage.removeItem('candidateFormData');
-        localStorage.removeItem('paymentAmount');
-        setShowInstantMatching(false);
         
         toast({
           title: "Interview Scheduled!",
@@ -141,13 +122,10 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Show Instant Matching Button if payment is done */}
-          {showInstantMatching && (
+          {/* Show Instant Matching Flow if payment is successful */}
+          {hasSuccessfulPayment && (
             <div className="mb-12">
-              <InstantMatchingButton 
-                onStartMatching={handleStartMatching}
-                isLoading={isMatching}
-              />
+              <InstantMatchingFlow onStartMatching={handleStartMatching} />
             </div>
           )}
 
