@@ -9,9 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface InstantMatchingFlowProps {
   onStartMatching?: () => void;
+  triggerPaymentSuccess?: () => void;
 }
 
-const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
+const InstantMatchingFlow = ({ onStartMatching, triggerPaymentSuccess }: InstantMatchingFlowProps) => {
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { paymentSession, hasSuccessfulPayment, markInterviewMatched, isLoading } = usePaymentStatus();
@@ -78,52 +79,93 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
     );
   }
 
-  if (!hasSuccessfulPayment) {
+  if (!hasSuccessfulPayment && !(paymentSession && paymentSession.payment_status === 'processing')) {
     return null;
   }
 
+  // Show different UI based on payment status
+  const isProcessing = paymentSession?.payment_status === 'processing';
+  const isSuccessful = hasSuccessfulPayment;
+
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200 shadow-lg">
+      <Card className={`shadow-lg ${isSuccessful ? 'bg-gradient-to-br from-green-50 to-blue-50 border-green-200' : 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200'}`}>
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isSuccessful ? 'bg-green-100' : 'bg-yellow-100'}`}>
+            {isSuccessful ? (
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            ) : (
+              <Loader2 className="w-8 h-8 text-yellow-600 animate-spin" />
+            )}
           </div>
-          <CardTitle className="text-2xl text-green-800">
-            Payment Confirmed!
+          <CardTitle className={`text-2xl ${isSuccessful ? 'text-green-800' : 'text-yellow-800'}`}>
+            {isSuccessful ? 'Payment Confirmed!' : 'Payment Processing...'}
           </CardTitle>
-          <CardDescription className="text-green-700 text-lg">
-            Your payment of ₹{paymentSession?.amount} has been processed successfully
+          <CardDescription className={`text-lg ${isSuccessful ? 'text-green-700' : 'text-yellow-700'}`}>
+            {isSuccessful 
+              ? `Your payment of ₹${paymentSession?.amount} has been processed successfully`
+              : `Your payment of ₹${paymentSession?.amount} is being processed. This usually takes a few seconds.`
+            }
           </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-            <Users className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-blue-800 mb-2">
-              Ready for Instant Matching!
+          <div className={`border rounded-lg p-6 text-center ${isSuccessful ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+            <Users className={`w-12 h-12 mx-auto mb-4 ${isSuccessful ? 'text-blue-600' : 'text-orange-600'}`} />
+            <h3 className={`text-xl font-semibold mb-2 ${isSuccessful ? 'text-blue-800' : 'text-orange-800'}`}>
+              {isSuccessful ? 'Ready for Instant Matching!' : 'Almost Ready!'}
             </h3>
-            <p className="text-blue-700 mb-4">
-              We'll instantly match you with the perfect interviewer based on your skills and requirements.
+            <p className={`mb-4 ${isSuccessful ? 'text-blue-700' : 'text-orange-700'}`}>
+              {isSuccessful 
+                ? "We'll instantly match you with the perfect interviewer based on your skills and requirements."
+                : "Your payment is being processed. Once confirmed, we'll start matching you with the perfect interviewer!"
+              }
             </p>
             
-            <InstantMatchingButton 
-              onStartMatching={handleStartMatching}
-              isLoading={isMatching}
-            />
+            {isSuccessful ? (
+              <InstantMatchingButton 
+                onStartMatching={handleStartMatching}
+                isLoading={isMatching}
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-center space-x-2 text-orange-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Processing payment...</span>
+                </div>
+                {triggerPaymentSuccess && (
+                  <button 
+                    onClick={triggerPaymentSuccess}
+                    className="mt-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Complete Payment Processing
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div className="bg-white/80 p-4 rounded-lg">
-              <div className="text-green-600 font-semibold mb-1">✓ Payment Confirmed</div>
-              <div className="text-sm text-slate-600">Transaction completed</div>
+              <div className={`font-semibold mb-1 ${isSuccessful ? 'text-green-600' : 'text-yellow-600'}`}>
+                {isSuccessful ? '✓ Payment Confirmed' : '⏳ Payment Processing'}
+              </div>
+              <div className="text-sm text-slate-600">
+                {isSuccessful ? 'Transaction completed' : 'Almost there...'}
+              </div>
             </div>
             <div className="bg-white/80 p-4 rounded-lg">
-              <div className="text-blue-600 font-semibold mb-1">⚡ Instant Matching</div>
-              <div className="text-sm text-slate-600">Find your interviewer now</div>
+              <div className={`font-semibold mb-1 ${isSuccessful ? 'text-blue-600' : 'text-gray-400'}`}>
+                {isSuccessful ? '⚡ Instant Matching' : '⚡ Ready to Match'}
+              </div>
+              <div className="text-sm text-slate-600">
+                {isSuccessful ? 'Find your interviewer now' : 'Waiting for payment'}
+              </div>
             </div>
             <div className="bg-white/80 p-4 rounded-lg">
-              <div className="text-purple-600 font-semibold mb-1">🎯 Perfect Match</div>
+              <div className={`font-semibold mb-1 ${isSuccessful ? 'text-purple-600' : 'text-gray-400'}`}>
+                🎯 Perfect Match
+              </div>
               <div className="text-sm text-slate-600">Based on your skills</div>
             </div>
           </div>

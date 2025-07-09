@@ -144,27 +144,10 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Debug: Show payment session status */}
-          {paymentSession && (
-            <div className="mb-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-              <p className="text-white text-sm">
-                Debug: Payment Status = {paymentSession.payment_status} | Has Success = {hasSuccessfulPayment ? 'Yes' : 'No'}
-              </p>
-              {paymentSession.payment_status === 'processing' && (
-                <Button 
-                  onClick={triggerPaymentSuccess}
-                  className="mt-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2"
-                >
-                  Simulate Payment Success
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Show Instant Matching Flow if payment is successful */}
-          {hasSuccessfulPayment && (
+          {/* Show Instant Matching Flow if payment is successful or processing */}
+          {(hasSuccessfulPayment || (paymentSession && paymentSession.payment_status === 'processing')) && (
             <div className="mb-12">
-              <InstantMatchingFlow onStartMatching={handleStartMatching} />
+              <InstantMatchingFlow onStartMatching={handleStartMatching} triggerPaymentSuccess={triggerPaymentSuccess} />
             </div>
           )}
 
