@@ -117,12 +117,25 @@ const PaymentProcessing = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        {/* Tech Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent">
+            <div 
+              className="w-full h-full"
+              style={{
+                background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+                backgroundSize: '60px 60px'
+              }}
+            />
+          </div>
+        </div>
+        
         <Navigation />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-            <p className="text-slate-600">Loading payment status...</p>
+        <div className="relative z-10 flex items-center justify-center min-h-[80vh]">
+          <div className="text-center bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-400 mx-auto mb-4" />
+            <p className="text-slate-300 text-lg">Loading payment status...</p>
           </div>
         </div>
         <Footer />
@@ -132,11 +145,24 @@ const PaymentProcessing = () => {
 
   if (!paymentSession || paymentSession.interview_matched) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        {/* Tech Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent">
+            <div 
+              className="w-full h-full"
+              style={{
+                background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+                backgroundSize: '60px 60px'
+              }}
+            />
+          </div>
+        </div>
+        
         <Navigation />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
-            <p className="text-slate-600">No active payment session found.</p>
+        <div className="relative z-10 flex items-center justify-center min-h-[80vh]">
+          <div className="text-center bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <p className="text-slate-300 text-lg">No active payment session found.</p>
           </div>
         </div>
         <Footer />
@@ -145,15 +171,28 @@ const PaymentProcessing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Tech Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent">
+          <div 
+            className="w-full h-full"
+            style={{
+              background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+              backgroundSize: '60px 60px'
+            }}
+          />
+        </div>
+      </div>
+      
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">
-              Payment Processing
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Payment <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Processing</span>
             </h1>
-            <p className="text-slate-600">
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Please wait while we process your payment and prepare your interview matching.
             </p>
           </div>

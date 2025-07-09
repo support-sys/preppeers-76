@@ -112,19 +112,19 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <Card className={`shadow-lg ${isSuccessful ? 'bg-gradient-to-br from-green-50 to-blue-50 border-green-200' : 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200'}`}>
+      <Card className={`shadow-2xl backdrop-blur-lg border-2 ${isSuccessful ? 'bg-white/10 border-green-400/30' : 'bg-white/10 border-yellow-400/30'}`}>
         <CardHeader className="text-center">
-          <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isSuccessful ? 'bg-green-100' : 'bg-yellow-100'}`}>
+          <div className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isSuccessful ? 'bg-green-500/20 backdrop-blur-sm' : 'bg-yellow-500/20 backdrop-blur-sm'}`}>
             {isSuccessful ? (
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-10 h-10 text-green-400" />
             ) : (
-              <Loader2 className="w-8 h-8 text-yellow-600 animate-spin" />
+              <Loader2 className="w-10 h-10 text-yellow-400 animate-spin" />
             )}
           </div>
-          <CardTitle className={`text-2xl ${isSuccessful ? 'text-green-800' : 'text-yellow-800'}`}>
+          <CardTitle className={`text-3xl font-bold ${isSuccessful ? 'text-green-400' : 'text-yellow-400'}`}>
             {isSuccessful ? 'Payment Confirmed!' : 'Payment Processing...'}
           </CardTitle>
-          <CardDescription className={`text-lg ${isSuccessful ? 'text-green-700' : 'text-yellow-700'}`}>
+          <CardDescription className={`text-lg ${isSuccessful ? 'text-green-200' : 'text-yellow-200'}`}>
             {isSuccessful 
               ? `Your payment of ₹${paymentSession?.amount} has been processed successfully`
               : `Your payment of ₹${paymentSession?.amount} is being processed. This usually takes a few seconds.`
@@ -133,12 +133,12 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className={`border rounded-lg p-6 text-center ${isSuccessful ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-            <Users className={`w-12 h-12 mx-auto mb-4 ${isSuccessful ? 'text-blue-600' : 'text-orange-600'}`} />
-            <h3 className={`text-xl font-semibold mb-2 ${isSuccessful ? 'text-blue-800' : 'text-orange-800'}`}>
+          <div className={`border-2 rounded-xl p-8 text-center backdrop-blur-sm ${isSuccessful ? 'bg-white/5 border-blue-400/30' : 'bg-white/5 border-orange-400/30'}`}>
+            <Users className={`w-16 h-16 mx-auto mb-6 ${isSuccessful ? 'text-blue-400' : 'text-orange-400'}`} />
+            <h3 className={`text-2xl font-bold mb-3 ${isSuccessful ? 'text-blue-400' : 'text-orange-400'}`}>
               {isSuccessful ? 'Ready for Instant Matching!' : 'Almost Ready!'}
             </h3>
-            <p className={`mb-4 ${isSuccessful ? 'text-blue-700' : 'text-orange-700'}`}>
+            <p className={`mb-6 text-lg ${isSuccessful ? 'text-blue-200' : 'text-orange-200'}`}>
               {isSuccessful 
                 ? "We'll instantly match you with the perfect interviewer based on your skills and requirements."
                 : "Your payment is being processed. Once confirmed, we'll start matching you with the perfect interviewer!"
@@ -151,15 +151,15 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
                 isLoading={isMatching}
               />
             ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-center space-x-2 text-orange-600">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Processing payment...</span>
+              <div className="space-y-4">
+                <div className="flex items-center justify-center space-x-3 text-orange-300">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-base font-medium">Processing payment...</span>
                 </div>
                 {triggerPaymentSuccess && (
                   <button 
                     onClick={triggerPaymentSuccess}
-                    className="mt-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105"
                   >
                     Complete Payment Processing
                   </button>
@@ -168,28 +168,28 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
             )}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="bg-white/80 p-4 rounded-lg">
-              <div className={`font-semibold mb-1 ${isSuccessful ? 'text-green-600' : 'text-yellow-600'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
+              <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-green-400' : 'text-yellow-400'}`}>
                 {isSuccessful ? '✓ Payment Confirmed' : '⏳ Payment Processing'}
               </div>
-              <div className="text-sm text-slate-600">
+              <div className="text-sm text-slate-300">
                 {isSuccessful ? 'Transaction completed' : 'Almost there...'}
               </div>
             </div>
-            <div className="bg-white/80 p-4 rounded-lg">
-              <div className={`font-semibold mb-1 ${isSuccessful ? 'text-blue-600' : 'text-gray-400'}`}>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
+              <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-blue-400' : 'text-gray-500'}`}>
                 {isSuccessful ? '⚡ Instant Matching' : '⚡ Ready to Match'}
               </div>
-              <div className="text-sm text-slate-600">
+              <div className="text-sm text-slate-300">
                 {isSuccessful ? 'Find your interviewer now' : 'Waiting for payment'}
               </div>
             </div>
-            <div className="bg-white/80 p-4 rounded-lg">
-              <div className={`font-semibold mb-1 ${isSuccessful ? 'text-purple-600' : 'text-gray-400'}`}>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
+              <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-purple-400' : 'text-gray-500'}`}>
                 🎯 Perfect Match
               </div>
-              <div className="text-sm text-slate-600">Based on your skills</div>
+              <div className="text-sm text-slate-300">Based on your skills</div>
             </div>
           </div>
         </CardContent>
