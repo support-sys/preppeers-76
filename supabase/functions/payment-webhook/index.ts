@@ -87,7 +87,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Handle different webhook types for actual payment events
     if (webhookData.type === 'PAYMENT_SUCCESS_WEBHOOK') {
       console.log('=== Processing Payment Success Webhook ===');
-      const { order_id, payment_id, order_amount, payment_status } = webhookData.data || {};
+      const order_id = webhookData.data?.order?.order_id;
+      const payment_id = webhookData.data?.payment?.cf_payment_id;
+      const order_amount = webhookData.data?.order?.order_amount;
+      const payment_status = webhookData.data?.payment?.payment_status;
       
       // Validate required fields
       if (!order_id) {
