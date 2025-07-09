@@ -176,12 +176,13 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       .eq('id', interviewer.user_id)
       .single();
 
-    if (profileError) {
-      console.error('Error fetching interviewer profile:', profileError);
+    if (profileError || !interviewerProfile?.email) {
+      console.error('Error fetching interviewer profile or email not found:', profileError);
+      throw new Error('Interviewer email not found. Cannot schedule interview.');
     }
 
-    const interviewerEmail = interviewerProfile?.email || 'noreply@interviewscheduler.com';
-    const interviewerName = interviewerProfile?.full_name || interviewer.company || 'Professional Interviewer';
+    const interviewerEmail = interviewerProfile.email;
+    const interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
     
     // Select the best available time slot
     let selectedTimeSlot = candidate.timeSlot;

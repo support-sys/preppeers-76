@@ -147,6 +147,7 @@ export type Database = {
           id: string
           interviewer_email: string
           interviewer_id: string
+          interviewer_name: string | null
           reminder_emails_sent: Json | null
           resume_url: string | null
           scheduled_time: string
@@ -166,6 +167,7 @@ export type Database = {
           id?: string
           interviewer_email: string
           interviewer_id: string
+          interviewer_name?: string | null
           reminder_emails_sent?: Json | null
           resume_url?: string | null
           scheduled_time: string
@@ -185,6 +187,7 @@ export type Database = {
           id?: string
           interviewer_email?: string
           interviewer_id?: string
+          interviewer_name?: string | null
           reminder_emails_sent?: Json | null
           resume_url?: string | null
           scheduled_time?: string

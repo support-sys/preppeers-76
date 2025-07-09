@@ -68,6 +68,7 @@ serve(async (req) => {
         candidate_name: interviewData.candidate_name,
         candidate_email: interviewData.candidate_email,
         interviewer_email: interviewData.interviewer_email,
+        interviewer_name: interviewData.interviewer_name,
         target_role: interviewData.target_role,
         experience: interviewData.experience,
         scheduled_time: interviewData.scheduled_time,
