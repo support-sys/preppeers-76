@@ -11,6 +11,7 @@ import { findMatchingInterviewer, scheduleInterview } from "@/services/interview
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
@@ -19,6 +20,27 @@ const Index = () => {
   const navigate = useNavigate();
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { paymentSession, hasSuccessfulPayment } = usePaymentStatus();
+
+  // Debug function to manually trigger payment success for testing
+  const triggerPaymentSuccess = async () => {
+    if (!paymentSession) return;
+    
+    console.log('Manually triggering payment success for session:', paymentSession.id);
+    
+    const { data, error } = await supabase
+      .from('payment_sessions')
+      .update({ 
+        payment_status: 'successful',
+        cashfree_payment_id: 'TEST_PAYMENT_' + Date.now()
+      })
+      .eq('id', paymentSession.id);
+    
+    if (error) {
+      console.error('Error updating payment status:', error);
+    } else {
+      console.log('Payment status updated successfully:', data);
+    }
+  };
 
   const handleStartMatching = async () => {
     if (!paymentSession || !user) {
@@ -122,6 +144,23 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
+          {/* Debug: Show payment session status */}
+          {paymentSession && (
+            <div className="mb-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+              <p className="text-white text-sm">
+                Debug: Payment Status = {paymentSession.payment_status} | Has Success = {hasSuccessfulPayment ? 'Yes' : 'No'}
+              </p>
+              {paymentSession.payment_status === 'processing' && (
+                <Button 
+                  onClick={triggerPaymentSuccess}
+                  className="mt-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2"
+                >
+                  Simulate Payment Success
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Show Instant Matching Flow if payment is successful */}
           {hasSuccessfulPayment && (
             <div className="mb-12">
