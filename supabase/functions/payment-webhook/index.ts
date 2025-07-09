@@ -118,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from('payment_sessions')
         .update({
           payment_status: 'successful',
-          cashfree_payment_id: payment_id
+          cashfree_payment_id: payment_id ? String(payment_id) : null
         })
         .eq('id', sessionId)
         .select();
@@ -184,7 +184,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from('payment_sessions')
         .update({
           payment_status: 'failed',
-          cashfree_payment_id: payment_id
+          cashfree_payment_id: payment_id ? String(payment_id) : null
         })
         .eq('id', sessionId)
         .select();
