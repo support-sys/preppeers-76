@@ -43,12 +43,8 @@ export const usePaymentStatus = () => {
         return;
       }
 
-      // If we have a recent session that's successful and not matched, use it
-      if (recentSession && recentSession.payment_status === 'successful' && !recentSession.interview_matched) {
-        setPaymentSession(recentSession);
-      } 
-      // If we have a recent session that's processing, also show it for debugging
-      else if (recentSession && recentSession.payment_status === 'processing') {
+      // Always set the most recent session for proper state management
+      if (recentSession) {
         setPaymentSession(recentSession);
       } else {
         setPaymentSession(null);
@@ -100,14 +96,10 @@ export const usePaymentStatus = () => {
              console.log('Payment status updated:', payload);
              const updatedSession = payload.new as PaymentSession;
              
-             // Update local state for any recent session (successful or processing)
-             if (updatedSession.user_id === user.id) {
-               if (updatedSession.payment_status === 'successful' && !updatedSession.interview_matched) {
-                 setPaymentSession(updatedSession);
-               } else if (updatedSession.payment_status === 'processing') {
-                 setPaymentSession(updatedSession);
-               }
-             }
+              // Update local state for any recent session
+              if (updatedSession.user_id === user.id) {
+                setPaymentSession(updatedSession);
+              }
            }
         )
         .subscribe();
@@ -122,6 +114,7 @@ export const usePaymentStatus = () => {
     paymentSession,
     isLoading,
     hasSuccessfulPayment: !!paymentSession && paymentSession.payment_status === 'successful' && !paymentSession.interview_matched,
+    isInterviewAlreadyMatched: !!paymentSession && paymentSession.payment_status === 'successful' && paymentSession.interview_matched,
     markInterviewMatched,
     refetch: fetchPaymentStatus
   };

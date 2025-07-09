@@ -18,7 +18,7 @@ import { useBookingFlow } from "@/hooks/useBookingFlow";
 
 const Book = () => {
   const { user } = useAuth();
-  const { paymentSession, hasSuccessfulPayment, isLoading: paymentLoading } = usePaymentStatus();
+  const { paymentSession, hasSuccessfulPayment, isInterviewAlreadyMatched, isLoading: paymentLoading } = usePaymentStatus();
   const {
     currentStep,
     formData,
@@ -33,10 +33,11 @@ const Book = () => {
 
   // Check if we should show the form or payment based on existing data
   useEffect(() => {
-    if (hasSuccessfulPayment && paymentSession) {
-      // Don't automatically set to payment step - let user see the instant matching button
+    if (isInterviewAlreadyMatched) {
+      // If interview is already matched, show success state immediately
+      handleStartMatching(); // This will trigger the success state
     }
-  }, [hasSuccessfulPayment, paymentSession]);
+  }, [isInterviewAlreadyMatched]);
 
   // Render different states
   if (currentStep === 'success') {

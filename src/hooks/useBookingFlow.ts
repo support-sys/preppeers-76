@@ -14,7 +14,7 @@ export const useBookingFlow = () => {
   const { toast } = useToast();
   const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
-  const { paymentSession, markInterviewMatched } = usePaymentStatus();
+  const { paymentSession, markInterviewMatched, isInterviewAlreadyMatched } = usePaymentStatus();
 
   const handleFormSubmit = async (data: any) => {
     console.log('Form submitted with data:', data);
@@ -40,7 +40,24 @@ export const useBookingFlow = () => {
   };
 
   const handleStartMatching = async () => {
-    if (!paymentSession) return;
+    if (!paymentSession) {
+      toast({
+        title: "Error",
+        description: "No valid payment session found. Please complete payment first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if interview is already matched
+    if (isInterviewAlreadyMatched) {
+      toast({
+        title: "Interview Already Scheduled",
+        description: "Your interview has already been scheduled. Check your email for details.",
+      });
+      setCurrentStep('success');
+      return;
+    }
 
     console.log('Starting matching process...');
     setCurrentStep('matching');
