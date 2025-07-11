@@ -11,10 +11,6 @@ export interface MatchingCandidate {
   bio?: string;
   skillCategories?: string[];
   specificSkills?: string[];
-  skillsToPractice?: string[];
-  interviewTypes?: string[];
-  targetCompanies?: string[];
-  preferredInterviewLength?: number;
   noticePeriod?: string;
   linkedinUrl?: string;
   githubUrl?: string;
@@ -255,8 +251,7 @@ export const checkEnhancedSkillsMatch = (
   console.log('👤 Candidate data:', {
     targetRole: candidate.targetRole,
     skillCategories: candidate.skillCategories,
-    specificSkills: candidate.specificSkills,
-    skillsToPractice: candidate.skillsToPractice
+    specificSkills: candidate.specificSkills
   });
   console.log('📋 Interviewer skill categories:', interviewerSkills);
   console.log('🔧 Interviewer technologies:', interviewerTechnologies);
@@ -302,21 +297,6 @@ export const checkEnhancedSkillsMatch = (
     }
   }
 
-  // 4. Skills to Practice Matching (5 points max)
-  if (candidate.skillsToPractice && candidate.skillsToPractice.length > 0) {
-    const practiceMatches = candidate.skillsToPractice.filter(skill => 
-      allInterviewerSkills.some(interviewerSkill => 
-        skill.toLowerCase() === interviewerSkill.toLowerCase() ||
-        skill.toLowerCase().includes(interviewerSkill.toLowerCase()) ||
-        interviewerSkill.toLowerCase().includes(skill.toLowerCase())
-      )
-    );
-    if (practiceMatches.length > 0) {
-      const practiceScore = Math.min(5, practiceMatches.length * 2);
-      totalScore += practiceScore;
-      matchDetails.push(`Can help practice: ${practiceMatches.join(', ')}`);
-    }
-  }
 
   const finalMatch = totalScore >= 15; // Require at least 15 points for a match
   console.log(`📊 Enhanced skills matching result: ${totalScore}/50 points, Match: ${finalMatch}`);
@@ -382,27 +362,3 @@ export const checkEnhancedExperienceMatch = (
   return { match, score, details };
 };
 
-// Company preference matching
-export const checkCompanyMatch = (
-  candidate: MatchingCandidate,
-  interviewerCompany: string
-): { match: boolean; score: number; details: string[] } => {
-  if (!candidate.targetCompanies || !interviewerCompany) {
-    return { match: false, score: 0, details: [] };
-  }
-
-  const companyMatch = candidate.targetCompanies.some(targetCompany => 
-    targetCompany.toLowerCase() === interviewerCompany.toLowerCase() ||
-    interviewerCompany.toLowerCase().includes(targetCompany.toLowerCase())
-  );
-
-  if (companyMatch) {
-    return {
-      match: true,
-      score: 5,
-      details: [`Works at target company: ${interviewerCompany}`]
-    };
-  }
-
-  return { match: false, score: 0, details: [] };
-};

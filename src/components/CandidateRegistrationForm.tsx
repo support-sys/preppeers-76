@@ -32,13 +32,9 @@ interface CandidateFormData {
   // Skills & Technologies
   skillCategories: string[];
   specificSkills: string[];
-  skillsToPractice: string[];
   
   // Interview Preferences
   targetRole: string;
-  interviewTypes: string[];
-  targetCompanies: string[];
-  preferredInterviewLength: number;
   timeSlot: string;
   noticePeriod: string;
   
@@ -67,13 +63,9 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     // Skills & Technologies
     skillCategories: [],
     specificSkills: [],
-    skillsToPractice: [],
     
     // Interview Preferences
     targetRole: "",
-    interviewTypes: [],
-    targetCompanies: [],
-    preferredInterviewLength: 60,
     timeSlot: "",
     noticePeriod: "",
     
@@ -131,40 +123,14 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     }));
   };
 
-  const handleSkillToPracticeChange = (skill: string) => {
-    setFormData(prev => ({
-      ...prev,
-      skillsToPractice: prev.skillsToPractice.includes(skill)
-        ? prev.skillsToPractice.filter(s => s !== skill)
-        : [...prev.skillsToPractice, skill]
-    }));
-  };
-
-  const handleInterviewTypeChange = (type: string) => {
-    setFormData(prev => ({
-      ...prev,
-      interviewTypes: prev.interviewTypes.includes(type)
-        ? prev.interviewTypes.filter(t => t !== type)
-        : [...prev.interviewTypes, type]
-    }));
-  };
-
-  const handleTargetCompanyChange = (company: string) => {
-    setFormData(prev => ({
-      ...prev,
-      targetCompanies: prev.targetCompanies.includes(company)
-        ? prev.targetCompanies.filter(c => c !== company)
-        : [...prev.targetCompanies, company]
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.targetRole || !formData.noticePeriod || !formData.currentPosition) {
+    if (!formData.targetRole || !formData.noticePeriod || !formData.currentPosition || !formData.resume) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields (Target Role, Notice Period, Current Position).",
+        description: "Please fill in all required fields (Target Role, Notice Period, Current Position, Resume).",
         variant: "destructive",
       });
       return;
@@ -181,9 +147,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             experience: formData.experienceYears.toString() + " years",
             notice_period: formData.noticePeriod,
             target_role: formData.targetRole,
-            skills_to_practice: formData.skillsToPractice,
-            target_companies: formData.targetCompanies,
-            preferred_interview_length: formData.preferredInterviewLength,
             linkedin_url: formData.linkedinUrl || null,
             github_url: formData.githubUrl || null,
             bio: formData.bio || null,
@@ -218,7 +181,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     skillOptions[category] || []
   );
 
-  const allSkillsForPractice = Object.values(skillOptions).flat();
+  
 
   return (
     <Card className="bg-white/10 backdrop-blur-lg border-white/20">
@@ -351,26 +314,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
                 </div>
               )}
 
-              <div>
-                <Label className="text-white">Skills to Practice (Select up to 5)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 max-h-48 overflow-y-auto">
-                  {allSkillsForPractice.map(skill => (
-                    <div key={skill} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`practice-${skill}`}
-                        checked={formData.skillsToPractice.includes(skill)}
-                        onCheckedChange={() => handleSkillToPracticeChange(skill)}
-                        disabled={formData.skillsToPractice.length >= 5 && !formData.skillsToPractice.includes(skill)}
-                        className="bg-white/10 border-white/20"
-                      />
-                      <Label htmlFor={`practice-${skill}`} className="text-white text-sm">{skill}</Label>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-slate-400 mt-1">
-                  Selected: {formData.skillsToPractice.length}/5
-                </p>
-              </div>
             </CollapsibleContent>
           </Collapsible>
 
@@ -412,57 +355,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
                 </select>
               </div>
 
-              <div>
-                <Label className="text-white">Interview Types</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {["Technical", "System Design", "Behavioral", "Code Review"].map(type => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={type}
-                        checked={formData.interviewTypes.includes(type)}
-                        onCheckedChange={() => handleInterviewTypeChange(type)}
-                        className="bg-white/10 border-white/20"
-                      />
-                      <Label htmlFor={type} className="text-white">{type}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div>
-                <Label className="text-white">Target Companies (Select up to 5)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                  {["Google", "Microsoft", "Amazon", "Meta", "Apple", "Netflix", "Uber", "Airbnb", "Spotify", "Startup"].map(company => (
-                    <div key={company} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={company}
-                        checked={formData.targetCompanies.includes(company)}
-                        onCheckedChange={() => handleTargetCompanyChange(company)}
-                        disabled={formData.targetCompanies.length >= 5 && !formData.targetCompanies.includes(company)}
-                        className="bg-white/10 border-white/20"
-                      />
-                      <Label htmlFor={company} className="text-white text-sm">{company}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="preferredInterviewLength" className="text-white">Preferred Interview Length</Label>
-                <select
-                  id="preferredInterviewLength"
-                  name="preferredInterviewLength"
-                  value={formData.preferredInterviewLength}
-                  onChange={handleInputChange}
-                  className="w-full mt-2 bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isLoading}
-                >
-                  <option value="30">30 minutes</option>
-                  <option value="45">45 minutes</option>
-                  <option value="60">60 minutes</option>
-                  <option value="90">90 minutes</option>
-                </select>
-              </div>
 
               <div>
                 <Label htmlFor="timeSlot" className="text-white">Preferred Time Slot</Label>
@@ -547,7 +440,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
               </div>
 
               <div>
-                <Label htmlFor="resume" className="text-white">Upload Resume (Optional)</Label>
+                <Label htmlFor="resume" className="text-white">Upload Resume *</Label>
                 <div className="mt-2">
                   <label htmlFor="resume" className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/20 border-dashed rounded-lg cursor-pointer bg-white/5 hover:bg-white/10 transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
