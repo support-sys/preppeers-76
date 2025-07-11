@@ -17,7 +17,15 @@ export const useBookingFlow = () => {
   const { paymentSession, markInterviewMatched, isInterviewAlreadyMatched } = usePaymentStatus();
 
   const handleFormSubmit = async (data: any) => {
-    console.log('Form submitted with data:', data);
+    console.log('Enhanced form submitted with data:', {
+      targetRole: data.targetRole,
+      currentPosition: data.currentPosition,
+      experienceYears: data.experienceYears,
+      skillCategories: data.skillCategories,
+      specificSkills: data.specificSkills,
+      skillsToPractice: data.skillsToPractice,
+      timeSlot: data.timeSlot
+    });
     setFormData(data);
     setCurrentStep('payment');
   };

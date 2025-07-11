@@ -4,6 +4,20 @@ export interface MatchingCandidate {
   experience: string;
   timeSlot?: string;
   resume?: File;
+  // Enhanced candidate data
+  currentPosition?: string;
+  company?: string;
+  experienceYears?: number;
+  bio?: string;
+  skillCategories?: string[];
+  specificSkills?: string[];
+  skillsToPractice?: string[];
+  interviewTypes?: string[];
+  targetCompanies?: string[];
+  preferredInterviewLength?: number;
+  noticePeriod?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
 }
 
 export interface MatchedInterviewer {
@@ -229,4 +243,166 @@ export const parseExperience = (experienceStr: string): number => {
   }
   
   return 2; // Default to 2 years
+};
+
+// Enhanced skills matching using candidate's specific skills
+export const checkEnhancedSkillsMatch = (
+  candidate: MatchingCandidate, 
+  interviewerSkills: string[], 
+  interviewerTechnologies: string[]
+): { match: boolean; score: number; details: string[] } => {
+  console.log('\n🎯 === ENHANCED SKILLS MATCHING DEBUG ===');
+  console.log('👤 Candidate data:', {
+    targetRole: candidate.targetRole,
+    skillCategories: candidate.skillCategories,
+    specificSkills: candidate.specificSkills,
+    skillsToPractice: candidate.skillsToPractice
+  });
+  console.log('📋 Interviewer skill categories:', interviewerSkills);
+  console.log('🔧 Interviewer technologies:', interviewerTechnologies);
+  
+  let totalScore = 0;
+  const matchDetails: string[] = [];
+  const skillsArray = Array.isArray(interviewerSkills) ? interviewerSkills : [];
+  const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
+  const allInterviewerSkills = [...skillsArray, ...technologiesArray];
+
+  // 1. Target Role Matching (20 points max)
+  const targetRoleMatch = checkSkillsMatch(candidate.targetRole, interviewerSkills, interviewerTechnologies);
+  if (targetRoleMatch) {
+    totalScore += 20;
+    matchDetails.push(`Target role "${candidate.targetRole}" matches interviewer expertise`);
+  }
+
+  // 2. Skill Categories Matching (15 points max)
+  if (candidate.skillCategories && candidate.skillCategories.length > 0) {
+    const categoryMatches = candidate.skillCategories.filter(category => 
+      skillsArray.includes(category)
+    );
+    if (categoryMatches.length > 0) {
+      const categoryScore = Math.min(15, categoryMatches.length * 5);
+      totalScore += categoryScore;
+      matchDetails.push(`${categoryMatches.length} skill categories match: ${categoryMatches.join(', ')}`);
+    }
+  }
+
+  // 3. Specific Skills Matching (10 points max)
+  if (candidate.specificSkills && candidate.specificSkills.length > 0) {
+    const skillMatches = candidate.specificSkills.filter(skill => 
+      allInterviewerSkills.some(interviewerSkill => 
+        skill.toLowerCase() === interviewerSkill.toLowerCase() ||
+        skill.toLowerCase().includes(interviewerSkill.toLowerCase()) ||
+        interviewerSkill.toLowerCase().includes(skill.toLowerCase())
+      )
+    );
+    if (skillMatches.length > 0) {
+      const skillScore = Math.min(10, skillMatches.length * 3);
+      totalScore += skillScore;
+      matchDetails.push(`${skillMatches.length} specific skills match: ${skillMatches.join(', ')}`);
+    }
+  }
+
+  // 4. Skills to Practice Matching (5 points max)
+  if (candidate.skillsToPractice && candidate.skillsToPractice.length > 0) {
+    const practiceMatches = candidate.skillsToPractice.filter(skill => 
+      allInterviewerSkills.some(interviewerSkill => 
+        skill.toLowerCase() === interviewerSkill.toLowerCase() ||
+        skill.toLowerCase().includes(interviewerSkill.toLowerCase()) ||
+        interviewerSkill.toLowerCase().includes(skill.toLowerCase())
+      )
+    );
+    if (practiceMatches.length > 0) {
+      const practiceScore = Math.min(5, practiceMatches.length * 2);
+      totalScore += practiceScore;
+      matchDetails.push(`Can help practice: ${practiceMatches.join(', ')}`);
+    }
+  }
+
+  const finalMatch = totalScore >= 15; // Require at least 15 points for a match
+  console.log(`📊 Enhanced skills matching result: ${totalScore}/50 points, Match: ${finalMatch}`);
+  console.log('🎯 Match details:', matchDetails);
+  console.log('=== END ENHANCED SKILLS MATCHING DEBUG ===\n');
+
+  return {
+    match: finalMatch,
+    score: totalScore,
+    details: matchDetails
+  };
+};
+
+// Enhanced experience matching
+export const checkEnhancedExperienceMatch = (
+  candidate: MatchingCandidate, 
+  interviewerExperience: number
+): { match: boolean; score: number; details: string[] } => {
+  console.log('\n💼 === ENHANCED EXPERIENCE MATCHING DEBUG ===');
+  
+  const candidateExp = candidate.experienceYears || parseExperience(candidate.experience);
+  console.log(`👤 Candidate experience: ${candidateExp} years`);
+  console.log(`👨‍💼 Interviewer experience: ${interviewerExperience} years`);
+  
+  let score = 0;
+  const details: string[] = [];
+  
+  if (!interviewerExperience || interviewerExperience <= 0) {
+    console.log('❌ No interviewer experience data');
+    return { match: false, score: 0, details: ['No experience data available'] };
+  }
+
+  const expDifference = interviewerExperience - candidateExp;
+  console.log(`📊 Experience difference: ${expDifference} years`);
+
+  // Scoring based on experience gap
+  if (expDifference >= 2 && expDifference <= 8) {
+    // Ideal mentorship gap: 2-8 years
+    score = 25;
+    details.push(`Ideal mentorship gap: ${expDifference} years difference`);
+  } else if (expDifference >= 1 && expDifference < 2) {
+    // Good gap: 1-2 years
+    score = 20;
+    details.push(`Good experience gap: ${expDifference} years difference`);
+  } else if (expDifference > 8) {
+    // Large gap but still valuable
+    score = 15;
+    details.push(`Senior mentor: ${expDifference} years more experience`);
+  } else if (expDifference >= 0) {
+    // Peer level
+    score = 10;
+    details.push(`Peer level: similar experience levels`);
+  } else {
+    // Candidate has more experience
+    score = 5;
+    details.push(`Reverse mentorship opportunity`);
+  }
+
+  const match = score >= 10;
+  console.log(`📊 Experience matching result: ${score}/25 points, Match: ${match}`);
+  console.log('=== END ENHANCED EXPERIENCE MATCHING DEBUG ===\n');
+
+  return { match, score, details };
+};
+
+// Company preference matching
+export const checkCompanyMatch = (
+  candidate: MatchingCandidate,
+  interviewerCompany: string
+): { match: boolean; score: number; details: string[] } => {
+  if (!candidate.targetCompanies || !interviewerCompany) {
+    return { match: false, score: 0, details: [] };
+  }
+
+  const companyMatch = candidate.targetCompanies.some(targetCompany => 
+    targetCompany.toLowerCase() === interviewerCompany.toLowerCase() ||
+    interviewerCompany.toLowerCase().includes(targetCompany.toLowerCase())
+  );
+
+  if (companyMatch) {
+    return {
+      match: true,
+      score: 5,
+      details: [`Works at target company: ${interviewerCompany}`]
+    };
+  }
+
+  return { match: false, score: 0, details: [] };
 };

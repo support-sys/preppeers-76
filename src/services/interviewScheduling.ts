@@ -1,6 +1,16 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { MatchingCandidate, MatchedInterviewer, checkSkillsMatch, checkTimeSlotMatch, parseExperience, getAlternativeTimeSlots } from "@/utils/interviewerMatching";
+import { 
+  MatchingCandidate, 
+  MatchedInterviewer, 
+  checkSkillsMatch, 
+  checkTimeSlotMatch, 
+  parseExperience, 
+  getAlternativeTimeSlots,
+  checkEnhancedSkillsMatch,
+  checkEnhancedExperienceMatch,
+  checkCompanyMatch
+} from "@/utils/interviewerMatching";
 
 export const findMatchingInterviewer = async (candidateData: MatchingCandidate): Promise<MatchedInterviewer | null> => {
   try {
@@ -42,74 +52,82 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
     const candidateExperience = parseExperience(candidateData.experience);
     console.log(`\n👤 Candidate parsed experience: ${candidateExperience} years`);
 
-    // Score and rank interviewers
-    console.log('\n🎯 === EVALUATING EACH INTERVIEWER ===');
+    // Score and rank interviewers using enhanced matching
+    console.log('\n🎯 === EVALUATING EACH INTERVIEWER WITH ENHANCED MATCHING ===');
     const scoredInterviewers = allInterviewers.map((interviewer, index) => {
-      let score = 0;
-      const reasons = [];
+      let totalScore = 0;
+      const allReasons = [];
+      const allDetails = [];
 
       console.log(`\n🔍 === EVALUATING INTERVIEWER ${index + 1}: ${interviewer.company || 'Unknown'} ===`);
 
-      // 1. Skills matching (40 points) - More comprehensive now
-      console.log('\n📋 STEP 1: Skills Evaluation');
-      const skillsMatch = checkSkillsMatch(
-        candidateData.targetRole, 
+      // 1. Enhanced Skills matching (50 points max)
+      console.log('\n📋 STEP 1: Enhanced Skills Evaluation');
+      const skillsResult = checkEnhancedSkillsMatch(
+        candidateData,
         interviewer.skills || [], 
         interviewer.technologies || []
       );
-      if (skillsMatch) {
-        score += 40;
-        reasons.push('Skills match');
-        console.log('✅ Skills match: +40 points');
-      } else {
-        console.log('❌ No skills match: +0 points');
+      totalScore += skillsResult.score;
+      if (skillsResult.match) {
+        allReasons.push('Advanced skills match');
       }
+      allDetails.push(...skillsResult.details);
+      console.log(`✅ Skills evaluation: +${skillsResult.score}/50 points`);
 
-      // 2. Experience matching (30 points)
-      console.log('\n👨‍💼 STEP 2: Experience Evaluation');
-      const interviewerExp = interviewer.experience_years || 0;
-      console.log(`Experience comparison: Interviewer ${interviewerExp} years vs Candidate ${candidateExperience} years`);
-      
-      if (interviewerExp >= candidateExperience) {
-        const expDiff = Math.abs(interviewerExp - candidateExperience);
-        if (expDiff <= 2) {
-          score += 30;
-          reasons.push('Experience appropriate');
-          console.log('✅ Experience appropriate: +30 points');
-        } else if (expDiff <= 5) {
-          score += 20;
-          reasons.push('Experience acceptable');
-          console.log('✅ Experience acceptable: +20 points');
-        } else {
-          console.log('⚠️ Experience gap too large: +0 points');
-        }
-      } else {
-        console.log('❌ Insufficient experience: +0 points');
+      // 2. Enhanced Experience matching (25 points max)
+      console.log('\n👨‍💼 STEP 2: Enhanced Experience Evaluation');
+      const experienceResult = checkEnhancedExperienceMatch(
+        candidateData,
+        interviewer.experience_years || 0
+      );
+      totalScore += experienceResult.score;
+      if (experienceResult.match) {
+        allReasons.push('Appropriate experience level');
       }
+      allDetails.push(...experienceResult.details);
+      console.log(`✅ Experience evaluation: +${experienceResult.score}/25 points`);
 
-      // 3. Time slot availability (30 points)
-      console.log('\n⏰ STEP 3: Time Availability Evaluation');
+      // 3. Company preference matching (5 points max)
+      console.log('\n🏢 STEP 3: Company Preference Evaluation');
+      const companyResult = checkCompanyMatch(candidateData, interviewer.company || '');
+      totalScore += companyResult.score;
+      if (companyResult.match) {
+        allReasons.push('Target company match');
+      }
+      allDetails.push(...companyResult.details);
+      console.log(`✅ Company evaluation: +${companyResult.score}/5 points`);
+
+      // 4. Time slot availability (25 points max)
+      console.log('\n⏰ STEP 4: Time Availability Evaluation');
       const timeMatch = checkTimeSlotMatch(candidateData.timeSlot || '', interviewer.current_time_slots);
       if (timeMatch) {
-        score += 30;
-        reasons.push('Time available');
-        console.log('✅ Time available: +30 points');
+        totalScore += 25;
+        allReasons.push('Time available');
+        allDetails.push('Exact time slot match found');
+        console.log('✅ Time available: +25 points');
       } else {
         console.log('❌ Time not available: +0 points');
       }
 
       // Get alternative time slots for this interviewer
       const alternativeTimeSlots = getAlternativeTimeSlots(interviewer.current_time_slots);
+      if (alternativeTimeSlots.length > 0 && !timeMatch) {
+        totalScore += 5; // Small bonus for having alternatives
+        allDetails.push(`${alternativeTimeSlots.length} alternative time slots available`);
+      }
 
-      console.log(`\n🎯 FINAL SCORE for ${interviewer.company}: ${score}/100`);
-      console.log(`📋 Match Reasons: ${reasons.join(', ')}`);
+      console.log(`\n🎯 ENHANCED FINAL SCORE for ${interviewer.company}: ${totalScore}/105`);
+      console.log(`📋 Match Reasons: ${allReasons.join(', ')}`);
+      console.log(`📝 Match Details: ${allDetails.join('; ')}`);
       console.log(`⏰ Alternative Slots Available: ${alternativeTimeSlots.length}`);
       console.log(`   ${alternativeTimeSlots.slice(0, 3).join('; ')}`);
       
       return {
         ...interviewer,
-        matchScore: score,
-        matchReasons: reasons,
+        matchScore: totalScore,
+        matchReasons: allReasons,
+        matchDetails: allDetails,
         alternativeTimeSlots
       };
     });
@@ -119,41 +137,53 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
     
     console.log('\n🏆 === FINAL RANKING ===');
     scoredInterviewers.forEach((interviewer, index) => {
-      console.log(`${index + 1}. ${interviewer.company || 'Unknown'} - Score: ${interviewer.matchScore}/100`);
+      console.log(`${index + 1}. ${interviewer.company || 'Unknown'} - Score: ${interviewer.matchScore}/105`);
       console.log(`   Reasons: ${interviewer.matchReasons.join(', ')}`);
+      console.log(`   Details: ${interviewer.matchDetails?.slice(0, 2).join('; ') || 'No details'}`);
       console.log(`   Alt Slots: ${interviewer.alternativeTimeSlots.length} available`);
     });
 
-    // Return best match if score is reasonable (at least skills match OR has good availability)
+    // Return best match if score is reasonable with enhanced criteria
     const bestMatch = scoredInterviewers[0];
     
-    // More flexible matching criteria
-    const hasSkillsMatch = bestMatch && bestMatch.matchReasons.includes('Skills match');
+    // Enhanced matching criteria
+    const hasAdvancedSkillsMatch = bestMatch && bestMatch.matchReasons.includes('Advanced skills match');
     const hasTimeMatch = bestMatch && bestMatch.matchReasons.includes('Time available');
+    const hasExperienceMatch = bestMatch && bestMatch.matchReasons.includes('Appropriate experience level');
+    const hasCompanyMatch = bestMatch && bestMatch.matchReasons.includes('Target company match');
     const hasAlternatives = bestMatch && bestMatch.alternativeTimeSlots.length > 0;
-    const hasGoodScore = bestMatch && bestMatch.matchScore >= 30; // Lowered threshold
+    const hasGoodScore = bestMatch && bestMatch.matchScore >= 40; // Increased threshold for quality
+    const hasMinimumScore = bestMatch && bestMatch.matchScore >= 25; // Minimum acceptable score
 
-    console.log('\n🎯 === FINAL DECISION ===');
+    console.log('\n🎯 === ENHANCED FINAL DECISION ===');
     console.log(`Best candidate: ${bestMatch?.company || 'None'}`);
-    console.log(`Has skills match: ${hasSkillsMatch}`);
+    console.log(`Has advanced skills match: ${hasAdvancedSkillsMatch}`);
     console.log(`Has time match: ${hasTimeMatch}`);
+    console.log(`Has experience match: ${hasExperienceMatch}`);
+    console.log(`Has company match: ${hasCompanyMatch}`);
     console.log(`Has alternatives: ${hasAlternatives}`);
-    console.log(`Has good score (>=30): ${hasGoodScore}`);
+    console.log(`Has good score (>=40): ${hasGoodScore}`);
+    console.log(`Has minimum score (>=25): ${hasMinimumScore}`);
 
-    if (bestMatch && (hasSkillsMatch || hasGoodScore || hasAlternatives)) {
-      console.log(`✅ MATCH SELECTED: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
-      console.log(`   Primary reason: ${bestMatch.matchReasons[0] || 'Available'}`);
+    // Prioritize quality matches first
+    if (bestMatch && (hasAdvancedSkillsMatch || hasGoodScore) && hasMinimumScore) {
+      console.log(`✅ HIGH-QUALITY MATCH SELECTED: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/105`);
+      console.log(`   Primary reasons: ${bestMatch.matchReasons.join(', ')}`);
       return bestMatch;
     }
 
-    // Fallback: return any interviewer with skills match, even with lower score
-    const skillsOnlyMatch = scoredInterviewers.find(interviewer => 
-      interviewer.matchReasons.includes('Skills match')
+    // Fallback: return interviewer with minimum acceptable criteria
+    const acceptableMatch = scoredInterviewers.find(interviewer => 
+      interviewer.matchScore >= 25 && (
+        interviewer.matchReasons.includes('Advanced skills match') ||
+        interviewer.matchReasons.includes('Appropriate experience level') ||
+        interviewer.alternativeTimeSlots.length > 0
+      )
     );
 
-    if (skillsOnlyMatch) {
-      console.log(`⚠️ FALLBACK MATCH (skills only): ${skillsOnlyMatch.company || 'Unknown'}`);
-      return skillsOnlyMatch;
+    if (acceptableMatch) {
+      console.log(`⚠️ ACCEPTABLE MATCH: ${acceptableMatch.company || 'Unknown'} with score ${acceptableMatch.matchScore}/105`);
+      return acceptableMatch;
     }
 
     console.log('❌ NO SUITABLE INTERVIEWER FOUND');
