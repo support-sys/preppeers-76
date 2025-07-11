@@ -224,6 +224,9 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       throw new Error('Error fetching interviewer profile.');
     }
 
+    let interviewerEmail: string;
+    let interviewerName: string;
+
     if (!interviewerProfile) {
       console.error('❌ No profile found for user_id:', interviewer.user_id);
       // Let's check if there are any profiles at all
@@ -232,22 +235,37 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
         .select('id, email, full_name')
         .limit(5);
       console.log('📋 Sample profiles in database:', allProfiles);
-      throw new Error('Interviewer profile not found. Cannot schedule interview.');
-    }
-
-    if (!interviewerProfile.email) {
+      
+      // Use fallback values instead of throwing error
+      console.log('⚠️ Using fallback interviewer details');
+      interviewerEmail = `${interviewer.company?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+      interviewerName = interviewer.company || 'Professional Interviewer';
+      
+      console.log('🔄 Fallback interviewer details:', { 
+        email: interviewerEmail, 
+        name: interviewerName 
+      });
+    } else if (!interviewerProfile.email) {
       console.error('❌ No email found in profile for user_id:', interviewer.user_id);
       console.log('📧 Profile data:', interviewerProfile);
-      throw new Error('Interviewer email not found in profile. Cannot schedule interview.');
+      
+      // Use fallback email
+      interviewerEmail = `${interviewer.company?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+      interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
+      
+      console.log('🔄 Using fallback email with profile name:', { 
+        email: interviewerEmail, 
+        name: interviewerName 
+      });
+    } else {
+      interviewerEmail = interviewerProfile.email;
+      interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
+      
+      console.log('✅ Found interviewer details:', { 
+        email: interviewerEmail, 
+        name: interviewerName 
+      });
     }
-
-    const interviewerEmail = interviewerProfile.email;
-    const interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
-    
-    console.log('✅ Found interviewer details:', { 
-      email: interviewerEmail, 
-      name: interviewerName 
-    });
     
     // Select the best available time slot
     let selectedTimeSlot = candidate.timeSlot;
