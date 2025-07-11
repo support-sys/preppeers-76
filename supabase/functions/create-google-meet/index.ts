@@ -181,10 +181,26 @@ serve(async (req) => {
       }
 
       const createdEvent = await eventResponse.json();
-      const googleMeetLink = createdEvent.conferenceData?.entryPoints?.[0]?.uri;
+      console.log("📋 Created event response:", JSON.stringify(createdEvent, null, 2));
       
+      let googleMeetLink = createdEvent.conferenceData?.entryPoints?.[0]?.uri;
+      
+      // Fallback: check hangoutLink property
       if (!googleMeetLink) {
-        console.error("❌ No Google Meet link found in created event");
+        googleMeetLink = createdEvent.hangoutLink;
+      }
+      
+      // Last resort: extract from htmlLink if available
+      if (!googleMeetLink && createdEvent.htmlLink) {
+        const meetMatch = createdEvent.htmlLink.match(/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}/);
+        if (meetMatch) {
+          googleMeetLink = `https://${meetMatch[0]}`;
+        }
+      }
+      
+      if (!googleMeetLink || googleMeetLink.includes('/new')) {
+        console.error("❌ No valid Google Meet link found in created event");
+        console.error("Event data:", JSON.stringify(createdEvent, null, 2));
         throw new Error("Google Meet link not generated in calendar event");
       }
 
