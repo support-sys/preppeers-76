@@ -12,6 +12,7 @@ import ProcessOverview from "@/components/ProcessOverview";
 import BookingHeader from "@/components/BookingHeader";
 import PaymentDetails from "@/components/PaymentDetails";
 import PaymentPage from "@/components/PaymentPage";
+import TimeSlotConfirmation from "@/components/TimeSlotConfirmation";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { useBookingFlow } from "@/hooks/useBookingFlow";
@@ -23,11 +24,14 @@ const Book = () => {
     currentStep,
     formData,
     matchedInterviewer,
+    alternativeTimeSlot,
     isLoading,
     handleFormSubmit,
     handlePaymentSuccess,
     handlePaymentError,
     handleStartMatching,
+    handleAcceptAlternativeTime,
+    handleWaitForBetterMatch,
     handleTryAgain
   } = useBookingFlow();
 
@@ -61,6 +65,24 @@ const Book = () => {
 
   if (currentStep === 'matching') {
     return <MatchingLoader />;
+  }
+
+  if (currentStep === 'time-confirmation') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <Navigation />
+        <div className="container mx-auto px-4 py-20">
+          <TimeSlotConfirmation
+            matchedInterviewer={matchedInterviewer}
+            alternativeTimeSlot={alternativeTimeSlot}
+            onAccept={handleAcceptAlternativeTime}
+            onWaitForBetter={handleWaitForBetterMatch}
+            isLoading={isLoading}
+          />
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   if (currentStep === 'payment') {
