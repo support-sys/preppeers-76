@@ -236,36 +236,22 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
         .limit(5);
       console.log('📋 Sample profiles in database:', allProfiles);
       
-      // Use fallback values instead of throwing error
-      console.log('⚠️ Using fallback interviewer details');
-      interviewerEmail = `${interviewer.company?.toLowerCase().replace(/\s+/g, '')}@example.com`;
-      interviewerName = interviewer.company || 'Professional Interviewer';
-      
-      console.log('🔄 Fallback interviewer details:', { 
-        email: interviewerEmail, 
-        name: interviewerName 
-      });
-    } else if (!interviewerProfile.email) {
+      throw new Error(`Interviewer profile not found for user_id: ${interviewer.user_id}. Please ensure the interviewer has a valid profile.`);
+    } 
+    
+    if (!interviewerProfile.email) {
       console.error('❌ No email found in profile for user_id:', interviewer.user_id);
       console.log('📧 Profile data:', interviewerProfile);
-      
-      // Use fallback email
-      interviewerEmail = `${interviewer.company?.toLowerCase().replace(/\s+/g, '')}@example.com`;
-      interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
-      
-      console.log('🔄 Using fallback email with profile name:', { 
-        email: interviewerEmail, 
-        name: interviewerName 
-      });
-    } else {
-      interviewerEmail = interviewerProfile.email;
-      interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
-      
-      console.log('✅ Found interviewer details:', { 
-        email: interviewerEmail, 
-        name: interviewerName 
-      });
+      throw new Error(`Interviewer email not found in profile for user_id: ${interviewer.user_id}. Please ensure the interviewer profile has a valid email.`);
     }
+    
+    interviewerEmail = interviewerProfile.email;
+    interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
+    
+    console.log('✅ Found interviewer details:', { 
+      email: interviewerEmail, 
+      name: interviewerName 
+    });
     
     // Select the best available time slot
     let selectedTimeSlot = candidate.timeSlot;
