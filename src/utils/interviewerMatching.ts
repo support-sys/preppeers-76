@@ -1,7 +1,7 @@
 
 export interface MatchingCandidate {
   targetRole: string;
-  experience: string;
+  experience?: string;
   timeSlot?: string;
   resume?: File;
   // Enhanced candidate data

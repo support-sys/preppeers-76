@@ -87,20 +87,20 @@ export const useBookingFlow = () => {
           user?.user_metadata?.full_name || user?.email || ''
         );
         
-        const candidateDataForSheets = {
-          name: user?.user_metadata?.full_name || user?.email || "Unknown",
-          email: user?.email || "Unknown",
-          experience: paymentSession.candidate_data.experience,
-          noticePeriod: paymentSession.candidate_data.noticePeriod,
-          targetRole: paymentSession.candidate_data.targetRole,
-          timeSlot: paymentSession.candidate_data.timeSlot || "To be confirmed",
-          resumeUploaded: paymentSession.candidate_data.resume ? "Yes" : "No",
-          resumeFileName: paymentSession.candidate_data.resume?.name || "Not provided",
-          matchedInterviewer: interviewer.company || "Unknown Company",
-          paymentId: paymentSession.id,
-          paymentAmount: paymentSession.amount.toString(),
-          submissionDate: new Date().toISOString()
-        };
+      const candidateDataForSheets = {
+        name: user?.user_metadata?.full_name || user?.email || "Unknown",
+        email: user?.email || "Unknown",
+        experience: paymentSession.candidate_data.experienceYears?.toString() || paymentSession.candidate_data.experience || "Not provided",
+        noticePeriod: paymentSession.candidate_data.noticePeriod || "Not provided",
+        targetRole: paymentSession.candidate_data.targetRole,
+        timeSlot: paymentSession.candidate_data.timeSlot || "To be confirmed",
+        resumeUploaded: paymentSession.candidate_data.resume ? "Yes" : "No",
+        resumeFileName: paymentSession.candidate_data.resume?.name || "Not provided",
+        matchedInterviewer: interviewer.company || "Unknown Company",
+        paymentId: paymentSession.id,
+        paymentAmount: paymentSession.amount.toString(),
+        submissionDate: new Date().toISOString()
+      };
 
         await syncCandidateToGoogleSheets(candidateDataForSheets);
         await markInterviewMatched(paymentSession.id);

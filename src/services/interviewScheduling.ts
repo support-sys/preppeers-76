@@ -16,9 +16,12 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
     console.log('\n🚀 === STARTING INTERVIEWER MATCHING PROCESS ===');
     console.log('👤 Candidate Data:', {
       targetRole: candidateData.targetRole,
+      experienceYears: candidateData.experienceYears,
       experience: candidateData.experience,
       timeSlot: candidateData.timeSlot,
-      hasResume: !!candidateData.resume
+      hasResume: !!candidateData.resume,
+      skillCategories: candidateData.skillCategories,
+      specificSkills: candidateData.specificSkills
     });
     
     // Get all interviewers first
@@ -48,7 +51,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       console.log(`   ⏰ Time Slots: ${JSON.stringify(interviewer.current_time_slots)}`);
     });
 
-    const candidateExperience = parseExperience(candidateData.experience);
+    const candidateExperience = candidateData.experienceYears || parseExperience(candidateData.experience || '');
     console.log(`\n👤 Candidate parsed experience: ${candidateExperience} years`);
 
     // Score and rank interviewers using enhanced matching
@@ -219,7 +222,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       interviewer_email: interviewerEmail,
       interviewer_name: interviewerName,
       target_role: candidate.targetRole,
-      experience: candidate.experience,
+      experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
       scheduled_time: selectedTimeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
       status: 'scheduled',
       resume_url: candidate.resume ? 'uploaded' : null
