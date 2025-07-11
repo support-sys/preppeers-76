@@ -14,18 +14,31 @@ interface CalendarEvent {
   attendees: string[];
 }
 
-// Generate a random meet link ID
+// Generate a random meet link ID in the format xxx-yyyy-zzz
 function generateMeetId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
   const segments = [];
   
-  for (let i = 0; i < 3; i++) {
-    let segment = '';
-    for (let j = 0; j < 4; j++) {
-      segment += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    segments.push(segment);
+  // First segment: 3 characters
+  let segment1 = '';
+  for (let j = 0; j < 3; j++) {
+    segment1 += chars.charAt(Math.floor(Math.random() * chars.length));
   }
+  segments.push(segment1);
+  
+  // Second segment: 4 characters  
+  let segment2 = '';
+  for (let j = 0; j < 4; j++) {
+    segment2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  segments.push(segment2);
+  
+  // Third segment: 3 characters
+  let segment3 = '';
+  for (let j = 0; j < 3; j++) {
+    segment3 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  segments.push(segment3);
   
   return segments.join('-');
 }
