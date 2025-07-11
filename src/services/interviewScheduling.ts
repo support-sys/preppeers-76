@@ -136,47 +136,52 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       console.log(`   Alt Slots: ${interviewer.alternativeTimeSlots.length} available`);
     });
 
-    // Return best match if score is reasonable with enhanced criteria
+    // Get the best match
     const bestMatch = scoredInterviewers[0];
-    
+
     // Enhanced matching criteria
     const hasAdvancedSkillsMatch = bestMatch && bestMatch.matchReasons.includes('Advanced skills match');
     const hasTimeMatch = bestMatch && bestMatch.matchReasons.includes('Time available');
     const hasExperienceMatch = bestMatch && bestMatch.matchReasons.includes('Appropriate experience level');
     
     const hasAlternatives = bestMatch && bestMatch.alternativeTimeSlots.length > 0;
-    const hasGoodScore = bestMatch && bestMatch.matchScore >= 40; // Increased threshold for quality
-    const hasMinimumScore = bestMatch && bestMatch.matchScore >= 25; // Minimum acceptable score
+    const hasGoodScore = bestMatch && bestMatch.matchScore >= 25; // Lowered from 40 for better matching
+    const hasMinimumScore = bestMatch && bestMatch.matchScore >= 15; // Lowered from 25
 
     console.log('\n🎯 === ENHANCED FINAL DECISION ===');
     console.log(`Best candidate: ${bestMatch?.company || 'None'}`);
+    console.log(`Score: ${bestMatch?.matchScore || 0}/100`);
     console.log(`Has advanced skills match: ${hasAdvancedSkillsMatch}`);
     console.log(`Has time match: ${hasTimeMatch}`);
     console.log(`Has experience match: ${hasExperienceMatch}`);
-    
     console.log(`Has alternatives: ${hasAlternatives}`);
-    console.log(`Has good score (>=40): ${hasGoodScore}`);
-    console.log(`Has minimum score (>=25): ${hasMinimumScore}`);
+    console.log(`Has good score (>=25): ${hasGoodScore}`);
+    console.log(`Has minimum score (>=15): ${hasMinimumScore}`);
 
-    // Prioritize quality matches first
-    if (bestMatch && (hasAdvancedSkillsMatch || hasGoodScore) && hasMinimumScore) {
-      console.log(`✅ HIGH-QUALITY MATCH SELECTED: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
+    // Accept matches with good skills or experience even without perfect time match
+    if (bestMatch && (hasAdvancedSkillsMatch || hasExperienceMatch || hasGoodScore) && hasMinimumScore) {
+      console.log(`✅ MATCH SELECTED: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
       console.log(`   Primary reasons: ${bestMatch.matchReasons.join(', ')}`);
       return bestMatch;
     }
 
-    // Fallback: return interviewer with minimum acceptable criteria
+    // Fallback: return interviewer with minimum acceptable criteria or best available
     const acceptableMatch = scoredInterviewers.find(interviewer => 
-      interviewer.matchScore >= 25 && (
+      interviewer.matchScore >= 15 && (
         interviewer.matchReasons.includes('Advanced skills match') ||
-        interviewer.matchReasons.includes('Appropriate experience level') ||
-        interviewer.alternativeTimeSlots.length > 0
+        interviewer.matchReasons.includes('Appropriate experience level')
       )
     );
 
     if (acceptableMatch) {
-      console.log(`⚠️ ACCEPTABLE MATCH: ${acceptableMatch.company || 'Unknown'} with score ${acceptableMatch.matchScore}/100`);
+      console.log(`⚠️ ACCEPTABLE MATCH (without time slot): ${acceptableMatch.company || 'Unknown'} with score ${acceptableMatch.matchScore}/100`);
       return acceptableMatch;
+    }
+
+    // Last resort: return the best interviewer even with low score
+    if (bestMatch && bestMatch.matchScore >= 10) {
+      console.log(`🔄 LAST RESORT MATCH: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
+      return bestMatch;
     }
 
     console.log('❌ NO SUITABLE INTERVIEWER FOUND');
