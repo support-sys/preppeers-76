@@ -203,14 +203,20 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     console.log("Scheduling interview with:", { interviewer: interviewer.company, candidate: userFullName });
     
     // Get the interviewer's profile to get their email
+    console.log('Looking for interviewer profile with user_id:', interviewer.user_id);
     const { data: interviewerProfile, error: profileError } = await supabase
       .from('profiles')
       .select('email, full_name')
       .eq('id', interviewer.user_id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !interviewerProfile?.email) {
-      console.error('Error fetching interviewer profile or email not found:', profileError);
+    if (profileError) {
+      console.error('Error fetching interviewer profile:', profileError);
+      throw new Error('Error fetching interviewer profile.');
+    }
+
+    if (!interviewerProfile?.email) {
+      console.error('Interviewer profile not found for user_id:', interviewer.user_id);
       throw new Error('Interviewer email not found. Cannot schedule interview.');
     }
 
