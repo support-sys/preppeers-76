@@ -156,14 +156,12 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
                   <Loader2 className="h-5 w-5 animate-spin" />
                   <span className="text-base font-medium">Processing payment...</span>
                 </div>
-                {triggerPaymentSuccess && (
-                  <button 
-                    onClick={triggerPaymentSuccess}
-                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105"
-                  >
-                    Complete Payment Processing
-                  </button>
-                )}
+                <button 
+                  onClick={triggerPaymentSuccess}
+                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  Mark Payment as Successful
+                </button>
               </div>
             )}
           </div>
