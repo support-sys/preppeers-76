@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   MatchingCandidate, 
@@ -201,27 +200,54 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
 export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string) => {
   try {
     console.log("Scheduling interview with:", { interviewer: interviewer.company, candidate: userFullName });
+    console.log("Full interviewer object:", interviewer);
     
     // Get the interviewer's profile to get their email
-    console.log('Looking for interviewer profile with user_id:', interviewer.user_id);
+    console.log('🔍 Looking for interviewer profile with user_id:', interviewer.user_id);
+    
+    // First check if we have user_id
+    if (!interviewer.user_id) {
+      console.error('❌ No user_id found in interviewer object');
+      throw new Error('Interviewer user ID not found. Cannot schedule interview.');
+    }
+    
     const { data: interviewerProfile, error: profileError } = await supabase
       .from('profiles')
       .select('email, full_name')
       .eq('id', interviewer.user_id)
       .maybeSingle();
 
+    console.log('📧 Profile lookup result:', { interviewerProfile, profileError });
+
     if (profileError) {
-      console.error('Error fetching interviewer profile:', profileError);
+      console.error('❌ Error fetching interviewer profile:', profileError);
       throw new Error('Error fetching interviewer profile.');
     }
 
-    if (!interviewerProfile?.email) {
-      console.error('Interviewer profile not found for user_id:', interviewer.user_id);
-      throw new Error('Interviewer email not found. Cannot schedule interview.');
+    if (!interviewerProfile) {
+      console.error('❌ No profile found for user_id:', interviewer.user_id);
+      // Let's check if there are any profiles at all
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .limit(5);
+      console.log('📋 Sample profiles in database:', allProfiles);
+      throw new Error('Interviewer profile not found. Cannot schedule interview.');
+    }
+
+    if (!interviewerProfile.email) {
+      console.error('❌ No email found in profile for user_id:', interviewer.user_id);
+      console.log('📧 Profile data:', interviewerProfile);
+      throw new Error('Interviewer email not found in profile. Cannot schedule interview.');
     }
 
     const interviewerEmail = interviewerProfile.email;
     const interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
+    
+    console.log('✅ Found interviewer details:', { 
+      email: interviewerEmail, 
+      name: interviewerName 
+    });
     
     // Select the best available time slot
     let selectedTimeSlot = candidate.timeSlot;
@@ -244,7 +270,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       resume_url: candidate.resume ? 'uploaded' : null
     };
 
-    console.log("Sending interview data to edge function:", interviewData);
+    console.log("📝 Sending interview data to edge function:", interviewData);
 
     // Call the edge function to handle interview scheduling
     const { data, error } = await supabase.functions.invoke('schedule-interview', {
@@ -252,7 +278,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     });
 
     if (error) {
-      console.error('Error calling schedule-interview function:', error);
+      console.error('❌ Error calling schedule-interview function:', error);
       throw error;
     }
 
@@ -261,10 +287,10 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot);
     }
 
-    console.log("Interview scheduled successfully:", data);
+    console.log("✅ Interview scheduled successfully:", data);
     return data;
   } catch (error) {
-    console.error('Error in scheduleInterview:', error);
+    console.error('💥 Error in scheduleInterview:', error);
     throw error;
   }
 };
