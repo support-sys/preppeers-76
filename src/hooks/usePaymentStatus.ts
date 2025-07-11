@@ -113,8 +113,8 @@ export const usePaymentStatus = () => {
   return {
     paymentSession,
     isLoading,
-    hasSuccessfulPayment: !!paymentSession && paymentSession.payment_status === 'successful' && !paymentSession.interview_matched,
-    isInterviewAlreadyMatched: !!paymentSession && paymentSession.payment_status === 'successful' && paymentSession.interview_matched,
+    hasSuccessfulPayment: !!paymentSession && paymentSession.payment_status === 'successful',
+    isInterviewAlreadyMatched: false, // Always allow re-matching for now since we need to verify actual interview exists
     markInterviewMatched,
     refetch: fetchPaymentStatus
   };
