@@ -8,8 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -21,10 +22,26 @@ const Auth = () => {
   const [role, setRole] = useState<'interviewer' | 'interviewee'>('interviewee');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [searchParams] = useSearchParams();
 
-  const { signUp, signIn } = useAuth();
+  const { signUp, signIn, resetPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check if we're in password reset mode
+  React.useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'reset') {
+      setShowResetPassword(true);
+      setActiveTab('signin');
+    }
+  }, [searchParams]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +88,73 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await resetPassword(resetEmail);
+    
+    if (error) {
+      toast({
+        title: "Reset Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Reset Email Sent!",
+        description: "Please check your email for password reset instructions.",
+      });
+      setShowForgotPassword(false);
+      setResetEmail('');
+    }
+    
+    setLoading(false);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) {
+        toast({
+          title: "Password Reset Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Password Updated!",
+          description: "Your password has been successfully updated.",
+        });
+        navigate('/');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
@@ -98,40 +182,132 @@ const Auth = () => {
                 </TabsList>
                 
                 <TabsContent value="signin" className="space-y-4">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div>
-                      <Label htmlFor="signin-email" className="text-white">Email</Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                        placeholder="Enter your email"
-                        required
-                      />
+                  {showResetPassword ? (
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <h3 className="text-white text-lg font-semibold mb-2">Set New Password</h3>
+                        <p className="text-slate-300 text-sm">
+                          Enter your new password below.
+                        </p>
+                      </div>
+                      <form onSubmit={handleResetPassword} className="space-y-4">
+                        <div>
+                          <Label htmlFor="new-password" className="text-white">New Password</Label>
+                          <Input
+                            id="new-password"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                            placeholder="Enter new password"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="confirm-password" className="text-white">Confirm Password</Label>
+                          <Input
+                            id="confirm-password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                            placeholder="Confirm new password"
+                            required
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          disabled={loading}
+                        >
+                          {loading ? 'Updating...' : 'Update Password'}
+                        </Button>
+                      </form>
                     </div>
-                    <div>
-                      <Label htmlFor="signin-password" className="text-white">Password</Label>
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                        placeholder="Enter your password"
-                        required
-                      />
+                  ) : !showForgotPassword ? (
+                    <form onSubmit={handleSignIn} className="space-y-4">
+                      <div>
+                        <Label htmlFor="signin-email" className="text-white">Email</Label>
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="signin-password" className="text-white">Password</Label>
+                        <Input
+                          id="signin-password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                          placeholder="Enter your password"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        disabled={loading}
+                      >
+                        <LogIn className="w-4 h-4 mr-2" />
+                        {loading ? 'Signing In...' : 'Sign In'}
+                      </Button>
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword(true)}
+                          className="text-blue-300 hover:text-blue-200 text-sm underline"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <h3 className="text-white text-lg font-semibold mb-2">Reset Password</h3>
+                        <p className="text-slate-300 text-sm">
+                          Enter your email address and we'll send you a link to reset your password.
+                        </p>
+                      </div>
+                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                        <div>
+                          <Label htmlFor="reset-email" className="text-white">Email</Label>
+                          <Input
+                            id="reset-email"
+                            type="email"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                            placeholder="Enter your email"
+                            required
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          disabled={loading}
+                        >
+                          {loading ? 'Sending...' : 'Send Reset Link'}
+                        </Button>
+                        <div className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotPassword(false)}
+                            className="text-blue-300 hover:text-blue-200 text-sm underline"
+                          >
+                            Back to Sign In
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      disabled={loading}
-                    >
-                      <LogIn className="w-4 h-4 mr-2" />
-                      {loading ? 'Signing In...' : 'Sign In'}
-                    </Button>
-                  </form>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="signup" className="space-y-4">

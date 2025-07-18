@@ -10,6 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   loading: boolean;
 }
 
@@ -110,6 +111,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+      return { error };
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -117,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signIn,
     signOut,
+    resetPassword,
     loading
   };
 

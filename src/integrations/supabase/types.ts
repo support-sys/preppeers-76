@@ -20,16 +20,11 @@ export type Database = {
           created_at: string
           current_position: string | null
           experience: string | null
-          experience_level: string | null
           github_url: string | null
           id: string
-          interview_types: string[] | null
           linkedin_url: string | null
           notice_period: string | null
-          preferred_interview_length: number | null
           resume_url: string | null
-          skills_to_practice: string[] | null
-          target_companies: string[] | null
           target_role: string | null
           updated_at: string
           user_id: string
@@ -39,16 +34,11 @@ export type Database = {
           created_at?: string
           current_position?: string | null
           experience?: string | null
-          experience_level?: string | null
           github_url?: string | null
           id?: string
-          interview_types?: string[] | null
           linkedin_url?: string | null
           notice_period?: string | null
-          preferred_interview_length?: number | null
           resume_url?: string | null
-          skills_to_practice?: string[] | null
-          target_companies?: string[] | null
           target_role?: string | null
           updated_at?: string
           user_id: string
@@ -58,16 +48,11 @@ export type Database = {
           created_at?: string
           current_position?: string | null
           experience?: string | null
-          experience_level?: string | null
           github_url?: string | null
           id?: string
-          interview_types?: string[] | null
           linkedin_url?: string | null
           notice_period?: string | null
-          preferred_interview_length?: number | null
           resume_url?: string | null
-          skills_to_practice?: string[] | null
-          target_companies?: string[] | null
           target_role?: string | null
           updated_at?: string
           user_id?: string
@@ -84,7 +69,6 @@ export type Database = {
           current_time_slots: Json | null
           experience_years: number | null
           github_url: string | null
-          hourly_rate: number | null
           id: string
           linkedin_url: string | null
           position: string | null
@@ -104,7 +88,6 @@ export type Database = {
           current_time_slots?: Json | null
           experience_years?: number | null
           github_url?: string | null
-          hourly_rate?: number | null
           id?: string
           linkedin_url?: string | null
           position?: string | null
@@ -124,7 +107,6 @@ export type Database = {
           current_time_slots?: Json | null
           experience_years?: number | null
           github_url?: string | null
-          hourly_rate?: number | null
           id?: string
           linkedin_url?: string | null
           position?: string | null
