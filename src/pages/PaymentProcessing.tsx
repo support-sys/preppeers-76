@@ -8,7 +8,6 @@ import InstantMatchingFlow from '@/components/InstantMatchingFlow';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { findMatchingInterviewer, scheduleInterview } from '@/services/interviewScheduling';
-import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import MatchingLoader from '@/components/MatchingLoader';
 
 const PaymentProcessing = () => {
@@ -16,7 +15,6 @@ const PaymentProcessing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const [isMatching, setIsMatching] = useState(false);
 
   useEffect(() => {
@@ -64,24 +62,6 @@ const PaymentProcessing = () => {
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || ''
         );
-        
-        // Sync to Google Sheets with payment info
-        const candidateDataForSheets = {
-          name: user?.user_metadata?.full_name || user?.email || "Unknown",
-          email: user?.email || "Unknown",
-          experience: candidateData.experience,
-          noticePeriod: candidateData.noticePeriod,
-          targetRole: candidateData.targetRole,
-          timeSlot: candidateData.timeSlot || "To be confirmed",
-          resumeUploaded: candidateData.resume ? "Yes" : "No",
-          resumeFileName: candidateData.resume?.name || "Not provided",
-          matchedInterviewer: interviewer.company || "Unknown Company",
-          paymentId: paymentSession.cashfree_payment_id || "payment_successful",
-          paymentAmount: paymentSession.amount.toString(),
-          submissionDate: new Date().toISOString()
-        };
-
-        await syncCandidateToGoogleSheets(candidateDataForSheets);
         
         toast({
           title: "Interview Scheduled!",

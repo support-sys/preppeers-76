@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Upload, ChevronDown, User, Settings, Clock, Link } from "lucide-react";
+import { Upload, ChevronDown, User, Settings, Clock, Link, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +42,7 @@ interface CandidateFormData {
   linkedinUrl: string;
   githubUrl: string;
   resume: File | null;
+  resumeUrl?: string; // Added for storing uploaded resume URL
 }
 
 interface CandidateRegistrationFormProps {
@@ -73,6 +74,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     linkedinUrl: "",
     githubUrl: "",
     resume: null,
+    resumeUrl: "",
   });
 
   const [openSections, setOpenSections] = useState({
@@ -81,6 +83,8 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     preferences: false,
     links: false,
   });
+
+  const [uploadingResume, setUploadingResume] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -93,6 +97,63 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData(prev => ({ ...prev, resume: file }));
+  };
+
+  // Upload resume to Supabase storage
+  const uploadResume = async (file: File): Promise<string | null> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      setUploadingResume(true);
+      
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        throw new Error('File size must be less than 5MB');
+      }
+
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Only PDF, DOC, and DOCX files are allowed');
+      }
+
+      // Generate unique filename
+      const timestamp = new Date().getTime();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `resumes/${user.id}/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+      console.log('Uploading resume:', fileName);
+
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('candidate-resumes')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Error uploading resume:', error);
+        throw new Error(`Failed to upload resume: ${error.message}`);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('candidate-resumes')
+        .getPublicUrl(fileName);
+
+      console.log('Resume uploaded successfully:', urlData.publicUrl);
+      return urlData.publicUrl;
+
+    } catch (error: any) {
+      console.error('Resume upload error:', error);
+      throw error;
+    } finally {
+      setUploadingResume(false);
+    }
   };
 
   const handleSkillCategoryChange = (category: string) => {
@@ -123,7 +184,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     }));
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -137,6 +197,16 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     }
 
     try {
+      // Upload resume first
+      let resumeUrl = formData.resumeUrl;
+      if (formData.resume && !resumeUrl) {
+        console.log('Uploading resume...');
+        resumeUrl = await uploadResume(formData.resume);
+        if (!resumeUrl) {
+          throw new Error('Failed to upload resume');
+        }
+      }
+
       // Create or update interviewee profile using upsert
       if (user) {
         const { error } = await supabase
@@ -150,6 +220,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             linkedin_url: formData.linkedinUrl || null,
             github_url: formData.githubUrl || null,
             bio: formData.bio || null,
+            resume_url: resumeUrl || null, // Add resume URL to profile
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'user_id'
@@ -166,12 +237,18 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
         }
       }
 
-      onSubmit(formData);
-    } catch (error) {
+      // Pass the form data with resume URL to parent component
+      const formDataWithResumeUrl = {
+        ...formData,
+        resumeUrl: resumeUrl || ""
+      };
+
+      onSubmit(formDataWithResumeUrl);
+    } catch (error: any) {
       console.error("Error in form submission:", error);
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     }
@@ -180,8 +257,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
   const availableSpecificSkills = formData.skillCategories.flatMap(category => 
     skillOptions[category] || []
   );
-
-  
 
   return (
     <Card className="bg-white/10 backdrop-blur-lg border-white/20">
@@ -355,8 +430,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
                 </select>
               </div>
 
-
-
               <div>
                 <Label htmlFor="timeSlot" className="text-white">Preferred Time Slot</Label>
                 <Input
@@ -444,9 +517,17 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
                 <div className="mt-2">
                   <label htmlFor="resume" className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/20 border-dashed rounded-lg cursor-pointer bg-white/5 hover:bg-white/10 transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-4 text-slate-400" />
+                      {uploadingResume ? (
+                        <Loader2 className="w-8 h-8 mb-4 text-slate-400 animate-spin" />
+                      ) : (
+                        <Upload className="w-8 h-8 mb-4 text-slate-400" />
+                      )}
                       <p className="mb-2 text-sm text-slate-300">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
+                        {uploadingResume ? (
+                          <span className="font-semibold">Uploading...</span>
+                        ) : (
+                          <span className="font-semibold">Click to upload</span>
+                        )} or drag and drop
                       </p>
                       <p className="text-xs text-slate-400">PDF, DOC, or DOCX (MAX. 5MB)</p>
                     </div>
@@ -457,12 +538,17 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
                       className="hidden"
                       accept=".pdf,.doc,.docx"
                       onChange={handleFileChange}
-                      disabled={isLoading}
+                      disabled={isLoading || uploadingResume}
                     />
                   </label>
                   {formData.resume && (
                     <p className="text-sm text-green-400 mt-2">
                       ✓ {formData.resume.name}
+                    </p>
+                  )}
+                  {formData.resumeUrl && (
+                    <p className="text-sm text-blue-400 mt-2">
+                      ✓ Resume uploaded successfully
                     </p>
                   )}
                 </div>
@@ -474,9 +560,9 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             type="submit"
             size="lg"
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-            disabled={isLoading}
+            disabled={isLoading || uploadingResume}
           >
-            {isLoading ? "Finding Interviewer..." : "Find My Perfect Match"}
+            {isLoading ? "Finding Interviewer..." : uploadingResume ? "Uploading Resume..." : "Find My Perfect Match"}
           </Button>
         </form>
       </CardContent>

@@ -22,12 +22,25 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
     rating: 4.8,
     experience: "Loading..."
   });
+  const [candidateDetails, setCandidateDetails] = useState({
+    name: "Loading...",
+    experience: "Loading...",
+    skills: [] as string[],
+    technologies: [] as string[],
+    resumeUrl: ""
+  });
 
   useEffect(() => {
     if (open && interview?.interviewer_id) {
       fetchInterviewerDetails();
     }
   }, [open, interview?.interviewer_id]);
+
+  useEffect(() => {
+    if (open && interview) {
+      fetchCandidateDetails();
+    }
+  }, [open, interview]);
 
   const fetchInterviewerDetails = async () => {
     try {
@@ -83,12 +96,100 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
     }
   };
 
-  const candidateDetails = {
-    name: interview?.candidate_name || "N/A",
-    experience: interview?.experience || "N/A",
-    skills: ["React", "Node.js", "TypeScript", "AWS"],
-    technologies: ["JavaScript", "Python", "Docker", "Kubernetes"],
-    resumeUrl: interview?.resume_url
+  const fetchCandidateDetails = async () => {
+    try {
+      console.log('Fetching candidate details for interview:', interview);
+      
+      let skills: string[] = [];
+      let technologies: string[] = [];
+      let candidateName = interview?.candidate_name || "N/A";
+      let experience = interview?.experience || "N/A";
+      let resumeUrl = interview?.resume_url || "";
+
+      // Try to get candidate data from payment_sessions table
+      if (interview?.candidate_email) {
+        const { data: paymentSessions, error } = await supabase
+          .from('payment_sessions')
+          .select('candidate_data')
+          .eq('user_id', interview.candidate_id || interview.candidate_email)
+          .eq('payment_status', 'successful')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!error && paymentSessions && paymentSessions.length > 0) {
+          const candidateData = paymentSessions[0].candidate_data as any;
+          console.log('Found candidate data from payment session:', candidateData);
+
+          // Extract skill categories and specific skills
+          if (candidateData?.skillCategories && Array.isArray(candidateData.skillCategories)) {
+            skills = candidateData.skillCategories;
+          }
+          
+          if (candidateData?.specificSkills && Array.isArray(candidateData.specificSkills)) {
+            technologies = candidateData.specificSkills;
+          }
+
+          // Update other details if available
+          if (candidateData?.targetRole) {
+            // candidateName is already set from interview data
+          }
+          if (candidateData?.experience) {
+            experience = candidateData.experience;
+          }
+        }
+      }
+
+      // If no skills found, try to get from interviewee profile
+      if (skills.length === 0 && technologies.length === 0 && interview?.candidate_email) {
+        const { data: intervieweeData, error: intervieweeError } = await supabase
+          .from('interviewees')
+          .select('skills_to_practice, target_role, experience_level')
+          .eq('user_id', interview.candidate_id)
+          .maybeSingle();
+
+        if (!intervieweeError && intervieweeData) {
+          console.log('Found interviewee data:', intervieweeData);
+          
+          if (intervieweeData.skills_to_practice && Array.isArray(intervieweeData.skills_to_practice)) {
+            skills = intervieweeData.skills_to_practice;
+          }
+          
+          if (intervieweeData.target_role) {
+            // Add target role as a skill if no other skills found
+            if (skills.length === 0) {
+              skills = [intervieweeData.target_role];
+            }
+          }
+        }
+      }
+
+      // If still no data, use fallback
+      if (skills.length === 0) {
+        skills = ["Skills not specified"];
+      }
+      if (technologies.length === 0) {
+        technologies = ["Technologies not specified"];
+      }
+
+      setCandidateDetails({
+        name: candidateName,
+        experience: experience,
+        skills: skills,
+        technologies: technologies,
+        resumeUrl: resumeUrl
+      });
+
+    } catch (error) {
+      console.error('Error fetching candidate details:', error);
+      // Set fallback values
+      setCandidateDetails({
+        name: interview?.candidate_name || "N/A",
+        experience: interview?.experience || "N/A",
+        skills: ["Skills not specified"],
+        technologies: ["Technologies not specified"],
+        resumeUrl: interview?.resume_url || ""
+      });
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentStatusPolling } from "@/hooks/usePaymentStatusPolling";
@@ -10,6 +11,7 @@ import PaymentSecurityFeatures from "./payment/PaymentSecurityFeatures";
 import PaymentButton from "./payment/PaymentButton";
 import PaymentMethodsInfo from "./payment/PaymentMethodsInfo";
 import PaymentContainer from "./payment/PaymentContainer";
+import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 
 interface CashfreePaymentProps {
   amount: number;
@@ -19,6 +21,45 @@ interface CashfreePaymentProps {
   onSuccess: (paymentData: any) => void;
   onError: (error: any) => void;
 }
+
+// Cashfree SDK loading utility
+const loadCashfreeSDK = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    if ((window as any).Cashfree) {
+      resolve();
+      return;
+    }
+
+    // Check if script is already being loaded
+    if (document.querySelector('script[src*="cashfree.js"]')) {
+      const checkLoaded = setInterval(() => {
+        if ((window as any).Cashfree) {
+          clearInterval(checkLoaded);
+          resolve();
+        }
+      }, 100);
+      return;
+    }
+
+    // Load the script
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    script.onload = () => {
+      // Wait a bit more for initialization
+      setTimeout(() => {
+        if ((window as any).Cashfree) {
+          resolve();
+        } else {
+          reject(new Error('Cashfree SDK failed to initialize'));
+        }
+      }, 500);
+    };
+    script.onerror = () => reject(new Error('Failed to load Cashfree SDK'));
+    document.head.appendChild(script);
+  });
+};
 
 const CashfreePayment = ({ 
   amount, 
@@ -32,11 +73,29 @@ const CashfreePayment = ({
   const [error, setError] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const paymentContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Use the polling hook for payment status
   const { isPolling, startPolling, manualStatusCheck } = usePaymentStatusPolling(paymentSessionId);
+
+  // Load Cashfree SDK on component mount
+  useEffect(() => {
+    const initializeSDK = async () => {
+      try {
+        await loadCashfreeSDK();
+        setSdkLoaded(true);
+        console.log('Cashfree SDK loaded successfully');
+      } catch (error) {
+        console.error('Failed to load Cashfree SDK:', error);
+        setError('Payment service is not available. Please refresh the page and try again.');
+      }
+    };
+
+    initializeSDK();
+  }, []);
 
   const createPaymentSession = async () => {
     try {
@@ -55,7 +114,10 @@ const CashfreePayment = ({
         .select()
         .single();
 
-      if (sessionError) throw sessionError;
+      if (sessionError) {
+        console.error('Database session creation error:', sessionError);
+        throw new Error(`Failed to create payment session: ${sessionError.message}`);
+      }
 
       console.log('Payment session created in database:', sessionData);
       setPaymentSessionId(sessionData.id);
@@ -73,7 +135,7 @@ const CashfreePayment = ({
       console.log('Starting payment process...');
 
       // Check if Cashfree SDK is loaded
-      if (!(window as any).Cashfree) {
+      if (!sdkLoaded) {
         console.error('Cashfree SDK not loaded');
         const errorMsg = "Payment service is not available. Please refresh the page and try again.";
         setError(errorMsg);
@@ -116,13 +178,14 @@ const CashfreePayment = ({
 
       if (cashfreeError) {
         console.error('Error creating Cashfree session:', cashfreeError);
+        
         // Update payment session status to failed
         await supabase
           .from('payment_sessions')
           .update({ payment_status: 'failed' })
           .eq('id', dbSession.id);
         
-        const errorMsg = cashfreeError.message || 'Failed to create payment session';
+        const errorMsg = cashfreeError.message || 'Failed to create payment session. Please check your internet connection and try again.';
         setError(errorMsg);
         throw new Error(errorMsg);
       }
@@ -136,7 +199,7 @@ const CashfreePayment = ({
           .update({ payment_status: 'failed' })
           .eq('id', dbSession.id);
         
-        const errorMsg = 'Invalid payment session response';
+        const errorMsg = 'Invalid payment session response. Please try again.';
         setError(errorMsg);
         throw new Error(errorMsg);
       }
@@ -208,7 +271,7 @@ const CashfreePayment = ({
             console.error('Error updating payment status:', updateError);
           }
           
-          const errorMsg = error.message || "Payment could not be processed.";
+          const errorMsg = error.message || "Payment could not be processed. Please try again.";
           setError(errorMsg);
           
           onError(error);
@@ -243,6 +306,29 @@ const CashfreePayment = ({
     }
   };
 
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(prev => prev + 1);
+    handlePayment();
+  };
+
+  const handleRefreshSDK = async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      await loadCashfreeSDK();
+      setSdkLoaded(true);
+      toast({
+        title: "SDK Reloaded",
+        description: "Payment service is now available.",
+      });
+    } catch (error) {
+      setError('Failed to reload payment service. Please refresh the page.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="bg-white/10 backdrop-blur-lg border-white/20">
@@ -253,8 +339,55 @@ const CashfreePayment = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* SDK Status */}
+          {!sdkLoaded && !error && (
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
+              <RefreshCw className="w-5 h-5 text-yellow-400 animate-spin" />
+              <p className="text-yellow-400 text-sm">
+                Loading payment service...
+              </p>
+            </div>
+          )}
+
+          {sdkLoaded && (
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <p className="text-green-400 text-sm">
+                Payment service ready
+              </p>
+            </div>
+          )}
+
           {/* Error Display */}
-          {error && <PaymentErrorDisplay error={error} />}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <h3 className="text-red-400 font-semibold">Payment Error</h3>
+              </div>
+              <p className="text-red-300 text-sm mb-4">{error}</p>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleRetry} 
+                  disabled={isLoading}
+                  variant="outline" 
+                  size="sm"
+                  className="border-red-400 text-red-400 hover:bg-red-400 hover:text-white"
+                >
+                  {isLoading ? 'Retrying...' : 'Try Again'}
+                </Button>
+                <Button 
+                  onClick={handleRefreshSDK} 
+                  disabled={isLoading}
+                  variant="outline" 
+                  size="sm"
+                  className="border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white"
+                >
+                  Reload Payment Service
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Payment Details */}
           <PaymentDetails amount={amount} candidateData={candidateData} />
@@ -263,7 +396,7 @@ const CashfreePayment = ({
           <PaymentSecurityFeatures />
 
           {/* Payment Button */}
-          {!showPaymentForm && (
+          {!showPaymentForm && sdkLoaded && !error && (
             <PaymentButton
               isLoading={isLoading || isPolling}
               amount={amount}

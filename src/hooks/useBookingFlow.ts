@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
@@ -13,7 +12,6 @@ export const useBookingFlow = () => {
   const [alternativeTimeSlot, setAlternativeTimeSlot] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { user } = useAuth();
   const { paymentSession, markInterviewMatched, isInterviewAlreadyMatched } = usePaymentStatus();
 
@@ -103,22 +101,6 @@ export const useBookingFlow = () => {
           user?.user_metadata?.full_name || user?.email || ''
         );
         
-      const candidateDataForSheets = {
-        name: user?.user_metadata?.full_name || user?.email || "Unknown",
-        email: user?.email || "Unknown",
-        experience: paymentSession.candidate_data.experienceYears?.toString() || paymentSession.candidate_data.experience || "Not provided",
-        noticePeriod: paymentSession.candidate_data.noticePeriod || "Not provided",
-        targetRole: paymentSession.candidate_data.targetRole,
-        timeSlot: paymentSession.candidate_data.timeSlot || "To be confirmed",
-        resumeUploaded: paymentSession.candidate_data.resume ? "Yes" : "No",
-        resumeFileName: paymentSession.candidate_data.resume?.name || "Not provided",
-        matchedInterviewer: interviewer.company || "Unknown Company",
-        paymentId: paymentSession.id,
-        paymentAmount: paymentSession.amount.toString(),
-        submissionDate: new Date().toISOString()
-      };
-
-        await syncCandidateToGoogleSheets(candidateDataForSheets);
         await markInterviewMatched(paymentSession.id);
         
         setCurrentStep('success');
@@ -161,22 +143,6 @@ export const useBookingFlow = () => {
         user?.user_metadata?.full_name || user?.email || ''
       );
       
-      const candidateDataForSheets = {
-        name: user?.user_metadata?.full_name || user?.email || "Unknown",
-        email: user?.email || "Unknown",
-        experience: paymentSession.candidate_data.experienceYears?.toString() || paymentSession.candidate_data.experience || "Not provided",
-        noticePeriod: paymentSession.candidate_data.noticePeriod || "Not provided",
-        targetRole: paymentSession.candidate_data.targetRole,
-        timeSlot: alternativeTimeSlot?.interviewerAvailable || "To be confirmed",
-        resumeUploaded: paymentSession.candidate_data.resume ? "Yes" : "No",
-        resumeFileName: paymentSession.candidate_data.resume?.name || "Not provided",
-        matchedInterviewer: matchedInterviewer.company || "Unknown Company",
-        paymentId: paymentSession.id,
-        paymentAmount: paymentSession.amount.toString(),
-        submissionDate: new Date().toISOString()
-      };
-
-      await syncCandidateToGoogleSheets(candidateDataForSheets);
       await markInterviewMatched(paymentSession.id);
       
       setCurrentStep('success');

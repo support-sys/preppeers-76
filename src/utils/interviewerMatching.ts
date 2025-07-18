@@ -1,19 +1,20 @@
 
 export interface MatchingCandidate {
   targetRole: string;
+  experienceYears?: number;
   experience?: string;
   timeSlot?: string;
-  resume?: File;
+  resume?: File | undefined;
   // Enhanced candidate data
   currentPosition?: string;
   company?: string;
-  experienceYears?: number;
   bio?: string;
   skillCategories?: string[];
   specificSkills?: string[];
   noticePeriod?: string;
   linkedinUrl?: string;
   githubUrl?: string;
+  excludeInterviewerId?: string; // Add this property
 }
 
 export interface MatchedInterviewer {

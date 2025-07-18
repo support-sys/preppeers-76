@@ -13,7 +13,6 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 
 const skillOptions = {
   "Frontend Development": ["React", "Vue.js", "Angular", "JavaScript", "TypeScript", "HTML/CSS", "Next.js", "Svelte"],
@@ -29,7 +28,6 @@ const Interviewers = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
-  const { syncInterviewerToGoogleSheets } = useGoogleSheets();
   const [interviewerData, setInterviewerData] = useState({
     experienceYears: "",
     company: "",
@@ -185,34 +183,6 @@ const Interviewers = () => {
         title: "Profile Saved!",
         description: "Your interviewer profile has been saved to the database."
       });
-
-      // Now sync to Google Sheets (this can fail without affecting the database save)
-      setSyncingToSheets(true);
-      try {
-        const sheetsData = {
-          email: user.email || '',
-          full_name: user.user_metadata?.full_name || user.email || '',
-          experience_years: interviewerData.experienceYears,
-          company: interviewerData.company,
-          position: interviewerData.position,
-          skills: interviewerData.selectedCategories.join(', '), // Send categories to sheets
-          bio: interviewerData.bio,
-          linkedin_url: interviewerData.linkedinUrl,
-          github_url: interviewerData.githubUrl,
-          created_at: new Date().toISOString()
-        };
-
-        await syncInterviewerToGoogleSheets(sheetsData);
-      } catch (sheetsError) {
-        console.error('Google Sheets sync failed:', sheetsError);
-        toast({
-          title: "Partial Success",
-          description: "Profile saved to database, but Google Sheets sync failed. Your data is safe.",
-          variant: "destructive"
-        });
-      } finally {
-        setSyncingToSheets(false);
-      }
 
       setIsSubmitted(true);
     } catch (error: any) {

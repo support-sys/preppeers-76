@@ -9,14 +9,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold mb-4">MockAce</h3>
+            <h3 className="text-2xl font-bold mb-4">INTERVIEWISE</h3>
             <p className="text-slate-300 mb-4 max-w-md">
               Practice with real engineers, get expert feedback, and land your dream IT job. 
               Connect with experienced professionals for personalized mock interviews.
             </p>
             <div className="flex space-x-4">
               <Mail className="w-5 h-5 text-blue-400" />
-              <span className="text-slate-300">support@mockace.com</span>
+              <span className="text-slate-300">support@interviewise.in</span>
             </div>
           </div>
 
@@ -77,7 +77,7 @@ const Footer = () => {
 
         <div className="border-t border-white/10 mt-8 pt-8 text-center">
           <p className="text-slate-400">
-            © 2024 MockAce. All rights reserved. Built for IT professionals by IT professionals.
+            © 2025 INTERVIEWISE. All rights reserved. Built for IT professionals by IT professionals.
           </p>
         </div>
       </div>

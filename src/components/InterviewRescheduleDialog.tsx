@@ -24,6 +24,7 @@ interface Interview {
   experience: string;
   scheduled_time: string;
   status: string;
+  interviewer_id: string; // <-- Add this line
   resume_url?: string;
   google_meet_link?: string;
   google_calendar_event_id?: string;
@@ -43,6 +44,7 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Generate time slots from 09:00 to 18:00
   const timeSlots = [];
@@ -74,20 +76,9 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
     }
 
     setIsProcessing(true);
+    setErrorMessage(null);
 
     try {
-      // Update the current interview status to rescheduled
-      const { error: updateError } = await supabase
-        .from('interviews')
-        .update({ 
-          status: 'rescheduled'
-        })
-        .eq('id', interview.id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
       // If it's a candidate rescheduling, find a new interviewer and schedule
       if (userRole === 'interviewee') {
         // Combine date and time to create the preferred datetime
@@ -102,15 +93,14 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
           resume: undefined
         };
 
-        // Find matching interviewer
-        const matchedInterviewer = await findMatchingInterviewer(candidateData);
+        // Find matching interviewer, excluding the previous one
+        const matchedInterviewer = await findMatchingInterviewer({
+          ...candidateData,
+          excludeInterviewerId: interview.interviewer_id
+        });
         
         if (!matchedInterviewer) {
-          toast({
-            title: "No Available Interviewer",
-            description: "We couldn't find an available interviewer for your selected date and time. Please try a different slot.",
-            variant: "destructive",
-          });
+          setErrorMessage("We couldn't find an available interviewer for your selected date and time. Please try a different slot.");
           setIsProcessing(false);
           return;
         }
@@ -123,12 +113,32 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
           interview.candidate_name
         );
 
+        // Only now mark the old interview as rescheduled
+        const { error: updateError } = await supabase
+          .from('interviews')
+          .update({ 
+            status: 'rescheduled'
+          })
+          .eq('id', interview.id);
+        if (updateError) {
+          throw updateError;
+        }
+
         toast({
           title: "Interview Rescheduled",
           description: `Your interview has been rescheduled for ${format(preferredDateTime, 'PPP')} at ${format(preferredDateTime, 'p')}. You'll receive a confirmation email shortly.`,
         });
       } else {
         // For interviewer rescheduling, just cancel and notify
+        const { error: updateError } = await supabase
+          .from('interviews')
+          .update({ 
+            status: 'rescheduled'
+          })
+          .eq('id', interview.id);
+        if (updateError) {
+          throw updateError;
+        }
         toast({
           title: "Interview Cancelled",
           description: "The interview has been cancelled. The candidate will be notified and can book a new session.",
@@ -167,6 +177,11 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
         </DialogHeader>
         
         <div className="space-y-4">
+          {errorMessage && (
+            <div className="bg-red-700/80 text-white p-3 rounded mb-2 text-center">
+              {errorMessage}
+            </div>
+          )}
           <div className="bg-slate-700/50 p-4 rounded-lg">
             <h4 className="text-white font-semibold mb-2">Interview Details</h4>
             <p className="text-slate-300 text-sm">

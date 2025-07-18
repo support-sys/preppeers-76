@@ -33,16 +33,22 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       return null;
     }
 
-    console.log(`\n📋 Found ${allInterviewers?.length || 0} interviewers in database`);
+    // Exclude previous interviewer if excludeInterviewerId is provided
+    let filteredInterviewers = allInterviewers;
+    if (candidateData.excludeInterviewerId) {
+      filteredInterviewers = allInterviewers.filter(
+        (interviewer) => interviewer.id !== candidateData.excludeInterviewerId
+      );
+    }
 
-    if (!allInterviewers || allInterviewers.length === 0) {
+    if (!filteredInterviewers || filteredInterviewers.length === 0) {
       console.log('❌ No interviewers found in database');
       return null;
     }
 
     // Log all interviewers data for debugging
     console.log('\n📊 === INTERVIEWER DATABASE OVERVIEW ===');
-    allInterviewers.forEach((interviewer, index) => {
+    filteredInterviewers.forEach((interviewer, index) => {
       console.log(`\n👨‍💼 Interviewer ${index + 1}: ${interviewer.company || 'Unknown Company'}`);
       console.log(`   📋 Skill Categories: ${JSON.stringify(interviewer.skills)}`);
       console.log(`   🔧 Technologies: ${JSON.stringify(interviewer.technologies)}`);
@@ -55,7 +61,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
 
     // Score and rank interviewers using enhanced matching
     console.log('\n🎯 === EVALUATING EACH INTERVIEWER WITH ENHANCED MATCHING ===');
-    const scoredInterviewers = allInterviewers.map((interviewer, index) => {
+    const scoredInterviewers = filteredInterviewers.map((interviewer, index) => {
       let totalScore = 0;
       const allReasons = [];
       const allDetails = [];
@@ -89,7 +95,6 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       allDetails.push(...experienceResult.details);
       console.log(`✅ Experience evaluation: +${experienceResult.score}/25 points`);
 
-
       // 3. Time slot availability (25 points max)
       console.log('\n⏰ STEP 4: Time Availability Evaluation');
       const timeMatch = checkTimeSlotMatch(candidateData.timeSlot || '', interviewer.current_time_slots);
@@ -120,77 +125,23 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
         matchScore: totalScore,
         matchReasons: allReasons,
         matchDetails: allDetails,
-        alternativeTimeSlots
+        alternativeTimeSlots,
+        timeMatch
       };
     });
 
-    // Sort by score descending
-    scoredInterviewers.sort((a, b) => b.matchScore - a.matchScore);
-    
-    console.log('\n🏆 === FINAL RANKING ===');
-    scoredInterviewers.forEach((interviewer, index) => {
-      console.log(`${index + 1}. ${interviewer.company || 'Unknown'} - Score: ${interviewer.matchScore}/100`);
-      console.log(`   Reasons: ${interviewer.matchReasons.join(', ')}`);
-      console.log(`   Details: ${interviewer.matchDetails?.slice(0, 2).join('; ') || 'No details'}`);
-      console.log(`   Alt Slots: ${interviewer.alternativeTimeSlots.length} available`);
-    });
+    // Only consider interviewers who are actually available at the requested time
+    const availableInterviewers = scoredInterviewers.filter(i => i.timeMatch);
+    availableInterviewers.sort((a, b) => b.matchScore - a.matchScore);
 
-    // Get the best match
-    const bestMatch = scoredInterviewers[0];
-
-    // Enhanced matching criteria
-    const hasAdvancedSkillsMatch = bestMatch && bestMatch.matchReasons.includes('Advanced skills match');
-    const hasTimeMatch = bestMatch && bestMatch.matchReasons.includes('Time available');
-    const hasExperienceMatch = bestMatch && bestMatch.matchReasons.includes('Appropriate experience level');
-    
-    const hasAlternatives = bestMatch && bestMatch.alternativeTimeSlots.length > 0;
-    const hasGoodScore = bestMatch && bestMatch.matchScore >= 25; // Lowered from 40 for better matching
-    const hasMinimumScore = bestMatch && bestMatch.matchScore >= 15; // Lowered from 25
-
-    console.log('\n🎯 === ENHANCED FINAL DECISION ===');
-    console.log(`Best candidate: ${bestMatch?.company || 'None'}`);
-    console.log(`Score: ${bestMatch?.matchScore || 0}/100`);
-    console.log(`Has advanced skills match: ${hasAdvancedSkillsMatch}`);
-    console.log(`Has time match: ${hasTimeMatch}`);
-    console.log(`Has experience match: ${hasExperienceMatch}`);
-    console.log(`Has alternatives: ${hasAlternatives}`);
-    console.log(`Has good score (>=25): ${hasGoodScore}`);
-    console.log(`Has minimum score (>=15): ${hasMinimumScore}`);
-
-    // Accept matches with good skills or experience, prioritizing time matches
-    if (bestMatch && hasMinimumScore) {
-      // Perfect match: skills + time
-      if ((hasAdvancedSkillsMatch || hasExperienceMatch) && hasTimeMatch) {
-        console.log(`✅ PERFECT MATCH: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
-        console.log(`   Reasons: ${bestMatch.matchReasons.join(', ')}`);
-        return bestMatch;
-      }
-      
-      // Good match: skills + alternatives OR high score
-      if ((hasAdvancedSkillsMatch || hasExperienceMatch) && (hasAlternatives || hasGoodScore)) {
-        console.log(`✅ GOOD MATCH: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
-        console.log(`   Will use alternative time slot if needed`);
-        return bestMatch;
-      }
-      
-      // Acceptable match: skills or good score
-      if (hasAdvancedSkillsMatch || hasExperienceMatch || hasGoodScore) {
-        console.log(`⚠️ ACCEPTABLE MATCH: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
-        console.log(`   Note: May not have perfect time match`);
-        return bestMatch;
-      }
+    if (availableInterviewers.length === 0) {
+      console.log('❌ No suitable interviewers available at the requested time.');
+      return null;
     }
 
-    // Last resort: return any interviewer with minimum viable score
-    if (bestMatch && bestMatch.matchScore >= 10) {
-      console.log(`🔄 LAST RESORT MATCH: ${bestMatch.company || 'Unknown'} with score ${bestMatch.matchScore}/100`);
-      console.log(`   Warning: Low match quality but proceeding`);
-      return bestMatch;
-    }
-
-    console.log('❌ NO SUITABLE INTERVIEWER FOUND');
-    console.log('=== END MATCHING PROCESS ===\n');
-    return null;
+    const bestMatch = availableInterviewers[0];
+    console.log(`\n🏆 Best available interviewer: ${bestMatch.company || 'Unknown'} - Score: ${bestMatch.matchScore}/100`);
+    return bestMatch;
   } catch (error) {
     console.error('💥 Error in findMatchingInterviewer:', error);
     return null;
@@ -199,8 +150,8 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
 
 export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string) => {
   try {
-    console.log("Scheduling interview with:", { interviewer: interviewer.company, candidate: userFullName });
-    console.log("Full interviewer object:", interviewer);
+    console.log("Scheduling interview with:", { candidate: userFullName });
+    console.log("Full interviewer object:", { interviewer: interviewer.company });
     
     // Get the interviewer's profile to get their email
     console.log('🔍 Looking for interviewer profile with user_id:', interviewer.user_id);
@@ -258,6 +209,21 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     if (!selectedTimeSlot && interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
       selectedTimeSlot = interviewer.alternativeTimeSlots[0];
     }
+
+    // Fetch the latest resume_url from interviewees table
+    let latestResumeUrl = candidate.resumeUrl || candidate.resume_url || null;
+    try {
+      const { data: intervieweeProfile, error: intervieweeError } = await supabase
+        .from('interviewees')
+        .select('resume_url')
+        .eq('user_id', interviewer.candidate_user_id || candidate.user_id || candidate.candidate_user_id || candidate.userId || candidate.id || null)
+        .maybeSingle();
+      if (!intervieweeError && intervieweeProfile && intervieweeProfile.resume_url) {
+        latestResumeUrl = intervieweeProfile.resume_url;
+      }
+    } catch (resumeFetchError) {
+      console.warn('Could not fetch latest resume_url from interviewees table:', resumeFetchError);
+    }
     
     // Create interview record data
     const interviewData = {
@@ -271,7 +237,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
       scheduled_time: selectedTimeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
       status: 'scheduled',
-      resume_url: candidate.resume ? 'uploaded' : null
+      resume_url: latestResumeUrl
     };
 
     console.log("📝 Sending interview data to edge function:", interviewData);

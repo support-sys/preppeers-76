@@ -8,7 +8,6 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
-import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +17,6 @@ const Index = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { syncCandidateToGoogleSheets } = useGoogleSheets();
   const { paymentSession, hasSuccessfulPayment } = usePaymentStatus();
 
   // Redirect to payment processing page if there's an active payment session
@@ -59,24 +57,6 @@ const Index = () => {
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || ''
         );
-        
-        // Sync to Google Sheets with payment info
-        const candidateDataForSheets = {
-          name: user?.user_metadata?.full_name || user?.email || "Unknown",
-          email: user?.email || "Unknown",
-          experience: candidateData.experience,
-          noticePeriod: candidateData.noticePeriod,
-          targetRole: candidateData.targetRole,
-          timeSlot: candidateData.timeSlot || "To be confirmed",
-          resumeUploaded: candidateData.resume ? "Yes" : "No",
-          resumeFileName: candidateData.resume?.name || "Not provided",
-          matchedInterviewer: interviewer.company || "Unknown Company",
-          paymentId: paymentSession.cashfree_payment_id || "payment_successful",
-          paymentAmount: paymentSession.amount.toString(),
-          submissionDate: new Date().toISOString()
-        };
-
-        await syncCandidateToGoogleSheets(candidateDataForSheets);
         
         toast({
           title: "Interview Scheduled!",
