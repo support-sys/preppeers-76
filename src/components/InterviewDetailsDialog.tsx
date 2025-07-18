@@ -143,23 +143,20 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
       if (skills.length === 0 && technologies.length === 0 && interview?.candidate_email) {
         const { data: intervieweeData, error: intervieweeError } = await supabase
           .from('interviewees')
-          .select('skills_to_practice, target_role, experience_level')
+          .select('target_role, experience')
           .eq('user_id', interview.candidate_id)
           .maybeSingle();
 
         if (!intervieweeError && intervieweeData) {
           console.log('Found interviewee data:', intervieweeData);
           
-          if (intervieweeData.skills_to_practice && Array.isArray(intervieweeData.skills_to_practice)) {
-            skills = intervieweeData.skills_to_practice;
+          if (intervieweeData.target_role) {
+            // Use target role as a skill
+            skills = [intervieweeData.target_role];
           }
           
-          if (intervieweeData.target_role) {
-            // Add target role as a skill if no other skills found
-            if (skills.length === 0) {
-              skills = [intervieweeData.target_role];
-            }
-          }
+          // Note: interviewees table doesn't have skills_to_practice column
+          // Skills are typically stored in the interviewers table
         }
       }
 
