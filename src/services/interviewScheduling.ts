@@ -130,18 +130,44 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       };
     });
 
-    // Only consider interviewers who are actually available at the requested time
-    const availableInterviewers = scoredInterviewers.filter(i => i.timeMatch);
-    availableInterviewers.sort((a, b) => b.matchScore - a.matchScore);
+    // First, try to find interviewers with exact time matches
+    const exactMatchInterviewers = scoredInterviewers.filter(i => i.timeMatch);
+    exactMatchInterviewers.sort((a, b) => b.matchScore - a.matchScore);
 
-    if (availableInterviewers.length === 0) {
-      console.log('❌ No suitable interviewers available at the requested time.');
+    if (exactMatchInterviewers.length > 0) {
+      const bestExactMatch = exactMatchInterviewers[0];
+      console.log(`\n🏆 Best exact time match: ${bestExactMatch.company || 'Unknown'} - Score: ${bestExactMatch.matchScore}/100`);
+      return bestExactMatch;
+    }
+
+    // If no exact matches, find the best interviewer with alternative time slots
+    console.log('\n⏰ No exact time matches found. Looking for best alternative...');
+    
+    const interviewersWithAlternatives = scoredInterviewers.filter(i => 
+      i.alternativeTimeSlots && i.alternativeTimeSlots.length > 0
+    );
+
+    if (interviewersWithAlternatives.length === 0) {
+      console.log('❌ No suitable interviewers with any available time slots.');
       return null;
     }
 
-    const bestMatch = availableInterviewers[0];
-    console.log(`\n🏆 Best available interviewer: ${bestMatch.company || 'Unknown'} - Score: ${bestMatch.matchScore}/100`);
-    return bestMatch;
+    // Sort by match score first, then by earliest alternative time slot
+    interviewersWithAlternatives.sort((a, b) => {
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore;
+      }
+      // If scores are equal, prefer the one with earlier time slots
+      const aEarliest = a.alternativeTimeSlots[0] || '';
+      const bEarliest = b.alternativeTimeSlots[0] || '';
+      return aEarliest.localeCompare(bEarliest);
+    });
+
+    const bestAlternativeMatch = interviewersWithAlternatives[0];
+    console.log(`\n🏆 Best alternative match: ${bestAlternativeMatch.company || 'Unknown'} - Score: ${bestAlternativeMatch.matchScore}/100`);
+    console.log(`⏰ Alternative time slots: ${bestAlternativeMatch.alternativeTimeSlots.join(', ')}`);
+    
+    return bestAlternativeMatch;
   } catch (error) {
     console.error('💥 Error in findMatchingInterviewer:', error);
     return null;
