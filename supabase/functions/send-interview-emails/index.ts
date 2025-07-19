@@ -46,8 +46,9 @@ serve(async (req) => {
 
     if (emailData.type === 'confirmation') {
       // Send confirmation email to candidate
-      await resend.emails.send({
-        from: "Interview Platform <noreply@yourdomain.com>",
+      console.log("Sending confirmation email to candidate:", emailData.candidateEmail);
+      const candidateResult = await resend.emails.send({
+        from: "Interview Platform <onboarding@resend.dev>",
         to: [emailData.candidateEmail],
         subject: `Interview Confirmed: ${emailData.targetRole}`,
         html: `
@@ -67,9 +68,16 @@ serve(async (req) => {
         `,
       });
 
+      if (candidateResult.error) {
+        console.error("Failed to send candidate email:", candidateResult.error);
+        throw new Error(`Failed to send candidate email: ${candidateResult.error.message}`);
+      }
+      console.log("Candidate email sent successfully:", candidateResult.data?.id);
+
       // Send notification to interviewer
-      await resend.emails.send({
-        from: "Interview Platform <noreply@yourdomain.com>",
+      console.log("Sending notification email to interviewer:", emailData.interviewerEmail);
+      const interviewerResult = await resend.emails.send({
+        from: "Interview Platform <onboarding@resend.dev>",
         to: [emailData.interviewerEmail],
         subject: `New Interview Scheduled: ${emailData.targetRole}`,
         html: `
@@ -87,10 +95,18 @@ serve(async (req) => {
           <p>Best regards,<br>The Interview Platform Team</p>
         `,
       });
+
+      if (interviewerResult.error) {
+        console.error("Failed to send interviewer email:", interviewerResult.error);
+        throw new Error(`Failed to send interviewer email: ${interviewerResult.error.message}`);
+      }
+      console.log("Interviewer email sent successfully:", interviewerResult.data?.id);
+
     } else if (emailData.type === 'reminder') {
       // Send reminder email to candidate
-      await resend.emails.send({
-        from: "Interview Platform <noreply@yourdomain.com>",
+      console.log("Sending reminder email to candidate:", emailData.candidateEmail);
+      const reminderResult = await resend.emails.send({
+        from: "Interview Platform <onboarding@resend.dev>",
         to: [emailData.candidateEmail],
         subject: `Interview Reminder: ${emailData.targetRole} - Tomorrow`,
         html: `
@@ -115,6 +131,12 @@ serve(async (req) => {
           <p>Best regards,<br>The Interview Platform Team</p>
         `,
       });
+
+      if (reminderResult.error) {
+        console.error("Failed to send reminder email:", reminderResult.error);
+        throw new Error(`Failed to send reminder email: ${reminderResult.error.message}`);
+      }
+      console.log("Reminder email sent successfully:", reminderResult.data?.id);
     }
 
     console.log("Email sent successfully");
