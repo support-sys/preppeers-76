@@ -1,6 +1,5 @@
 
 export interface MatchingCandidate {
-  targetRole: string;
   experienceYears?: number;
   experience?: string;
   timeSlot?: string;
@@ -9,12 +8,12 @@ export interface MatchingCandidate {
   currentPosition?: string;
   company?: string;
   bio?: string;
-  skillCategories?: string[];
+  skillCategories: string[]; // Make required for matching
   specificSkills?: string[];
   noticePeriod?: string;
   linkedinUrl?: string;
   githubUrl?: string;
-  excludeInterviewerId?: string; // Add this property
+  excludeInterviewerId?: string;
 }
 
 export interface MatchedInterviewer {
@@ -29,18 +28,15 @@ export interface MatchedInterviewer {
   alternativeTimeSlots?: string[];
 }
 
-// Enhanced skill mapping for better matching
-export const skillMapping: { [key: string]: string[] } = {
-  "Frontend Developer": ["Frontend Development", "Full Stack Development", "React", "JavaScript", "Vue", "Angular", "HTML", "CSS", "TypeScript", "Frontend", "Frontend Developer", "Next.js", "React.js", "Vue.js"],
-  "Backend Developer": ["Backend Development", "Full Stack Development", "Node.js", "Python", "Java", "PHP", "Go", "Ruby", "Backend", "Backend Developer", "API", "Express.js", "Django", "Spring"],
-  "Full Stack Developer": ["Full Stack Development", "Frontend Development", "Backend Development", "React", "Node.js", "JavaScript", "Python", "Full Stack", "Full Stack Developer", "MERN Stack", "MEAN Stack"],
-  "Data Scientist": ["Data Science & AI", "Python", "R", "Machine Learning", "Data Science", "Statistics", "Data Scientist"],
-  "Data Engineer": ["Data Science & AI", "Python", "SQL", "Apache Spark", "Data Engineering", "ETL", "Data Engineer"],
-  "DevOps Engineer": ["DevOps & Cloud", "Docker", "Kubernetes", "AWS", "CI/CD", "DevOps", "DevOps Engineer"],
-  "Mobile Developer": ["Mobile Development", "React Native", "Flutter", "iOS", "Android", "Mobile", "Mobile Developer"],
-  "Machine Learning Engineer": ["Data Science & AI", "Python", "TensorFlow", "PyTorch", "Machine Learning", "ML Engineer"],
-  "Product Manager": ["Product Management", "Agile", "Scrum", "Product Manager"],
-  "QA Engineer": ["Testing", "Automation", "QA", "Quality Assurance", "QA Engineer"]
+// Enhanced skill category mapping with technologies
+export const skillCategoryMapping: { [key: string]: string[] } = {
+  "Frontend Development": ["React", "Vue.js", "Angular", "JavaScript", "TypeScript", "HTML/CSS", "Next.js", "Svelte"],
+  "Backend Development": ["Node.js", "Python", "Java", "Go", "Ruby", "PHP", "C#", ".NET", "Spring Boot"],
+  "Full Stack Development": ["MERN Stack", "MEAN Stack", "Django", "Rails", "Laravel", "Express.js"],
+  "Mobile Development": ["React Native", "Flutter", "iOS", "Android", "Swift", "Kotlin", "Ionic", "Xamarin"],
+  "DevOps & Cloud": ["AWS", "Azure", "GCP", "Docker", "Kubernetes", "Jenkins", "Terraform", "Ansible"],
+  "Data Science & AI": ["Python", "R", "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "SQL"],
+  "System Design": ["Microservices", "Database Design", "Scalability", "Load Balancing", "Caching", "API Design"]
 };
 
 export const parseTimeSlot = (timeSlot: string) => {
@@ -166,15 +162,13 @@ export const getAlternativeTimeSlots = (interviewerTimeSlots: any): string[] => 
   return alternatives.slice(0, 5); // Return top 5 alternatives
 };
 
-export const checkSkillsMatch = (candidateRole: string, interviewerSkills: string[], interviewerTechnologies: string[]) => {
+export const checkSkillsMatch = (candidateSkillCategories: string[], candidateSpecificSkills: string[], interviewerSkills: string[], interviewerTechnologies: string[]) => {
   console.log('\n🎯 === SKILLS MATCHING DEBUG ===');
-  console.log('👤 Candidate role:', candidateRole);
+  console.log('👤 Candidate skill categories:', candidateSkillCategories);
+  console.log('👤 Candidate specific skills:', candidateSpecificSkills);
   console.log('📋 Interviewer skill categories:', interviewerSkills);
   console.log('🔧 Interviewer technologies:', interviewerTechnologies);
   
-  const relevantSkills = skillMapping[candidateRole] || [candidateRole];
-  console.log('🎯 Skills we\'re looking for:', relevantSkills);
-
   // Combine interviewer skills and technologies, ensuring we have arrays
   const skillsArray = Array.isArray(interviewerSkills) ? interviewerSkills : [];
   const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
@@ -187,19 +181,27 @@ export const checkSkillsMatch = (candidateRole: string, interviewerSkills: strin
     return false;
   }
 
+  // Combine candidate skills from categories and specific skills
+  const candidateSkillsFromCategories = candidateSkillCategories.flatMap(category => 
+    skillCategoryMapping[category] || [category]
+  );
+  const allCandidateSkills = [...candidateSkillCategories, ...candidateSkillsFromCategories, ...(candidateSpecificSkills || [])];
+  
+  console.log('🎯 All candidate skills to match:', allCandidateSkills);
+
   // Check for matches (case-insensitive and partial matches)
   let matchFound = false;
   const matches = [];
 
-  for (const relevantSkill of relevantSkills) {
+  for (const candidateSkill of allCandidateSkills) {
     for (const interviewerSkill of allInterviewerSkills) {
-      const skillLower = relevantSkill.toLowerCase();
+      const candidateSkillLower = candidateSkill.toLowerCase();
       const interviewerSkillLower = interviewerSkill.toLowerCase();
       
       // More flexible matching: exact match, contains match, or word match
-      const isExactMatch = skillLower === interviewerSkillLower;
-      const isPartialMatch = skillLower.includes(interviewerSkillLower) || interviewerSkillLower.includes(skillLower);
-      const isWordMatch = skillLower.split(' ').some(word => 
+      const isExactMatch = candidateSkillLower === interviewerSkillLower;
+      const isPartialMatch = candidateSkillLower.includes(interviewerSkillLower) || interviewerSkillLower.includes(candidateSkillLower);
+      const isWordMatch = candidateSkillLower.split(' ').some(word => 
         interviewerSkillLower.split(' ').some(interviewerWord => 
           word === interviewerWord && word.length > 2 // Avoid matching short words like "js"
         )
@@ -207,9 +209,9 @@ export const checkSkillsMatch = (candidateRole: string, interviewerSkills: strin
       
       if (isExactMatch || isPartialMatch || isWordMatch) {
         matchFound = true;
-        matches.push(`"${relevantSkill}" ↔ "${interviewerSkill}"`);
-        console.log(`✅ SKILL MATCH: "${relevantSkill}" ↔ "${interviewerSkill}"`);
-        break; // Move to next relevant skill
+        matches.push(`"${candidateSkill}" ↔ "${interviewerSkill}"`);
+        console.log(`✅ SKILL MATCH: "${candidateSkill}" ↔ "${interviewerSkill}"`);
+        break; // Move to next candidate skill
       }
     }
   }
@@ -250,7 +252,6 @@ export const checkEnhancedSkillsMatch = (
 ): { match: boolean; score: number; details: string[] } => {
   console.log('\n🎯 === ENHANCED SKILLS MATCHING DEBUG ===');
   console.log('👤 Candidate data:', {
-    targetRole: candidate.targetRole,
     skillCategories: candidate.skillCategories,
     specificSkills: candidate.specificSkills
   });
@@ -263,26 +264,19 @@ export const checkEnhancedSkillsMatch = (
   const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
   const allInterviewerSkills = [...skillsArray, ...technologiesArray];
 
-  // 1. Target Role Matching (20 points max)
-  const targetRoleMatch = checkSkillsMatch(candidate.targetRole, interviewerSkills, interviewerTechnologies);
-  if (targetRoleMatch) {
-    totalScore += 20;
-    matchDetails.push(`Target role "${candidate.targetRole}" matches interviewer expertise`);
-  }
-
-  // 2. Skill Categories Matching (15 points max)
+  // 1. Skill Categories Matching (30 points max)
   if (candidate.skillCategories && candidate.skillCategories.length > 0) {
     const categoryMatches = candidate.skillCategories.filter(category => 
       skillsArray.includes(category)
     );
     if (categoryMatches.length > 0) {
-      const categoryScore = Math.min(15, categoryMatches.length * 5);
+      const categoryScore = Math.min(30, categoryMatches.length * 10);
       totalScore += categoryScore;
       matchDetails.push(`${categoryMatches.length} skill categories match: ${categoryMatches.join(', ')}`);
     }
   }
 
-  // 3. Specific Skills Matching (10 points max)
+  // 2. Specific Skills Matching (20 points max)
   if (candidate.specificSkills && candidate.specificSkills.length > 0) {
     const skillMatches = candidate.specificSkills.filter(skill => 
       allInterviewerSkills.some(interviewerSkill => 
@@ -292,12 +286,11 @@ export const checkEnhancedSkillsMatch = (
       )
     );
     if (skillMatches.length > 0) {
-      const skillScore = Math.min(10, skillMatches.length * 3);
+      const skillScore = Math.min(20, skillMatches.length * 5);
       totalScore += skillScore;
       matchDetails.push(`${skillMatches.length} specific skills match: ${skillMatches.join(', ')}`);
     }
   }
-
 
   const finalMatch = totalScore >= 15; // Require at least 15 points for a match
   console.log(`📊 Enhanced skills matching result: ${totalScore}/50 points, Match: ${finalMatch}`);

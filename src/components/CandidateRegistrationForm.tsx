@@ -34,7 +34,6 @@ interface CandidateFormData {
   specificSkills: string[];
   
   // Interview Preferences
-  targetRole: string;
   timeSlot: string;
   noticePeriod: string;
   
@@ -66,7 +65,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     specificSkills: [],
     
     // Interview Preferences
-    targetRole: "",
     timeSlot: "",
     noticePeriod: "",
     
@@ -187,10 +185,10 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.targetRole || !formData.noticePeriod || !formData.currentPosition || !formData.resume) {
+    if (!formData.skillCategories.length || !formData.noticePeriod || !formData.currentPosition || !formData.resume) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields (Target Role, Notice Period, Current Position, Resume).",
+        description: "Please fill in all required fields (Skill Categories, Notice Period, Current Position, Resume).",
         variant: "destructive",
       });
       return;
@@ -216,7 +214,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             current_position: formData.currentPosition,
             experience: formData.experienceYears.toString() + " years",
             notice_period: formData.noticePeriod,
-            target_role: formData.targetRole,
+            target_role: formData.skillCategories.join(', ') || 'Not specified',
             linkedin_url: formData.linkedinUrl || null,
             github_url: formData.githubUrl || null,
             bio: formData.bio || null,
@@ -354,7 +352,8 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
               <div>
-                <Label className="text-white">Skill Categories</Label>
+                <Label className="text-white">Skill Categories *</Label>
+                <p className="text-sm text-slate-400 mb-2">Select at least one skill category for matching with interviewers</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                   {Object.keys(skillOptions).map(category => (
                     <div key={category} className="flex items-center space-x-2">
@@ -405,30 +404,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
               <ChevronDown className={`w-5 h-5 transition-transform ${openSections.preferences ? 'rotate-180' : ''}`} />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
-              <div>
-                <Label htmlFor="targetRole" className="text-white">Target Role *</Label>
-                <select
-                  id="targetRole"
-                  name="targetRole"
-                  value={formData.targetRole}
-                  onChange={handleInputChange}
-                  className="w-full mt-2 bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                  disabled={isLoading}
-                >
-                  <option value="">Select your target role</option>
-                  <option value="Frontend Developer">Frontend Developer</option>
-                  <option value="Backend Developer">Backend Developer</option>
-                  <option value="Full Stack Developer">Full Stack Developer</option>
-                  <option value="Data Scientist">Data Scientist</option>
-                  <option value="Data Engineer">Data Engineer</option>
-                  <option value="DevOps Engineer">DevOps Engineer</option>
-                  <option value="Mobile Developer">Mobile Developer</option>
-                  <option value="Machine Learning Engineer">Machine Learning Engineer</option>
-                  <option value="Product Manager">Product Manager</option>
-                  <option value="QA Engineer">QA Engineer</option>
-                </select>
-              </div>
 
               <div>
                 <Label htmlFor="timeSlot" className="text-white">Preferred Time Slot</Label>

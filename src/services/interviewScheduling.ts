@@ -14,7 +14,6 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
   try {
     console.log('\n🚀 === STARTING INTERVIEWER MATCHING PROCESS ===');
     console.log('👤 Candidate Data:', {
-      targetRole: candidateData.targetRole,
       experienceYears: candidateData.experienceYears,
       experience: candidateData.experience,
       timeSlot: candidateData.timeSlot,
@@ -259,7 +258,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       candidate_email: userEmail,
       interviewer_email: interviewerEmail,
       interviewer_name: interviewerName,
-      target_role: candidate.targetRole,
+      target_role: candidate.skillCategories?.join(', ') || 'Not specified',
       experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
       scheduled_time: selectedTimeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
       status: 'scheduled',

@@ -86,8 +86,11 @@ const InterviewRescheduleDialog = ({ interview, userRole, onClose, onSuccess }: 
         const preferredDateTime = new Date(selectedDate!);
         preferredDateTime.setHours(hours, minutes, 0, 0);
 
+        // Parse skills from target_role field (which now contains skill categories)
+        const skillCategories = interview.target_role?.split(', ').filter(Boolean) || [];
+        
         const candidateData = {
-          targetRole: interview.target_role,
+          skillCategories: skillCategories,
           experience: interview.experience,
           timeSlot: format(preferredDateTime, 'yyyy-MM-dd HH:mm'),
           resume: undefined
