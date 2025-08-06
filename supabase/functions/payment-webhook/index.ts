@@ -54,11 +54,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check various conditions that indicate this is a test webhook from Cashfree
     const isTestWebhook = (
-      !webhookData.type ||                                    // No webhook type
-      Object.keys(webhookData).length < 3 ||                 // Very few fields
-      !webhookData.data ||                                    // No data field
-      (webhookData.data && !webhookData.data.order_id)       // Data exists but no order_id
+      !webhookData.type ||                                         // No webhook type
+      Object.keys(webhookData).length < 3 ||                      // Very few fields
+      !webhookData.data ||                                         // No data field
+      (webhookData.data && !webhookData.data.order && !webhookData.data.order_id)  // Data exists but no order info
     );
+    
+    // Log webhook details for debugging
+    console.log('Webhook type:', webhookData.type);
+    console.log('Has data field:', !!webhookData.data);
+    console.log('Has order field:', !!(webhookData.data && webhookData.data.order));
+    console.log('Has order_id in order:', !!(webhookData.data && webhookData.data.order && webhookData.data.order.order_id));
+    console.log('Is test webhook?', isTestWebhook);
     
     if (isTestWebhook) {
       console.log('=== Processing Cashfree Test Webhook ===');
