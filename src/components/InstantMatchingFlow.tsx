@@ -31,28 +31,6 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
     }
   }, [hasSuccessfulPayment, showSuccess, toast]);
 
-  const triggerPaymentSuccess = () => {
-    // This simulates a successful payment by updating the payment session
-    console.log('Manually triggering payment success for session:', paymentSession?.id);
-    
-    if (paymentSession?.id) {
-      // Update the payment session to successful status
-      supabase
-        .from('payment_sessions')
-        .update({ 
-          payment_status: 'successful',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', paymentSession.id)
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error updating payment session:', error);
-          } else {
-            console.log('Payment status updated successfully:', error);
-          }
-        });
-    }
-  };
 
   const handleStartMatching = async () => {
     if (!paymentSession) return;
@@ -151,17 +129,9 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
                 isLoading={isMatching}
               />
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-center space-x-3 text-orange-300">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-base font-medium">Processing payment...</span>
-                </div>
-                <button 
-                  onClick={triggerPaymentSuccess}
-                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  Mark Payment as Successful
-                </button>
+              <div className="flex items-center justify-center space-x-3 text-orange-300">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-base font-medium">Processing payment...</span>
               </div>
             )}
           </div>
