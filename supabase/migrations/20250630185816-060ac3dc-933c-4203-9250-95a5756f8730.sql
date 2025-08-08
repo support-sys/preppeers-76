@@ -24,7 +24,6 @@ CREATE TABLE public.interviewers (
   technologies TEXT[] DEFAULT '{}',
   availability_days TEXT[] DEFAULT '{}',
   time_slots JSONB DEFAULT '{}',
-  hourly_rate DECIMAL(10,2),
   bio TEXT,
   linkedin_url TEXT,
   github_url TEXT,

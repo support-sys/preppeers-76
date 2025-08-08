@@ -152,7 +152,6 @@ const Interviewers = () => {
         technologies: interviewerData.skills, // Store individual skills in technologies for backward compatibility
         availability_days: [],
         time_slots: {},
-        hourly_rate: 0,
         bio: interviewerData.bio,
         linkedin_url: interviewerData.linkedinUrl,
         github_url: interviewerData.githubUrl
