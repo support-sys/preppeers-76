@@ -1,5 +1,1 @@
-
 project_id = "jhhoeodofsbgfxndhotq"
-
-[functions.payment-webhook]
-verify_jwt = false
