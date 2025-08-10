@@ -362,19 +362,36 @@ const Auth = () => {
                     </div>
                     <div>
                       <Label className="text-white">I want to join as</Label>
-                      <Select value={role} onValueChange={(value: 'interviewer' | 'interviewee') => setRole(value)}>
-                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-600">
-                          <SelectItem value="interviewee" className="text-white hover:bg-slate-700">
-                            Interviewee (Looking for practice)
-                          </SelectItem>
-                          <SelectItem value="interviewer" className="text-white hover:bg-slate-700">
-                            Interviewer (Want to conduct interviews)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-3 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="interviewee"
+                            name="role"
+                            value="interviewee"
+                            checked={role === 'interviewee'}
+                            onChange={(e) => setRole(e.target.value as 'interviewer' | 'interviewee')}
+                            className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
+                          />
+                          <Label htmlFor="interviewee" className="text-white cursor-pointer">
+                            Want to practice for Interview
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="interviewer"
+                            name="role"
+                            value="interviewer"
+                            checked={role === 'interviewer'}
+                            onChange={(e) => setRole(e.target.value as 'interviewer' | 'interviewee')}
+                            className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
+                          />
+                          <Label htmlFor="interviewer" className="text-white cursor-pointer">
+                            Want to take interviews
+                          </Label>
+                        </div>
+                      </div>
                     </div>
                     <Button
                       type="submit"
