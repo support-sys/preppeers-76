@@ -6,7 +6,7 @@ import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
 
 export const useBookingFlow = () => {
-  const [currentStep, setCurrentStep] = useState<'form' | 'payment' | 'matching' | 'success' | 'no-match' | 'time-confirmation'>('form');
+  const [currentStep, setCurrentStep] = useState<'form' | 'preview-match' | 'payment' | 'matching' | 'success' | 'no-match' | 'time-confirmation'>('form');
   const [formData, setFormData] = useState<any>(null);
   const [matchedInterviewer, setMatchedInterviewer] = useState<any>(null);
   const [alternativeTimeSlot, setAlternativeTimeSlot] = useState<any>(null);
@@ -17,7 +17,6 @@ export const useBookingFlow = () => {
 
   const handleFormSubmit = async (data: any) => {
     console.log('Enhanced form submitted with data:', {
-      targetRole: data.targetRole,
       currentPosition: data.currentPosition,
       experienceYears: data.experienceYears,
       skillCategories: data.skillCategories,
@@ -26,15 +25,91 @@ export const useBookingFlow = () => {
       timeSlot: data.timeSlot
     });
     setFormData(data);
+    setIsLoading(true);
+    
+    try {
+      console.log('Finding matching interviewer preview...');
+      const interviewer = await findMatchingInterviewer(data);
+      
+      if (interviewer) {
+        console.log('Preview interviewer found:', interviewer);
+        setMatchedInterviewer(interviewer);
+        
+        // Check if time slots match exactly or if we need confirmation
+        const candidatePreferredTime = data.timeSlot;
+        const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time');
+        
+        if (!hasExactTimeMatch && candidatePreferredTime) {
+          setAlternativeTimeSlot({
+            candidatePreferred: candidatePreferredTime,
+            interviewerAvailable: interviewer.alternativeTimeSlots?.[0] || 'Next available slot'
+          });
+        }
+        
+        setCurrentStep('preview-match');
+      } else {
+        console.log('No interviewer found for preview');
+        setCurrentStep('no-match');
+        toast({
+          title: "No Interviewer Available",
+          description: "We're finding the best interviewer for you!",
+        });
+      }
+    } catch (error) {
+      console.error("Error finding interviewer preview:", error);
+      toast({
+        title: "Error",
+        description: "Unable to find an interviewer. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleProceedToPayment = () => {
     setCurrentStep('payment');
   };
 
-  const handlePaymentSuccess = (paymentData: any) => {
+  const handlePaymentSuccess = async (paymentData: any) => {
     console.log('Payment success callback called:', paymentData);
-    toast({
-      title: "Payment Successful!",
-      description: "You can now start matching with interviewers.",
-    });
+    setIsLoading(true);
+    
+    try {
+      // Now finalize the booking with the already matched interviewer
+      if (matchedInterviewer && formData) {
+        await scheduleInterview(
+          matchedInterviewer, 
+          formData, 
+          user?.email || '',
+          user?.user_metadata?.full_name || user?.email || ''
+        );
+        
+        if (paymentData?.sessionId) {
+          await markInterviewMatched(paymentData.sessionId);
+        }
+        
+        setCurrentStep('success');
+        toast({
+          title: "Interview Scheduled!",
+          description: "Your interview has been scheduled successfully!",
+        });
+      } else {
+        toast({
+          title: "Payment Successful!",
+          description: "Processing your interview booking...",
+        });
+      }
+    } catch (error) {
+      console.error("Error finalizing booking:", error);
+      toast({
+        title: "Booking Error",
+        description: "Payment successful but booking failed. We'll contact you soon!",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePaymentError = (error: any) => {
@@ -185,6 +260,7 @@ export const useBookingFlow = () => {
     alternativeTimeSlot,
     isLoading,
     handleFormSubmit,
+    handleProceedToPayment,
     handlePaymentSuccess,
     handlePaymentError,
     handleStartMatching,

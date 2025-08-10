@@ -13,6 +13,7 @@ import BookingHeader from "@/components/BookingHeader";
 import PaymentDetails from "@/components/PaymentDetails";
 import PaymentPage from "@/components/PaymentPage";
 import TimeSlotConfirmation from "@/components/TimeSlotConfirmation";
+import InterviewerPreview from "@/components/InterviewerPreview";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { useBookingFlow } from "@/hooks/useBookingFlow";
@@ -27,6 +28,7 @@ const Book = () => {
     alternativeTimeSlot,
     isLoading,
     handleFormSubmit,
+    handleProceedToPayment,
     handlePaymentSuccess,
     handlePaymentError,
     handleStartMatching,
@@ -65,6 +67,18 @@ const Book = () => {
 
   if (currentStep === 'matching') {
     return <MatchingLoader />;
+  }
+
+  if (currentStep === 'preview-match') {
+    return (
+      <InterviewerPreview
+        matchedInterviewer={matchedInterviewer}
+        alternativeTimeSlot={alternativeTimeSlot}
+        onProceedToPayment={handleProceedToPayment}
+        onGoBack={handleTryAgain}
+        formData={formData}
+      />
+    );
   }
 
   if (currentStep === 'time-confirmation') {
