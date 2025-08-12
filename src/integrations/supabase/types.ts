@@ -59,6 +59,57 @@ export type Database = {
         }
         Relationships: []
       }
+      interviewer_time_blocks: {
+        Row: {
+          block_reason: string
+          blocked_date: string
+          created_at: string
+          end_time: string
+          id: string
+          interview_id: string | null
+          interviewer_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          block_reason?: string
+          blocked_date: string
+          created_at?: string
+          end_time: string
+          id?: string
+          interview_id?: string | null
+          interviewer_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          block_reason?: string
+          blocked_date?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          interview_id?: string | null
+          interviewer_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_interviewer_time_blocks_interview_id"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_interviewer_time_blocks_interviewer_id"
+            columns: ["interviewer_id"]
+            isOneToOne: false
+            referencedRelation: "interviewers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interviewers: {
         Row: {
           availability_days: string[] | null

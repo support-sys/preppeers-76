@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { format } from 'date-fns';
 import { 
   MatchingCandidate, 
   MatchedInterviewer, 
@@ -173,40 +174,75 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
   }
 };
 
-// Function to check for existing interviews at the same time
-export const checkForConflictingInterviews = async (interviewerId: string, scheduledTime: string) => {
+// Function to check for conflicting time blocks
+export const checkForConflictingTimeBlocks = async (interviewerId: string, scheduledTime: string) => {
   try {
-    console.log(`🔍 Checking for conflicting interviews for interviewer ${interviewerId} at ${scheduledTime}`);
+    console.log(`🔍 Checking for conflicting time blocks for interviewer ${interviewerId} at ${scheduledTime}`);
     
-    // Check for existing interviews within ±30 minutes of the scheduled time
     const scheduledDate = new Date(scheduledTime);
-    const bufferMinutes = 30;
-    const startTime = new Date(scheduledDate.getTime() - bufferMinutes * 60000).toISOString();
-    const endTime = new Date(scheduledDate.getTime() + bufferMinutes * 60000).toISOString();
+    const scheduledDateStr = scheduledDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const startTime = scheduledDate.toTimeString().slice(0, 5); // HH:MM format
+    const endTime = new Date(scheduledDate.getTime() + 60 * 60 * 1000).toTimeString().slice(0, 5); // +1 hour
     
-    const { data: existingInterviews, error } = await supabase
-      .from('interviews')
-      .select('id, scheduled_time, candidate_name, status')
+    const { data: existingBlocks, error } = await supabase
+      .from('interviewer_time_blocks')
+      .select('id, start_time, end_time, block_reason')
       .eq('interviewer_id', interviewerId)
-      .gte('scheduled_time', startTime)
-      .lte('scheduled_time', endTime)
-      .in('status', ['scheduled', 'confirmed']);
+      .eq('blocked_date', scheduledDateStr)
+      .or(`start_time.lt.${endTime},end_time.gt.${startTime}`);
     
     if (error) {
-      console.error('❌ Error checking for conflicting interviews:', error);
+      console.error('❌ Error checking for conflicting time blocks:', error);
       return false; // Allow booking if we can't check
     }
     
-    if (existingInterviews && existingInterviews.length > 0) {
-      console.log('⚠️ Found conflicting interviews:', existingInterviews);
+    if (existingBlocks && existingBlocks.length > 0) {
+      console.log('⚠️ Found conflicting time blocks:', existingBlocks);
       return true; // Conflict found
     }
     
-    console.log('✅ No conflicting interviews found');
+    console.log('✅ No conflicting time blocks found');
     return false; // No conflicts
   } catch (error) {
-    console.error('💥 Error in checkForConflictingInterviews:', error);
+    console.error('💥 Error in checkForConflictingTimeBlocks:', error);
     return false; // Allow booking on error
+  }
+};
+
+// Function to create time block for interview
+export const createInterviewTimeBlock = async (
+  interviewerId: string,
+  scheduledTime: string,
+  interviewId?: string
+): Promise<void> => {
+  try {
+    console.log(`🔒 Creating time block for interviewer ${interviewerId} at ${scheduledTime}`);
+    
+    const scheduledDate = new Date(scheduledTime);
+    const scheduledDateStr = format(scheduledDate, 'yyyy-MM-dd');
+    const startTime = format(scheduledDate, 'HH:mm');
+    const endTime = format(new Date(scheduledDate.getTime() + 60 * 60 * 1000), 'HH:mm');
+
+    const { error } = await supabase
+      .from('interviewer_time_blocks')
+      .insert({
+        interviewer_id: interviewerId,
+        blocked_date: scheduledDateStr,
+        start_time: startTime,
+        end_time: endTime,
+        block_reason: 'interview_scheduled',
+        interview_id: interviewId
+      });
+
+    if (error) {
+      console.error('❌ Error creating time block:', error);
+      throw error;
+    }
+
+    console.log(`✅ Successfully created time block for ${scheduledDateStr} ${startTime}-${endTime}`);
+  } catch (error) {
+    console.error('💥 Error in createInterviewTimeBlock:', error);
+    throw error;
   }
 };
 
@@ -309,8 +345,8 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
 
     console.log("📝 Sending interview data to edge function:", interviewData);
 
-    // Check for conflicting interviews before booking
-    const hasConflict = await checkForConflictingInterviews(interviewer.id, selectedTimeSlot);
+    // Check for conflicting time blocks before booking
+    const hasConflict = await checkForConflictingTimeBlocks(interviewer.id, selectedTimeSlot);
     if (hasConflict) {
       throw new Error('This time slot is no longer available. Please select a different time.');
     }
@@ -325,9 +361,9 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       throw error;
     }
 
-    // Block the time slot for the interviewer after successful booking
-    if (selectedTimeSlot) {
-      await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot);
+    // Create time block for the interviewer after successful booking
+    if (selectedTimeSlot && data?.interview_id) {
+      await createInterviewTimeBlock(interviewer.id, selectedTimeSlot, data.interview_id);
     }
 
     console.log("✅ Interview scheduled successfully:", data);
