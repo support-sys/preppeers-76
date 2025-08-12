@@ -46,19 +46,18 @@ export const parseTimeSlot = (timeSlot: string) => {
   if (!timeSlot) return null;
   
   try {
-    // Parse the ISO string directly to get the correct date
+    // Parse the ISO string and work with local time to get correct day
     const date = new Date(timeSlot);
     
-    // Use UTC parsing to avoid timezone confusion for the date part
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth();
-    const day = date.getUTCDate();
-    const hour = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
+    // Get the actual local date components to determine correct day of week
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const hour = date.getHours();
+    const minutes = date.getMinutes();
     
-    // Create a proper date for day calculation in Asia/Kolkata
-    const localDate = new Date(year, month, day);
-    const dayOfWeek = localDate.toLocaleDateString('en-US', { 
+    // Get day of week from the actual parsed date
+    const dayOfWeek = date.toLocaleDateString('en-US', { 
       weekday: 'long'
     });
     
@@ -68,7 +67,8 @@ export const parseTimeSlot = (timeSlot: string) => {
       minutes, 
       timeString: `${hour}:${minutes.toString().padStart(2, '0')}`,
       originalTimeSlot: timeSlot,
-      parsedDate: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      parsedDate: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      fullDateDebug: date.toString()
     });
     
     return { dayOfWeek, hour, minutes, date };
