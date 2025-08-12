@@ -47,9 +47,21 @@ export const parseTimeSlot = (timeSlot: string) => {
   
   try {
     const date = new Date(timeSlot);
-    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const hour = date.getHours();
-    const minutes = date.getMinutes();
+    // Use Asia/Kolkata timezone for consistent day calculation
+    const dayOfWeek = date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      timeZone: 'Asia/Kolkata'
+    });
+    // Get hours and minutes in Asia/Kolkata timezone
+    const hour = parseInt(date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      hour12: false,
+      timeZone: 'Asia/Kolkata'
+    }));
+    const minutes = parseInt(date.toLocaleTimeString('en-US', { 
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    }));
     
     console.log('🕐 Parsed candidate time slot:', { 
       dayOfWeek, 

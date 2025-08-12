@@ -229,9 +229,14 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       name: interviewerName 
     });
     
-    // Select the best available time slot
+    // Use the exact time slot if there's a match, otherwise use first alternative
     let selectedTimeSlot = candidate.timeSlot;
-    if (!selectedTimeSlot && interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
+    
+    // If there's an exact time match, keep the candidate's preferred time
+    if (interviewer.timeMatch) {
+      selectedTimeSlot = candidate.timeSlot;
+    } else if (interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
+      // Only use alternative if no exact match was found
       selectedTimeSlot = interviewer.alternativeTimeSlots[0];
     }
 
@@ -307,26 +312,19 @@ export const blockInterviewerTimeSlot = async (interviewerId: string, timeSlot: 
       return;
     }
 
-    // Remove the booked time slot from available slots
-    const currentSlots = interviewer.current_time_slots || [];
-    const updatedSlots = Array.isArray(currentSlots) 
-      ? currentSlots.filter(slot => slot !== timeSlot)
-      : [];
-
-    // Update the interviewer's available time slots
-    const { error: updateError } = await supabase
-      .from('interviewers')
-      .update({ 
-        current_time_slots: updatedSlots,
-        schedule_last_updated: new Date().toISOString()
-      })
-      .eq('id', interviewerId);
-
-    if (updateError) {
-      console.error('Error updating interviewer time slots:', updateError);
-    } else {
-      console.log(`Successfully blocked time slot ${timeSlot} for interviewer ${interviewerId}`);
+    // When an exact time match occurs, we don't need to block anything
+    // since the interviewer is available during their entire time range
+    // Only block if we're scheduling during a specific alternative slot
+    if (!timeSlot || timeSlot.includes('T')) {
+      // This is an ISO datetime string (exact match), no need to block
+      console.log('Exact time match - no need to block specific slot');
+      return;
     }
+
+    // For alternative time slots (like "Monday 09:00-17:00"), we would block the entire day
+    // But since we're dealing with continuous availability, we'll just log for now
+    console.log(`Interview scheduled for ${timeSlot} - maintaining current availability`);
+    
   } catch (error) {
     console.error('Error in blockInterviewerTimeSlot:', error);
   }
