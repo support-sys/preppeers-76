@@ -22,10 +22,10 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       specificSkills: candidateData.specificSkills
     });
     
-    // Get all interviewers first
+    // Get all interviewers first - only non-sensitive data needed for matching
     const { data: allInterviewers, error } = await supabase
       .from('interviewers')
-      .select('*');
+      .select('id, user_id, experience_years, position, company, skills, technologies, availability_days, time_slots, current_available_date, current_time_slots');
 
     if (error) {
       console.error('❌ Error fetching interviewers:', error);
