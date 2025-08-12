@@ -173,6 +173,43 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
   }
 };
 
+// Function to check for existing interviews at the same time
+export const checkForConflictingInterviews = async (interviewerId: string, scheduledTime: string) => {
+  try {
+    console.log(`🔍 Checking for conflicting interviews for interviewer ${interviewerId} at ${scheduledTime}`);
+    
+    // Check for existing interviews within ±30 minutes of the scheduled time
+    const scheduledDate = new Date(scheduledTime);
+    const bufferMinutes = 30;
+    const startTime = new Date(scheduledDate.getTime() - bufferMinutes * 60000).toISOString();
+    const endTime = new Date(scheduledDate.getTime() + bufferMinutes * 60000).toISOString();
+    
+    const { data: existingInterviews, error } = await supabase
+      .from('interviews')
+      .select('id, scheduled_time, candidate_name, status')
+      .eq('interviewer_id', interviewerId)
+      .gte('scheduled_time', startTime)
+      .lte('scheduled_time', endTime)
+      .in('status', ['scheduled', 'confirmed']);
+    
+    if (error) {
+      console.error('❌ Error checking for conflicting interviews:', error);
+      return false; // Allow booking if we can't check
+    }
+    
+    if (existingInterviews && existingInterviews.length > 0) {
+      console.log('⚠️ Found conflicting interviews:', existingInterviews);
+      return true; // Conflict found
+    }
+    
+    console.log('✅ No conflicting interviews found');
+    return false; // No conflicts
+  } catch (error) {
+    console.error('💥 Error in checkForConflictingInterviews:', error);
+    return false; // Allow booking on error
+  }
+};
+
 export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string) => {
   try {
     console.log("Scheduling interview with:", { candidate: userFullName });
@@ -272,6 +309,12 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
 
     console.log("📝 Sending interview data to edge function:", interviewData);
 
+    // Check for conflicting interviews before booking
+    const hasConflict = await checkForConflictingInterviews(interviewer.id, selectedTimeSlot);
+    if (hasConflict) {
+      throw new Error('This time slot is no longer available. Please select a different time.');
+    }
+
     // Call the edge function to handle interview scheduling
     const { data, error } = await supabase.functions.invoke('schedule-interview', {
       body: interviewData
@@ -295,10 +338,10 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
   }
 };
 
-// New function to block interviewer time slots
+// Function to block specific datetime from interviewer's availability
 export const blockInterviewerTimeSlot = async (interviewerId: string, timeSlot: string) => {
   try {
-    console.log(`Blocking time slot ${timeSlot} for interviewer ${interviewerId}`);
+    console.log(`🔒 Blocking time slot ${timeSlot} for interviewer ${interviewerId}`);
     
     // Get current time slots
     const { data: interviewer, error: fetchError } = await supabase
@@ -308,24 +351,136 @@ export const blockInterviewerTimeSlot = async (interviewerId: string, timeSlot: 
       .single();
 
     if (fetchError) {
-      console.error('Error fetching interviewer time slots:', fetchError);
+      console.error('❌ Error fetching interviewer time slots:', fetchError);
       return;
     }
 
-    // When an exact time match occurs, we don't need to block anything
-    // since the interviewer is available during their entire time range
-    // Only block if we're scheduling during a specific alternative slot
-    if (!timeSlot || timeSlot.includes('T')) {
-      // This is an ISO datetime string (exact match), no need to block
-      console.log('Exact time match - no need to block specific slot');
-      return;
-    }
-
-    // For alternative time slots (like "Monday 09:00-17:00"), we would block the entire day
-    // But since we're dealing with continuous availability, we'll just log for now
-    console.log(`Interview scheduled for ${timeSlot} - maintaining current availability`);
+    // Parse the scheduled datetime
+    const scheduledDate = new Date(timeSlot);
+    const scheduledDay = scheduledDate.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      timeZone: 'Asia/Kolkata'
+    });
     
+    const scheduledHour = parseInt(scheduledDate.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      hour12: false,
+      timeZone: 'Asia/Kolkata'
+    }));
+    
+    const scheduledMinutes = parseInt(scheduledDate.toLocaleTimeString('en-US', { 
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    }));
+
+    console.log(`📅 Blocking ${scheduledDay} at ${scheduledHour}:${scheduledMinutes.toString().padStart(2, '0')}`);
+
+    const currentSlots = interviewer.current_time_slots || {};
+    const daySlots = (currentSlots as any)?.[scheduledDay] || [];
+    
+    if (!Array.isArray(daySlots) || daySlots.length === 0) {
+      console.log(`❌ No availability found for ${scheduledDay}`);
+      return;
+    }
+
+    // Create 1-hour blocked slot
+    const blockStartTime = `${scheduledHour}:${scheduledMinutes.toString().padStart(2, '0')}`;
+    const blockEndHour = scheduledHour + 1;
+    const blockEndTime = `${blockEndHour}:${scheduledMinutes.toString().padStart(2, '0')}`;
+    
+    console.log(`🚫 Blocking time range: ${blockStartTime} - ${blockEndTime}`);
+
+    // Process each time slot for the day
+    const updatedDaySlots = [];
+    
+    for (const slot of daySlots) {
+      if (typeof slot === 'object' && slot.start && slot.end) {
+        const slotStart = timeToMinutes(slot.start);
+        const slotEnd = timeToMinutes(slot.end);
+        const blockStart = timeToMinutes(blockStartTime);
+        const blockEnd = timeToMinutes(blockEndTime);
+        
+        console.log(`🔍 Processing slot ${slot.start}-${slot.end} (${slotStart}-${slotEnd} mins)`);
+        console.log(`🚫 Block range: ${blockStart}-${blockEnd} mins`);
+        
+        // Check if block overlaps with this slot
+        if (blockEnd <= slotStart || blockStart >= slotEnd) {
+          // No overlap, keep the slot as is
+          updatedDaySlots.push(slot);
+          console.log(`✅ No overlap - keeping slot ${slot.start}-${slot.end}`);
+        } else {
+          // Overlap detected - split the slot
+          console.log(`⚠️ Overlap detected - splitting slot`);
+          
+          // Add slot before the block (if any)
+          if (slotStart < blockStart) {
+            const beforeSlot = {
+              id: generateSlotId(),
+              start: slot.start,
+              end: minutesToTime(blockStart)
+            };
+            updatedDaySlots.push(beforeSlot);
+            console.log(`📝 Added before-block slot: ${beforeSlot.start}-${beforeSlot.end}`);
+          }
+          
+          // Add slot after the block (if any)
+          if (slotEnd > blockEnd) {
+            const afterSlot = {
+              id: generateSlotId(),
+              start: minutesToTime(blockEnd),
+              end: slot.end
+            };
+            updatedDaySlots.push(afterSlot);
+            console.log(`📝 Added after-block slot: ${afterSlot.start}-${afterSlot.end}`);
+          }
+        }
+      } else {
+        // Keep non-object slots as is
+        updatedDaySlots.push(slot);
+      }
+    }
+
+    // Update the interviewer's time slots
+    const updatedSlots = currentSlots && typeof currentSlots === 'object' ? {
+      ...(currentSlots as Record<string, any>),
+      [scheduledDay]: updatedDaySlots
+    } : {
+      [scheduledDay]: updatedDaySlots
+    };
+
+    const { error: updateError } = await supabase
+      .from('interviewers')
+      .update({ 
+        current_time_slots: updatedSlots,
+        schedule_last_updated: new Date().toISOString()
+      })
+      .eq('id', interviewerId);
+
+    if (updateError) {
+      console.error('❌ Error updating interviewer time slots:', updateError);
+    } else {
+      console.log(`✅ Successfully blocked time slot ${blockStartTime}-${blockEndTime} for interviewer ${interviewerId}`);
+      console.log(`📊 Updated slots for ${scheduledDay}:`, updatedDaySlots);
+    }
   } catch (error) {
-    console.error('Error in blockInterviewerTimeSlot:', error);
+    console.error('💥 Error in blockInterviewerTimeSlot:', error);
   }
+};
+
+// Helper function to convert time string to minutes since midnight
+const timeToMinutes = (timeStr: string): number => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+// Helper function to convert minutes since midnight to time string
+const minutesToTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+};
+
+// Helper function to generate unique slot IDs
+const generateSlotId = (): string => {
+  return Math.random().toString(36).substr(2, 9);
 };
