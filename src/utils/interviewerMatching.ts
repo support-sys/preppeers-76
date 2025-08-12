@@ -46,30 +46,31 @@ export const parseTimeSlot = (timeSlot: string) => {
   if (!timeSlot) return null;
   
   try {
+    // Parse the ISO string directly to get the correct date
     const date = new Date(timeSlot);
-    // Use Asia/Kolkata timezone for consistent day calculation
-    const dayOfWeek = date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      timeZone: 'Asia/Kolkata'
+    
+    // Use UTC parsing to avoid timezone confusion for the date part
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+    const hour = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    
+    // Create a proper date for day calculation in Asia/Kolkata
+    const localDate = new Date(year, month, day);
+    const dayOfWeek = localDate.toLocaleDateString('en-US', { 
+      weekday: 'long'
     });
-    // Get hours and minutes in Asia/Kolkata timezone
-    const hour = parseInt(date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      hour12: false,
-      timeZone: 'Asia/Kolkata'
-    }));
-    const minutes = parseInt(date.toLocaleTimeString('en-US', { 
-      minute: '2-digit',
-      timeZone: 'Asia/Kolkata'
-    }));
     
     console.log('🕐 Parsed candidate time slot:', { 
       dayOfWeek, 
       hour, 
       minutes, 
       timeString: `${hour}:${minutes.toString().padStart(2, '0')}`,
-      originalTimeSlot: timeSlot 
+      originalTimeSlot: timeSlot,
+      parsedDate: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     });
+    
     return { dayOfWeek, hour, minutes, date };
   } catch (error) {
     console.error('❌ Error parsing time slot:', error);
