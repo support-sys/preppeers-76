@@ -11,6 +11,59 @@ import {
   checkEnhancedExperienceMatch
 } from "@/utils/interviewerMatching";
 
+// Helper function to convert time slot format to ISO datetime
+const convertTimeSlotToISODate = (timeSlot: string): string => {
+  // If it's already an ISO date, return as is
+  if (timeSlot.includes('T') || timeSlot.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return timeSlot;
+  }
+  
+  // Handle format like "Tuesday 09:00-17:00"
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  
+  // Extract day and time from the slot
+  const parts = timeSlot.split(' ');
+  if (parts.length < 2) {
+    // Fallback: schedule for tomorrow if format is unclear
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0); // Default to 10 AM
+    return tomorrow.toISOString();
+  }
+  
+  const dayName = parts[0];
+  const timeRange = parts[1];
+  const startTime = timeRange.split('-')[0];
+  
+  // Find the target day
+  const targetDayIndex = daysOfWeek.indexOf(dayName);
+  if (targetDayIndex === -1) {
+    // Fallback: schedule for tomorrow if day is invalid
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    return tomorrow.toISOString();
+  }
+  
+  // Calculate how many days ahead this day is
+  const currentDayIndex = today.getDay();
+  let daysAhead = targetDayIndex - currentDayIndex;
+  if (daysAhead <= 0) {
+    daysAhead += 7; // Next week
+  }
+  
+  // Create the target date
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + daysAhead);
+  
+  // Set the time
+  const [hours, minutes] = startTime.split(':').map(Number);
+  targetDate.setHours(hours, minutes, 0, 0);
+  
+  return targetDate.toISOString();
+};
+
 export const findMatchingInterviewer = async (candidateData: MatchingCandidate): Promise<MatchedInterviewer | null> => {
   try {
     console.log('\n🚀 === STARTING INTERVIEWER MATCHING PROCESS ===');
@@ -327,6 +380,9 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       // Only use alternative if no exact match was found
       selectedTimeSlot = interviewer.alternativeTimeSlots[0];
     }
+    
+    // Convert time slot to proper ISO datetime format
+    const scheduledDateTime = convertTimeSlotToISODate(selectedTimeSlot);
 
     // Fetch the latest resume_url from interviewees table
     let latestResumeUrl = candidate.resumeUrl || candidate.resume_url || null;
@@ -353,7 +409,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       interviewer_name: interviewerName,
       target_role: candidate.skillCategories?.join(', ') || 'Not specified',
       experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
-      scheduled_time: selectedTimeSlot || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default to tomorrow
+      scheduled_time: scheduledDateTime,
       status: 'scheduled',
       resume_url: latestResumeUrl
     };
@@ -361,7 +417,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     console.log("📝 Sending interview data to edge function:", interviewData);
 
     // Check for conflicting time blocks before booking
-    const hasConflict = await checkForConflictingTimeBlocks(interviewer.id, selectedTimeSlot);
+    const hasConflict = await checkForConflictingTimeBlocks(interviewer.id, scheduledDateTime);
     if (hasConflict) {
       throw new Error('This time slot is no longer available. Please select a different time.');
     }
@@ -377,14 +433,9 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     }
 
     // Create time block for the interviewer after successful booking
-    if (selectedTimeSlot) {
-      const interviewId = data?.interview?.id || data?.interview_id;
-      console.log(`🔒 Creating time block with interview ID: ${interviewId}`);
-      await createInterviewTimeBlock(interviewer.id, selectedTimeSlot, interviewId);
-      
-      // Also update the current_time_slots to remove the booked time
-      console.log(`🔄 Updating current_time_slots for interviewer ${interviewer.id}`);
-      await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot);
+    if (scheduledDateTime) {
+      await createInterviewTimeBlock(interviewer.id, scheduledDateTime, data.interview?.id);
+      await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot); // Use original format for time slot blocking
     }
 
     console.log("✅ Interview scheduled successfully:", data);
