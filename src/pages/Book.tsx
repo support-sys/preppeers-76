@@ -119,8 +119,8 @@ const Book = () => {
         <div className="max-w-4xl mx-auto">
           <BookingHeader hasSuccessfulPayment={hasSuccessfulPayment} />
 
-          {/* Show Instant Matching Button if payment is successful */}
-          {hasSuccessfulPayment && !paymentLoading && (
+          {/* Show Instant Matching Button if payment is successful but no interview scheduled yet */}
+          {hasSuccessfulPayment && !paymentLoading && !isInterviewAlreadyMatched && (
             <div className="mb-8">
               <InstantMatchingButton
                 onStartMatching={handleStartMatching}

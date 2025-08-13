@@ -20,6 +20,7 @@ interface PaymentSession {
 export const usePaymentStatus = () => {
   const [paymentSession, setPaymentSession] = useState<PaymentSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasScheduledInterview, setHasScheduledInterview] = useState(false);
   const { user } = useAuth();
 
   const fetchPaymentStatus = async () => {
@@ -46,8 +47,25 @@ export const usePaymentStatus = () => {
       // Always set the most recent session for proper state management
       if (recentSession) {
         setPaymentSession(recentSession);
+        
+        // Check if there's already a scheduled interview for this user
+        if (recentSession.payment_status === 'successful' && recentSession.interview_matched) {
+          const { data: existingInterview } = await supabase
+            .from('interviews')
+            .select('id')
+            .eq('candidate_email', user.email)
+            .eq('status', 'scheduled')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          setHasScheduledInterview(!!existingInterview);
+        } else {
+          setHasScheduledInterview(false);
+        }
       } else {
         setPaymentSession(null);
+        setHasScheduledInterview(false);
       }
     } catch (error) {
       console.error('Error in fetchPaymentStatus:', error);
@@ -114,7 +132,7 @@ export const usePaymentStatus = () => {
     paymentSession,
     isLoading,
     hasSuccessfulPayment: !!paymentSession && paymentSession.payment_status === 'successful',
-    isInterviewAlreadyMatched: false, // Always allow re-matching for now since we need to verify actual interview exists
+    isInterviewAlreadyMatched: hasScheduledInterview, // Only true if interview is actually scheduled
     markInterviewMatched,
     refetch: fetchPaymentStatus
   };
