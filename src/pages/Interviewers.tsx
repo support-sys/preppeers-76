@@ -87,7 +87,13 @@ const Interviewers = () => {
         skills: data.technologies || [],
         bio: data.bio || "",
         linkedinUrl: data.linkedin_url || "",
-        githubUrl: data.github_url || ""
+        githubUrl: data.github_url || "",
+        payoutMethod: data.payout_method || "",
+        upiId: data.upi_id || "",
+        bankName: data.bank_name || "",
+        bankAccountNumber: data.bank_account_number || "",
+        bankIfscCode: data.bank_ifsc_code || "",
+        accountHolderName: data.account_holder_name || ""
       });
     }
   };
@@ -154,6 +160,21 @@ const Interviewers = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
+      // Validate payout details
+      if (!interviewerData.payoutMethod) {
+        throw new Error("Please select a payout method");
+      }
+      
+      if (interviewerData.payoutMethod === 'upi' && !interviewerData.upiId) {
+        throw new Error("Please enter your UPI ID");
+      }
+      
+      if (interviewerData.payoutMethod === 'bank_account') {
+        if (!interviewerData.bankName || !interviewerData.bankAccountNumber || !interviewerData.bankIfscCode || !interviewerData.accountHolderName) {
+          throw new Error("Please fill all bank account details");
+        }
+      }
+
       const profileData = {
         experience_years: parseInt(interviewerData.experienceYears),
         company: interviewerData.company,
@@ -164,7 +185,15 @@ const Interviewers = () => {
         time_slots: {},
         bio: interviewerData.bio,
         linkedin_url: interviewerData.linkedinUrl,
-        github_url: interviewerData.githubUrl
+        github_url: interviewerData.githubUrl,
+        payout_method: interviewerData.payoutMethod,
+        upi_id: interviewerData.payoutMethod === 'upi' ? interviewerData.upiId : null,
+        bank_name: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankName : null,
+        bank_account_number: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankAccountNumber : null,
+        bank_ifsc_code: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankIfscCode : null,
+        account_holder_name: interviewerData.payoutMethod === 'bank_account' ? interviewerData.accountHolderName : null,
+        payout_details_submitted_at: new Date().toISOString(),
+        payout_details_locked: true
       };
 
       if (existingData) {
@@ -185,6 +214,33 @@ const Interviewers = () => {
           });
 
         if (error) throw error;
+      }
+
+      // Send welcome email for new registrations
+      if (!existingData) {
+        try {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single();
+
+          await supabase.functions.invoke('send-interviewer-welcome', {
+            body: {
+              interviewer_name: userProfile?.full_name || user.email,
+              interviewer_email: user.email,
+              company: interviewerData.company,
+              position: interviewerData.position,
+              experience_years: parseInt(interviewerData.experienceYears),
+              skills: interviewerData.skills
+            }
+          });
+
+          console.log("Welcome email sent successfully");
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          // Don't fail the registration if email fails
+        }
       }
 
       // Database save successful
@@ -380,6 +436,110 @@ const Interviewers = () => {
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                     placeholder="Enter your GitHub URL"
                   />
+                </div>
+
+                {/* Payout Details Section */}
+                <div className="border-t border-white/20 pt-6">
+                  <h3 className="text-xl font-semibold text-white mb-4">💰 Payout Information</h3>
+                  <p className="text-slate-300 text-sm mb-6">
+                    <strong>Important:</strong> Payout details cannot be changed easily once submitted. 
+                    If you need to update them later, you'll need to contact support@interviewise.in
+                  </p>
+                  
+                  {/* Payout Method */}
+                  <div className="mb-4">
+                    <Label className="text-white">Payout Method *</Label>
+                    <Select 
+                      value={interviewerData.payoutMethod} 
+                      onValueChange={(value) => setInterviewerData(prev => ({ ...prev, payoutMethod: value }))}
+                    >
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                        <SelectValue placeholder="Select payout method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="bank_account">Bank Account</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* UPI Details */}
+                  {interviewerData.payoutMethod === 'upi' && (
+                    <div>
+                      <Label htmlFor="upiId" className="text-white">UPI ID *</Label>
+                      <Input
+                        id="upiId"
+                        name="upiId"
+                        type="text"
+                        value={interviewerData.upiId}
+                        onChange={handleInputChange}
+                        className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                        placeholder="Enter your UPI ID (e.g., name@paytm)"
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {/* Bank Account Details */}
+                  {interviewerData.payoutMethod === 'bank_account' && (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="accountHolderName" className="text-white">Account Holder Name *</Label>
+                        <Input
+                          id="accountHolderName"
+                          name="accountHolderName"
+                          type="text"
+                          value={interviewerData.accountHolderName}
+                          onChange={handleInputChange}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                          placeholder="Enter account holder name"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="bankName" className="text-white">Bank Name *</Label>
+                        <Input
+                          id="bankName"
+                          name="bankName"
+                          type="text"
+                          value={interviewerData.bankName}
+                          onChange={handleInputChange}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                          placeholder="Enter bank name"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="bankAccountNumber" className="text-white">Account Number *</Label>
+                        <Input
+                          id="bankAccountNumber"
+                          name="bankAccountNumber"
+                          type="text"
+                          value={interviewerData.bankAccountNumber}
+                          onChange={handleInputChange}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                          placeholder="Enter account number"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="bankIfscCode" className="text-white">IFSC Code *</Label>
+                        <Input
+                          id="bankIfscCode"
+                          name="bankIfscCode"
+                          type="text"
+                          value={interviewerData.bankIfscCode}
+                          onChange={handleInputChange}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                          placeholder="Enter IFSC code"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Button */}
