@@ -133,7 +133,7 @@ const Index = () => {
               </Button>
             </Link>
             
-            <Link to="/interviewers">
+            <Link to="/auth?role=interviewer">
               <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
                 Become an Interviewer
               </Button>
@@ -287,7 +287,7 @@ const Index = () => {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Link to="/interviewers">
+              <Link to="/auth?role=interviewer">
                 <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 group">
                   Become an Interviewer
                   <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />

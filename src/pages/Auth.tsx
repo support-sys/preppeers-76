@@ -34,12 +34,20 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if we're in password reset mode
+  // Check URL parameters for role and mode
   React.useEffect(() => {
     const mode = searchParams.get('mode');
+    const roleParam = searchParams.get('role');
+    
     if (mode === 'reset') {
       setShowResetPassword(true);
       setActiveTab('signin');
+    }
+    
+    // Pre-select role based on URL parameter and switch to signup tab
+    if (roleParam && (roleParam === 'interviewer' || roleParam === 'interviewee')) {
+      setRole(roleParam);
+      setActiveTab('signup');
     }
   }, [searchParams]);
 
@@ -83,6 +91,13 @@ const Auth = () => {
         title: "Account Created!",
         description: "Please check your email to verify your account.",
       });
+      
+      // Redirect based on role for better UX
+      if (role === 'interviewer') {
+        navigate('/interviewers'); // Redirect to interviewer profile page to complete setup
+      } else {
+        navigate('/book'); // Redirect to booking page for interviewees
+      }
     }
     
     setLoading(false);
@@ -360,39 +375,58 @@ const Auth = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <Label className="text-white">I want to join as</Label>
-                      <div className="space-y-3 mt-2">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="interviewee"
-                            name="role"
-                            value="interviewee"
-                            checked={role === 'interviewee'}
-                            onChange={(e) => setRole(e.target.value as 'interviewer' | 'interviewee')}
-                            className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
-                          />
-                          <Label htmlFor="interviewee" className="text-white cursor-pointer">
-                            Want to practice for Interview
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="interviewer"
-                            name="role"
-                            value="interviewer"
-                            checked={role === 'interviewer'}
-                            onChange={(e) => setRole(e.target.value as 'interviewer' | 'interviewee')}
-                            className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
-                          />
-                          <Label htmlFor="interviewer" className="text-white cursor-pointer">
-                            Want to take interviews
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
+                     {/* Role Selection - Show based on URL parameter or allow selection */}
+                     {!searchParams.get('role') ? (
+                       <div>
+                         <Label className="text-white">I want to join as</Label>
+                         <div className="space-y-3 mt-2">
+                           <div className="flex items-center space-x-2">
+                             <input
+                               type="radio"
+                               id="interviewee"
+                               name="role"
+                               value="interviewee"
+                               checked={role === 'interviewee'}
+                               onChange={(e) => setRole(e.target.value as 'interviewer' | 'interviewee')}
+                               className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
+                             />
+                             <Label htmlFor="interviewee" className="text-white cursor-pointer">
+                               Want to practice for Interview
+                             </Label>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                             <input
+                               type="radio"
+                               id="interviewer"
+                               name="role"
+                               value="interviewer"
+                               checked={role === 'interviewer'}
+                               onChange={(e) => setRole(e.target.value as 'interviewer' | 'interviewee')}
+                               className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
+                             />
+                             <Label htmlFor="interviewer" className="text-white cursor-pointer">
+                               Want to take interviews
+                             </Label>
+                           </div>
+                         </div>
+                       </div>
+                     ) : (
+                       <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-4">
+                         <div className="flex items-center justify-center">
+                           <div className="text-center">
+                             <p className="text-blue-300 text-sm font-medium">
+                               {role === 'interviewer' ? 'Joining as an Interviewer' : 'Joining as an Interviewee'}
+                             </p>
+                             <p className="text-blue-200 text-xs mt-1">
+                               {role === 'interviewer' 
+                                 ? 'You\'ll be able to conduct mock interviews and earn income' 
+                                 : 'You\'ll be able to book mock interviews for practice'
+                               }
+                             </p>
+                           </div>
+                         </div>
+                       </div>
+                     )}
                     <Button
                       type="submit"
                       className="w-full bg-green-600 hover:bg-green-700"
