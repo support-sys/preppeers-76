@@ -362,8 +362,14 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     }
 
     // Create time block for the interviewer after successful booking
-    if (selectedTimeSlot && data?.interview_id) {
-      await createInterviewTimeBlock(interviewer.id, selectedTimeSlot, data.interview_id);
+    if (selectedTimeSlot) {
+      const interviewId = data?.interview?.id || data?.interview_id;
+      console.log(`🔒 Creating time block with interview ID: ${interviewId}`);
+      await createInterviewTimeBlock(interviewer.id, selectedTimeSlot, interviewId);
+      
+      // Also update the current_time_slots to remove the booked time
+      console.log(`🔄 Updating current_time_slots for interviewer ${interviewer.id}`);
+      await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot);
     }
 
     console.log("✅ Interview scheduled successfully:", data);

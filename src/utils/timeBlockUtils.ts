@@ -66,6 +66,8 @@ export const manuallyBlockTimeSlot = async (
   reason: string = 'manually_blocked'
 ): Promise<void> => {
   try {
+    console.log(`🔒 Manually blocking time slot: ${blockedDate} ${startTime}-${endTime} for interviewer ${interviewerId}`);
+    
     const { error } = await supabase
       .from('interviewer_time_blocks')
       .insert({
