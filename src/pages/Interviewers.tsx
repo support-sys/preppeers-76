@@ -51,6 +51,7 @@ const Interviewers = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [syncingToSheets, setSyncingToSheets] = useState(false);
+  const [isProfileLocked, setIsProfileLocked] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -79,6 +80,10 @@ const Interviewers = () => {
       .maybeSingle();
 
     if (data) {
+      // Check if profile is locked (has payout details submitted)
+      const profileLocked = data.payout_details_submitted_at !== null;
+      setIsProfileLocked(profileLocked);
+      
       setInterviewerData({
         experienceYears: data.experience_years?.toString() || "",
         company: data.company || "",
@@ -95,6 +100,11 @@ const Interviewers = () => {
         bankIfscCode: data.bank_ifsc_code || "",
         accountHolderName: data.account_holder_name || ""
       });
+      
+      // If profile is locked, mark as submitted to show read-only view
+      if (profileLocked) {
+        setIsSubmitted(true);
+      }
     }
   };
 
@@ -264,21 +274,59 @@ const Interviewers = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900">
         <Navigation />
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 border border-white/20">
-              <CheckCircle className="w-20 h-20 text-green-400 mx-auto mb-6" />
-              <h1 className="text-4xl font-bold text-white mb-4">Profile Updated!</h1>
-              <p className="text-xl text-slate-300 mb-8">
-                Thank you for updating your profile. You can now manage your schedule and availability in the dashboard!
-              </p>
-              <Button onClick={() => navigate('/dashboard')} className="bg-blue-600 hover:bg-blue-700">
-                Go to Dashboard
-              </Button>
-            </div>
-          </div>
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <CardTitle className="text-white text-2xl">
+                {isProfileLocked ? "Profile Locked" : "Profile Complete!"}
+              </CardTitle>
+              <CardDescription className="text-slate-300">
+                {isProfileLocked 
+                  ? "Your profile details are locked for security. Contact support to make changes."
+                  : "Your interviewer profile has been successfully created and submitted."
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {isProfileLocked && (
+                <div className="bg-amber-500/20 border border-amber-500/30 p-4 rounded-lg">
+                  <h4 className="font-semibold text-amber-300 mb-2">🔒 Profile Locked</h4>
+                  <p className="text-amber-100 text-sm">
+                    Your profile details are locked for security purposes. This includes your experience, 
+                    company, position, skills, and payout information. If you need to make changes, 
+                    please contact our support team at{" "}
+                    <a href="mailto:support@interviewise.in" className="text-amber-300 underline">
+                      support@interviewise.in
+                    </a>
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  onClick={() => navigate('/dashboard')} 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                {!isProfileLocked && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsSubmitted(false)}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    Edit Profile
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
         <Footer />
       </div>
