@@ -304,19 +304,28 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     console.log("Scheduling interview with:", { candidate: userFullName });
     console.log("Full interviewer object:", { interviewer: interviewer.company });
     
-    // FIRST: Check if an interview is already scheduled for this candidate to prevent duplicates
-    const { data: existingInterview } = await supabase
+    // Convert time slot to proper ISO datetime format first
+    let selectedTimeSlot = candidate.timeSlot;
+    if (interviewer.timeMatch) {
+      selectedTimeSlot = candidate.timeSlot;
+    } else if (interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
+      selectedTimeSlot = interviewer.alternativeTimeSlots[0];
+    }
+    const scheduledDateTime = convertTimeSlotToISODate(selectedTimeSlot);
+
+    // Check for conflicts with the SAME interviewer at the SAME time (allowing multiple interviews with different interviewers or times)
+    const { data: conflictingInterview } = await supabase
       .from('interviews')
       .select('id, scheduled_time, interviewer_email')
       .eq('candidate_email', userEmail)
+      .eq('interviewer_id', interviewer.id)
+      .eq('scheduled_time', scheduledDateTime)
       .eq('status', 'scheduled')
-      .order('created_at', { ascending: false })
-      .limit(1)
       .maybeSingle();
     
-    if (existingInterview) {
-      console.log('⚠️ Interview already exists for this candidate:', existingInterview);
-      throw new Error(`Interview already scheduled for ${new Date(existingInterview.scheduled_time).toLocaleString()} with ${existingInterview.interviewer_email}`);
+    if (conflictingInterview) {
+      console.log('⚠️ Exact time conflict with same interviewer:', conflictingInterview);
+      throw new Error(`You already have an interview scheduled with this interviewer at ${new Date(conflictingInterview.scheduled_time).toLocaleString()}`);
     }
     
     // Get the interviewer's profile to get their email
@@ -370,19 +379,6 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       name: interviewerName 
     });
     
-    // Use the exact time slot if there's a match, otherwise use first alternative
-    let selectedTimeSlot = candidate.timeSlot;
-    
-    // If there's an exact time match, keep the candidate's preferred time
-    if (interviewer.timeMatch) {
-      selectedTimeSlot = candidate.timeSlot;
-    } else if (interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
-      // Only use alternative if no exact match was found
-      selectedTimeSlot = interviewer.alternativeTimeSlots[0];
-    }
-    
-    // Convert time slot to proper ISO datetime format
-    const scheduledDateTime = convertTimeSlotToISODate(selectedTimeSlot);
 
     // Fetch the latest resume_url from interviewees table
     let latestResumeUrl = candidate.resumeUrl || candidate.resume_url || null;
