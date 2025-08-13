@@ -112,7 +112,7 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
           {
             id: Math.random().toString(36).substr(2, 9),
             start: "09:00",
-            end: "17:00"
+            end: "10:00"
           }
         ]
       }
@@ -245,7 +245,7 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
           <div>
             <CardTitle className="text-white">Manage Schedule</CardTitle>
             <CardDescription className="text-slate-300">
-              Set your availability and time slots for interviews
+              Set your availability and time slots for interviews. Each time slot should be exactly 1 hour.
             </CardDescription>
           </div>
           <Button variant="outline" onClick={onClose} className="bg-white/10 border-white/20 text-white hover:bg-white/20">

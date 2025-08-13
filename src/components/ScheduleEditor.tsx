@@ -29,7 +29,7 @@ const ScheduleEditor = ({ onClose }: ScheduleEditorProps) => {
     DAYS_OF_WEEK.map(day => ({
       day,
       startTime: '09:00',
-      endTime: '17:00',
+      endTime: '10:00',
       enabled: day !== 'Saturday' && day !== 'Sunday'
     }))
   );
@@ -68,7 +68,7 @@ const ScheduleEditor = ({ onClose }: ScheduleEditorProps) => {
           Edit Schedule
         </CardTitle>
         <CardDescription className="text-slate-300">
-          Set your available hours for each day of the week
+          Set your available hours for each day of the week. Please set 1-hour time slots only.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
