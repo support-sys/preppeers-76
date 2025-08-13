@@ -251,6 +251,21 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     console.log("Scheduling interview with:", { candidate: userFullName });
     console.log("Full interviewer object:", { interviewer: interviewer.company });
     
+    // FIRST: Check if an interview is already scheduled for this candidate to prevent duplicates
+    const { data: existingInterview } = await supabase
+      .from('interviews')
+      .select('id, scheduled_time, interviewer_email')
+      .eq('candidate_email', userEmail)
+      .eq('status', 'scheduled')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (existingInterview) {
+      console.log('⚠️ Interview already exists for this candidate:', existingInterview);
+      throw new Error(`Interview already scheduled for ${new Date(existingInterview.scheduled_time).toLocaleString()} with ${existingInterview.interviewer_email}`);
+    }
+    
     // Get the interviewer's profile to get their email
     console.log('🔍 Looking for interviewer profile with user_id:', interviewer.user_id);
     

@@ -48,8 +48,8 @@ export const usePaymentStatus = () => {
       if (recentSession) {
         setPaymentSession(recentSession);
         
-        // Check if there's already a scheduled interview for this user
-        if (recentSession.payment_status === 'successful' && recentSession.interview_matched) {
+        // Check if there's already a scheduled interview for this payment session specifically
+        if (recentSession.payment_status === 'successful') {
           const { data: existingInterview } = await supabase
             .from('interviews')
             .select('id')
@@ -58,6 +58,17 @@ export const usePaymentStatus = () => {
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
+          
+          // Update the interview_matched flag if we find an existing interview
+          if (existingInterview && !recentSession.interview_matched) {
+            await supabase
+              .from('payment_sessions')
+              .update({ interview_matched: true })
+              .eq('id', recentSession.id);
+            
+            // Update local state
+            setPaymentSession({ ...recentSession, interview_matched: true });
+          }
           
           setHasScheduledInterview(!!existingInterview);
         } else {
@@ -132,7 +143,7 @@ export const usePaymentStatus = () => {
     paymentSession,
     isLoading,
     hasSuccessfulPayment: !!paymentSession && paymentSession.payment_status === 'successful',
-    isInterviewAlreadyMatched: hasScheduledInterview, // Only true if interview is actually scheduled
+    isInterviewAlreadyMatched: !!paymentSession && paymentSession.interview_matched && hasScheduledInterview,
     markInterviewMatched,
     refetch: fetchPaymentStatus
   };
