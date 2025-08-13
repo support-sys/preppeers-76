@@ -132,15 +132,17 @@ const Book = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              {!hasSuccessfulPayment && (
-                <CandidateRegistrationForm
-                  onSubmit={handleFormSubmit}
-                  isLoading={isLoading}
-                />
-              )}
+              {/* Always show the registration form to allow multiple bookings */}
+              <CandidateRegistrationForm
+                onSubmit={handleFormSubmit}
+                isLoading={isLoading}
+              />
               
               {hasSuccessfulPayment && paymentSession && (
-                <PaymentDetails paymentSession={paymentSession} />
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-white mb-4">Previous Payment Session</h3>
+                  <PaymentDetails paymentSession={paymentSession} />
+                </div>
               )}
             </div>
 
