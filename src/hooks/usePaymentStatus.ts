@@ -48,19 +48,22 @@ export const usePaymentStatus = () => {
       if (recentSession) {
         setPaymentSession(recentSession);
         
-        // Check if there's already a scheduled interview for this payment session specifically
+        // Check if there's already a scheduled interview specifically for this payment session
         if (recentSession.payment_status === 'successful') {
-          const { data: existingInterview } = await supabase
+          // Only check for interviews that were created after this payment session
+          // to avoid automatically marking sessions as matched based on old interviews
+          const { data: sessionSpecificInterview } = await supabase
             .from('interviews')
             .select('id')
             .eq('candidate_email', user.email)
             .eq('status', 'scheduled')
+            .gte('created_at', recentSession.created_at)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
           
-          // Update the interview_matched flag if we find an existing interview
-          if (existingInterview && !recentSession.interview_matched) {
+          // Only update interview_matched if there's an interview created after this payment
+          if (sessionSpecificInterview && !recentSession.interview_matched) {
             await supabase
               .from('payment_sessions')
               .update({ interview_matched: true })
@@ -68,9 +71,10 @@ export const usePaymentStatus = () => {
             
             // Update local state
             setPaymentSession({ ...recentSession, interview_matched: true });
+            setHasScheduledInterview(true);
+          } else {
+            setHasScheduledInterview(!!sessionSpecificInterview);
           }
-          
-          setHasScheduledInterview(!!existingInterview);
         } else {
           setHasScheduledInterview(false);
         }
