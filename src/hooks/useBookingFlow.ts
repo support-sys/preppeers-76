@@ -37,7 +37,7 @@ export const useBookingFlow = () => {
         
         // Check if time slots match exactly or if we need confirmation
         const candidatePreferredTime = data.timeSlot;
-        const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time');
+        const hasExactTimeMatch = interviewer.matchReasons?.includes('Time available');
         
         if (!hasExactTimeMatch && candidatePreferredTime) {
           setAlternativeTimeSlot({
@@ -156,7 +156,7 @@ export const useBookingFlow = () => {
         
         // Check if time slots match exactly or if we need confirmation
         const candidatePreferredTime = paymentSession.candidate_data.timeSlot;
-        const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time');
+        const hasExactTimeMatch = interviewer.matchReasons?.includes('Time available');
         
         if (!hasExactTimeMatch && candidatePreferredTime) {
           // Show alternative time slot for confirmation
