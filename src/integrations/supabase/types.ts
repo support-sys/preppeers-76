@@ -125,6 +125,7 @@ export type Database = {
           experience_years: number | null
           github_url: string | null
           id: string
+          is_eligible: boolean
           linkedin_url: string | null
           payout_details_locked: boolean | null
           payout_details_submitted_at: string | null
@@ -153,6 +154,7 @@ export type Database = {
           experience_years?: number | null
           github_url?: string | null
           id?: string
+          is_eligible?: boolean
           linkedin_url?: string | null
           payout_details_locked?: boolean | null
           payout_details_submitted_at?: string | null
@@ -181,6 +183,7 @@ export type Database = {
           experience_years?: number | null
           github_url?: string | null
           id?: string
+          is_eligible?: boolean
           linkedin_url?: string | null
           payout_details_locked?: boolean | null
           payout_details_submitted_at?: string | null
