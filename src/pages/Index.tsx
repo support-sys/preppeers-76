@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const { paymentSession, hasSuccessfulPayment } = usePaymentStatus();
 
@@ -126,18 +126,22 @@ const Index = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            <Link to="/book">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
-                Book a Mock Interview
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-              </Button>
-            </Link>
+            {!user || (user && userRole === 'interviewee') ? (
+              <Link to={user ? "/book" : "/auth?role=interviewee"}>
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
+                  Book a Mock Interview
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
+            ) : null}
             
-            <Link to="/auth?role=interviewer">
-              <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
-                Become an Interviewer
-              </Button>
-            </Link>
+            {!user || (user && userRole === 'interviewer') ? (
+              <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
+                <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
+                  Become an Interviewer
+                </Button>
+              </Link>
+            ) : null}
           </div>
 
           {/* Feature Highlights */}
@@ -233,7 +237,7 @@ const Index = () => {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Link to="/book">
+              <Link to={user ? "/book" : "/auth?role=interviewee"}>
                 <Button size="lg" className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
                   Start Practicing
                   <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
@@ -287,7 +291,7 @@ const Index = () => {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Link to="/auth?role=interviewer">
+              <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
                 <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 group">
                   Become an Interviewer
                   <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />

@@ -20,10 +20,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireRole }
   }
 
   if (!user) {
-    return <Navigate to="/auth" />;
+    const currentPath = window.location.pathname;
+    return <Navigate to={`/auth?from=${encodeURIComponent(currentPath)}`} />;
   }
 
   if (requireRole && userRole !== requireRole) {
+    // If user has wrong role, redirect to home instead of showing error
     return <Navigate to="/" />;
   }
 

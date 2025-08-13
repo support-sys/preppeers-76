@@ -68,7 +68,20 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You have been signed in successfully.",
       });
-      navigate('/');
+      
+      // Check if user came from a specific page and redirect accordingly
+      const from = searchParams.get('from');
+      const roleParam = searchParams.get('role');
+      
+      if (from) {
+        navigate(from);
+      } else if (roleParam === 'interviewer') {
+        navigate('/interviewers');
+      } else if (roleParam === 'interviewee') {
+        navigate('/book');
+      } else {
+        navigate('/');
+      }
     }
     
     setLoading(false);
