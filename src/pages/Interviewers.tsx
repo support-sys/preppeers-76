@@ -242,7 +242,9 @@ const Interviewers = () => {
               company: interviewerData.company,
               position: interviewerData.position,
               experience_years: parseInt(interviewerData.experienceYears),
-              skills: interviewerData.skills
+              skills: interviewerData.selectedCategories,
+              technologies: interviewerData.skills,
+              payout_method: interviewerData.payoutMethod
             }
           });
 

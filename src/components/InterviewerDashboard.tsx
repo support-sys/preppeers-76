@@ -34,19 +34,20 @@ const InterviewerDashboard = () => {
   const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'profile' | 'time-slots'>('dashboard');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [isEligible, setIsEligible] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetchInterviews();
+    checkEligibilityAndFetchInterviews();
   }, []);
 
-  const fetchInterviews = async () => {
+  const checkEligibilityAndFetchInterviews = async () => {
     if (!user) return;
 
     try {
-      // First get the interviewer record to get the interviewer_id
+      // First get the interviewer record to check eligibility
       const { data: interviewerData, error: interviewerError } = await supabase
         .from('interviewers')
-        .select('id')
+        .select('id, is_eligible')
         .eq('user_id', user.id)
         .single();
 
@@ -55,6 +56,8 @@ const InterviewerDashboard = () => {
         setLoading(false);
         return;
       }
+
+      setIsEligible(interviewerData.is_eligible);
 
       // Then fetch interviews for this interviewer
       const { data: interviewsData, error: interviewsError } = await supabase
@@ -74,11 +77,12 @@ const InterviewerDashboard = () => {
         setInterviews(uniqueInterviews);
       }
     } catch (error) {
-      console.error('Error in fetchInterviews:', error);
+      console.error('Error in checkEligibilityAndFetchInterviews:', error);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleJoinMeeting = (meetLink: string) => {
     if (meetLink) {
@@ -123,7 +127,7 @@ const InterviewerDashboard = () => {
         description: "The interview has been cancelled successfully.",
       });
 
-      fetchInterviews(); // Refresh the list
+      checkEligibilityAndFetchInterviews(); // Refresh the list
     } catch (error) {
       console.error('Error cancelling interview:', error);
       toast({
@@ -176,32 +180,83 @@ const InterviewerDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Onboarding Banner for Non-Eligible Interviewers */}
+      {isEligible === false && (
+        <Card className="bg-amber-500/20 backdrop-blur-lg border-amber-500/30">
+          <CardHeader>
+            <CardTitle className="text-amber-300 flex items-center">
+              <Clock className="w-5 h-5 mr-2" />
+              Onboarding in Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-amber-100">
+              Thank you for registering as an interviewer! Your onboarding process is currently in progress.
+            </p>
+            <div className="space-y-3">
+              <div className="bg-amber-600/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-amber-200 mb-2">📋 What's Next:</h4>
+                <ul className="space-y-2 text-amber-100 text-sm">
+                  <li>• Complete your technical skills assessment</li>
+                  <li>• Attend a brief discovery session with our team</li>
+                  <li>• Await approval to start conducting interviews</li>
+                </ul>
+              </div>
+              <div className="bg-blue-600/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-200 mb-2">✉️ Check Your Email</h4>
+                <p className="text-blue-100 text-sm">
+                  We've sent you detailed instructions about the assessment process. 
+                  If you haven't received it, please check your spam folder or contact support.
+                </p>
+              </div>
+              <div className="bg-green-600/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-green-200 mb-2">🎯 Once Eligible</h4>
+                <p className="text-green-100 text-sm">
+                  After completing the onboarding process, you'll be able to set your availability 
+                  and start receiving interview requests from candidates.
+                </p>
+              </div>
+            </div>
+            <div className="border-t border-amber-500/30 pt-4">
+              <p className="text-amber-200 text-sm">
+                Need help? Contact us at{" "}
+                <a href="mailto:support@interviewise.in" className="text-amber-300 underline">
+                  support@interviewise.in
+                </a>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Interviewer Dashboard</h1>
-        <div className="flex space-x-2">
-          <Button 
-            onClick={() => setActiveView('profile')}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <User className="w-4 h-4 mr-2" />
-            Profile Settings
-          </Button>
-          <Button 
-            onClick={() => setActiveView('time-slots')}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Clock className="w-4 h-4 mr-2" />
-            Manage Schedule
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setActiveView('block-dates')}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            <CalendarX className="w-4 h-4 mr-2" />
-            Block Dates
-          </Button>
-        </div>
+        {isEligible && (
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => setActiveView('profile')}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Profile Settings
+            </Button>
+            <Button 
+              onClick={() => setActiveView('time-slots')}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Manage Schedule
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setActiveView('block-dates')}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <CalendarX className="w-4 h-4 mr-2" />
+              Block Dates
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
