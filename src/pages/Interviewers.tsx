@@ -40,7 +40,13 @@ const Interviewers = () => {
     skills: [] as string[],
     bio: "",
     linkedinUrl: "",
-    githubUrl: ""
+    githubUrl: "",
+    payoutMethod: "",
+    upiId: "",
+    bankName: "",
+    bankAccountNumber: "",
+    bankIfscCode: "",
+    accountHolderName: ""
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);

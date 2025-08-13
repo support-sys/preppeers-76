@@ -112,7 +112,11 @@ export type Database = {
       }
       interviewers: {
         Row: {
+          account_holder_name: string | null
           availability_days: string[] | null
+          bank_account_number: string | null
+          bank_ifsc_code: string | null
+          bank_name: string | null
           bio: string | null
           company: string | null
           created_at: string
@@ -122,16 +126,25 @@ export type Database = {
           github_url: string | null
           id: string
           linkedin_url: string | null
+          payout_details_locked: boolean | null
+          payout_details_submitted_at: string | null
+          payout_details_verified: boolean | null
+          payout_method: string | null
           position: string | null
           schedule_last_updated: string | null
           skills: string[] | null
           technologies: string[] | null
           time_slots: Json | null
           updated_at: string
+          upi_id: string | null
           user_id: string
         }
         Insert: {
+          account_holder_name?: string | null
           availability_days?: string[] | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -141,16 +154,25 @@ export type Database = {
           github_url?: string | null
           id?: string
           linkedin_url?: string | null
+          payout_details_locked?: boolean | null
+          payout_details_submitted_at?: string | null
+          payout_details_verified?: boolean | null
+          payout_method?: string | null
           position?: string | null
           schedule_last_updated?: string | null
           skills?: string[] | null
           technologies?: string[] | null
           time_slots?: Json | null
           updated_at?: string
+          upi_id?: string | null
           user_id: string
         }
         Update: {
+          account_holder_name?: string | null
           availability_days?: string[] | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -160,12 +182,17 @@ export type Database = {
           github_url?: string | null
           id?: string
           linkedin_url?: string | null
+          payout_details_locked?: boolean | null
+          payout_details_submitted_at?: string | null
+          payout_details_verified?: boolean | null
+          payout_method?: string | null
           position?: string | null
           schedule_last_updated?: string | null
           skills?: string[] | null
           technologies?: string[] | null
           time_slots?: Json | null
           updated_at?: string
+          upi_id?: string | null
           user_id?: string
         }
         Relationships: []
