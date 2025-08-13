@@ -27,6 +27,10 @@ export const useBookingFlow = () => {
     setFormData(data);
     setIsLoading(true);
     
+    // Reset previous state for fresh booking
+    setMatchedInterviewer(null);
+    setAlternativeTimeSlot(null);
+    
     try {
       console.log('Finding matching interviewer preview...');
       const interviewer = await findMatchingInterviewer(data);
@@ -35,17 +39,7 @@ export const useBookingFlow = () => {
         console.log('Preview interviewer found:', interviewer);
         setMatchedInterviewer(interviewer);
         
-        // Check if time slots match exactly or if we need confirmation
-        const candidatePreferredTime = data.timeSlot;
-        const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time');
-        
-        if (!hasExactTimeMatch && candidatePreferredTime) {
-          setAlternativeTimeSlot({
-            candidatePreferred: candidatePreferredTime,
-            interviewerAvailable: interviewer.alternativeTimeSlots?.[0] || 'Next available slot'
-          });
-        }
-        
+        // Always proceed to payment for new bookings - no time confirmation needed for fresh bookings
         setCurrentStep('preview-match');
       } else {
         console.log('No interviewer found for preview');
