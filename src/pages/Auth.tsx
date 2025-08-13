@@ -46,7 +46,7 @@ const Auth = () => {
     
     // Pre-select role based on URL parameter and switch to signup tab
     if (roleParam && (roleParam === 'interviewer' || roleParam === 'interviewee')) {
-      setRole(roleParam);
+      setRole(roleParam as 'interviewer' | 'interviewee');
       setActiveTab('signup');
     }
   }, [searchParams]);
