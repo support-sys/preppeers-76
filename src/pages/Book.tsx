@@ -39,11 +39,13 @@ const Book = () => {
 
   // Check if we should show the form or payment based on existing data
   useEffect(() => {
-    if (isInterviewAlreadyMatched) {
-      // If interview is already matched, show success state immediately
-      handleStartMatching(); // This will trigger the success state
+    // Only auto-trigger matching if user explicitly clicks the instant matching button
+    // Don't auto-redirect users who want to make new bookings
+    if (isInterviewAlreadyMatched && currentStep === 'matching') {
+      // This will trigger the success state only when user explicitly starts matching
+      handleStartMatching();
     }
-  }, [isInterviewAlreadyMatched]);
+  }, [isInterviewAlreadyMatched, currentStep]);
 
   // Render different states
   if (currentStep === 'success') {
