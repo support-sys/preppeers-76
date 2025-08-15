@@ -76,11 +76,8 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       specificSkills: candidateData.specificSkills
     });
     
-    // Get all eligible interviewers first - only non-sensitive data needed for matching
-    const { data: allInterviewers, error } = await supabase
-      .from('interviewers')
-      .select('id, user_id, experience_years, position, company, skills, technologies, availability_days, time_slots, current_available_date, current_time_slots')
-      .eq('is_eligible', true);
+    // Get all eligible interviewers using secure function
+    const { data: allInterviewers, error } = await supabase.rpc('get_safe_interviewer_data');
 
     if (error) {
       console.error('❌ Error fetching interviewers:', error);
@@ -107,6 +104,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       console.log(`   📋 Skill Categories: ${JSON.stringify(interviewer.skills)}`);
       console.log(`   🔧 Technologies: ${JSON.stringify(interviewer.technologies)}`);
       console.log(`   📅 Experience: ${interviewer.experience_years} years`);
+      console.log(`   💼 Position: ${interviewer.job_position || 'Not specified'}`);
       console.log(`   ⏰ Time Slots: ${JSON.stringify(interviewer.current_time_slots)}`);
     });
 

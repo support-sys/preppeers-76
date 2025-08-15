@@ -357,6 +357,39 @@ export type Database = {
           upi_id: string
         }[]
       }
+      get_safe_interviewer_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          availability_days: string[]
+          bio: string
+          company: string
+          created_at: string
+          current_available_date: string
+          current_time_slots: Json
+          experience_years: number
+          github_url: string
+          id: string
+          is_eligible: boolean
+          job_position: string
+          linkedin_url: string
+          schedule_last_updated: string
+          skills: string[]
+          technologies: string[]
+          time_slots: Json
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_safe_profile_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       user_role: "interviewer" | "interviewee"
