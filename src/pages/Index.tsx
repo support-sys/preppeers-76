@@ -137,7 +137,7 @@ const Index = () => {
                 <Users className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Real Engineers</h3>
-              <p className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 text-slate-300 ">Practice with experienced professionals from top tech companies</p>
+              <p className="">Practice with experienced professionals from top tech companies</p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
