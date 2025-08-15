@@ -51,7 +51,7 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
     
     const { data } = await supabase
       .from('interviewers')
-      .select('*')
+      .select('id, bio, linkedin_url, github_url, company, position, skills, technologies, experience_years, availability_days, is_eligible, payout_details_verified, payout_details_submitted_at, payout_details_locked')
       .eq('user_id', user.id)
       .maybeSingle();
 

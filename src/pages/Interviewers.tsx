@@ -73,11 +73,16 @@ const Interviewers = () => {
 
   const loadExistingData = async () => {
     if (!user) return;
+    
+    // Get basic profile data (non-sensitive)
     const { data } = await supabase
       .from('interviewers')
-      .select('*')
+      .select('id, bio, linkedin_url, github_url, company, position, skills, technologies, experience_years, availability_days, is_eligible, payout_details_verified, payout_details_submitted_at, payout_details_locked')
       .eq('user_id', user.id)
       .maybeSingle();
+
+    // Get sensitive payout details using secure function
+    const { data: payoutData } = await supabase.rpc('get_my_payout_details');
 
     if (data) {
       // Check if profile is locked (has payout details submitted)
@@ -93,12 +98,12 @@ const Interviewers = () => {
         bio: data.bio || "",
         linkedinUrl: data.linkedin_url || "",
         githubUrl: data.github_url || "",
-        payoutMethod: data.payout_method || "",
-        upiId: data.upi_id || "",
-        bankName: data.bank_name || "",
-        bankAccountNumber: data.bank_account_number || "",
-        bankIfscCode: data.bank_ifsc_code || "",
-        accountHolderName: data.account_holder_name || ""
+        payoutMethod: payoutData?.[0]?.payout_method || "",
+        upiId: payoutData?.[0]?.upi_id || "",
+        bankName: payoutData?.[0]?.bank_name || "",
+        bankAccountNumber: payoutData?.[0]?.bank_account_number || "",
+        bankIfscCode: payoutData?.[0]?.bank_ifsc_code || "",
+        accountHolderName: payoutData?.[0]?.account_holder_name || ""
       });
       
       // If profile is locked, mark as submitted to show read-only view

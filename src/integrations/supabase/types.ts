@@ -105,13 +105,6 @@ export type Database = {
             foreignKeyName: "fk_interviewer_time_blocks_interviewer_id"
             columns: ["interviewer_id"]
             isOneToOne: false
-            referencedRelation: "interviewer_public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_interviewer_time_blocks_interviewer_id"
-            columns: ["interviewer_id"]
-            isOneToOne: false
             referencedRelation: "interviewers"
             referencedColumns: ["id"]
           },
@@ -347,69 +340,7 @@ export type Database = {
       }
     }
     Views: {
-      interviewer_public_profiles: {
-        Row: {
-          availability_days: string[] | null
-          bio: string | null
-          company: string | null
-          created_at: string | null
-          current_available_date: string | null
-          current_time_slots: Json | null
-          experience_years: number | null
-          github_url: string | null
-          id: string | null
-          is_eligible: boolean | null
-          linkedin_url: string | null
-          position: string | null
-          schedule_last_updated: string | null
-          skills: string[] | null
-          technologies: string[] | null
-          time_slots: Json | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          availability_days?: string[] | null
-          bio?: string | null
-          company?: string | null
-          created_at?: string | null
-          current_available_date?: string | null
-          current_time_slots?: Json | null
-          experience_years?: number | null
-          github_url?: string | null
-          id?: string | null
-          is_eligible?: boolean | null
-          linkedin_url?: string | null
-          position?: string | null
-          schedule_last_updated?: string | null
-          skills?: string[] | null
-          technologies?: string[] | null
-          time_slots?: Json | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          availability_days?: string[] | null
-          bio?: string | null
-          company?: string | null
-          created_at?: string | null
-          current_available_date?: string | null
-          current_time_slots?: Json | null
-          experience_years?: number | null
-          github_url?: string | null
-          id?: string | null
-          is_eligible?: boolean | null
-          linkedin_url?: string | null
-          position?: string | null
-          schedule_last_updated?: string | null
-          skills?: string[] | null
-          technologies?: string[] | null
-          time_slots?: Json | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_my_payout_details: {
