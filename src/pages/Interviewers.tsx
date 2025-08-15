@@ -201,34 +201,43 @@ const Interviewers = () => {
         bio: interviewerData.bio,
         linkedin_url: interviewerData.linkedinUrl,
         github_url: interviewerData.githubUrl,
-        payout_method: interviewerData.payoutMethod,
-        upi_id: interviewerData.payoutMethod === 'upi' ? interviewerData.upiId : null,
-        bank_name: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankName : null,
-        bank_account_number: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankAccountNumber : null,
-        bank_ifsc_code: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankIfscCode : null,
-        account_holder_name: interviewerData.payoutMethod === 'bank_account' ? interviewerData.accountHolderName : null,
         payout_details_submitted_at: new Date().toISOString(),
         payout_details_locked: true
       };
 
       if (existingData) {
         // Update existing record
-        const { error } = await supabase
+        const { error: profileError } = await supabase
           .from('interviewers')
           .update(profileData)
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (profileError) throw profileError;
       } else {
         // Insert new record
-        const { error } = await supabase
+        const { error: profileError } = await supabase
           .from('interviewers')
           .insert({
             user_id: user.id,
             ...profileData
           });
 
-        if (error) throw error;
+        if (profileError) throw profileError;
+      }
+
+      // Handle financial data using secure function
+      const { error: financialError } = await supabase.rpc('update_my_payout_details', {
+        p_payout_method: interviewerData.payoutMethod,
+        p_upi_id: interviewerData.payoutMethod === 'upi' ? interviewerData.upiId : null,
+        p_bank_name: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankName : null,
+        p_bank_account_number: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankAccountNumber : null,
+        p_bank_ifsc_code: interviewerData.payoutMethod === 'bank_account' ? interviewerData.bankIfscCode : null,
+        p_account_holder_name: interviewerData.payoutMethod === 'bank_account' ? interviewerData.accountHolderName : null
+      });
+
+      if (financialError) {
+        console.error("Financial data error:", financialError);
+        throw financialError;
       }
 
       // Send welcome email for new registrations

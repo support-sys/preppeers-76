@@ -59,6 +59,65 @@ export type Database = {
         }
         Relationships: []
       }
+      interviewer_financial_data: {
+        Row: {
+          account_holder_name: string | null
+          bank_account_number: string | null
+          bank_ifsc_code: string | null
+          bank_name: string | null
+          created_at: string
+          data_hash: string | null
+          id: string
+          interviewer_id: string
+          payout_details_locked: boolean | null
+          payout_details_submitted_at: string | null
+          payout_details_verified: boolean | null
+          payout_method: string | null
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          account_holder_name?: string | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
+          created_at?: string
+          data_hash?: string | null
+          id?: string
+          interviewer_id: string
+          payout_details_locked?: boolean | null
+          payout_details_submitted_at?: string | null
+          payout_details_verified?: boolean | null
+          payout_method?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          account_holder_name?: string | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
+          created_at?: string
+          data_hash?: string | null
+          id?: string
+          interviewer_id?: string
+          payout_details_locked?: boolean | null
+          payout_details_submitted_at?: string | null
+          payout_details_verified?: boolean | null
+          payout_method?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interviewer_financial_data_interviewer_id_fkey"
+            columns: ["interviewer_id"]
+            isOneToOne: true
+            referencedRelation: "interviewers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interviewer_time_blocks: {
         Row: {
           block_reason: string
@@ -112,11 +171,7 @@ export type Database = {
       }
       interviewers: {
         Row: {
-          account_holder_name: string | null
           availability_days: string[] | null
-          bank_account_number: string | null
-          bank_ifsc_code: string | null
-          bank_name: string | null
           bio: string | null
           company: string | null
           created_at: string
@@ -130,22 +185,16 @@ export type Database = {
           payout_details_locked: boolean | null
           payout_details_submitted_at: string | null
           payout_details_verified: boolean | null
-          payout_method: string | null
           position: string | null
           schedule_last_updated: string | null
           skills: string[] | null
           technologies: string[] | null
           time_slots: Json | null
           updated_at: string
-          upi_id: string | null
           user_id: string
         }
         Insert: {
-          account_holder_name?: string | null
           availability_days?: string[] | null
-          bank_account_number?: string | null
-          bank_ifsc_code?: string | null
-          bank_name?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -159,22 +208,16 @@ export type Database = {
           payout_details_locked?: boolean | null
           payout_details_submitted_at?: string | null
           payout_details_verified?: boolean | null
-          payout_method?: string | null
           position?: string | null
           schedule_last_updated?: string | null
           skills?: string[] | null
           technologies?: string[] | null
           time_slots?: Json | null
           updated_at?: string
-          upi_id?: string | null
           user_id: string
         }
         Update: {
-          account_holder_name?: string | null
           availability_days?: string[] | null
-          bank_account_number?: string | null
-          bank_ifsc_code?: string | null
-          bank_name?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -188,14 +231,12 @@ export type Database = {
           payout_details_locked?: boolean | null
           payout_details_submitted_at?: string | null
           payout_details_verified?: boolean | null
-          payout_method?: string | null
           position?: string | null
           schedule_last_updated?: string | null
           skills?: string[] | null
           technologies?: string[] | null
           time_slots?: Json | null
           updated_at?: string
-          upi_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -389,6 +430,17 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }[]
+      }
+      update_my_payout_details: {
+        Args: {
+          p_account_holder_name?: string
+          p_bank_account_number?: string
+          p_bank_ifsc_code?: string
+          p_bank_name?: string
+          p_payout_method: string
+          p_upi_id?: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
