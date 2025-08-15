@@ -4,20 +4,26 @@ import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, File
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
 import { supabase } from "@/integrations/supabase/client";
-
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
-  const { toast } = useToast();
-  const { user, userRole } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    user,
+    userRole
+  } = useAuth();
   const navigate = useNavigate();
-  const { paymentSession, hasSuccessfulPayment } = usePaymentStatus();
+  const {
+    paymentSession,
+    hasSuccessfulPayment
+  } = usePaymentStatus();
 
   // Redirect to payment processing page if there's an active payment session
   useEffect(() => {
@@ -25,42 +31,32 @@ const Index = () => {
       navigate('/payment-processing');
     }
   }, [paymentSession, navigate]);
-
   const handleStartMatching = async () => {
     if (!paymentSession || !user) {
       toast({
         title: "Error",
         description: "Missing payment information. Please try booking again.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsMatching(true);
-
     try {
       console.log('Starting matching process from homepage...');
-      
+
       // Get candidate data from payment session
       const candidateData = paymentSession.candidate_data;
-      
+
       // Find matching interviewer
       const interviewer = await findMatchingInterviewer(candidateData);
-      
       if (interviewer) {
         console.log('Interviewer found, scheduling interview...');
-        
+
         // Schedule the interview and send emails
-        await scheduleInterview(
-          interviewer, 
-          candidateData, 
-          user?.email || '',
-          user?.user_metadata?.full_name || user?.email || ''
-        );
-        
+        await scheduleInterview(interviewer, candidateData, user?.email || '', user?.user_metadata?.full_name || user?.email || '');
         toast({
           title: "Interview Scheduled!",
-          description: "Your interview has been scheduled successfully!",
+          description: "Your interview has been scheduled successfully!"
         });
 
         // Navigate to dashboard or success page
@@ -69,9 +65,9 @@ const Index = () => {
         console.log('No interviewer found');
         toast({
           title: "No Interviewer Available",
-          description: "We're finding the best interviewer for you! We'll contact you soon.",
+          description: "We're finding the best interviewer for you! We'll contact you soon."
         });
-        
+
         // Keep the button visible for retry
         setIsMatching(false);
       }
@@ -80,30 +76,24 @@ const Index = () => {
       toast({
         title: "Processing Error",
         description: "There was an issue with matching. We'll contact you soon!",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsMatching(false);
     }
   };
-
   if (isMatching) {
     return <MatchingLoader />;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+  return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
       
       {/* Tech Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent">
-          <div 
-            className="w-full h-full"
-            style={{
-              background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
-              backgroundSize: '60px 60px'
-            }}
-          />
+          <div className="w-full h-full" style={{
+          background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+          backgroundSize: '60px 60px'
+        }} />
         </div>
       </div>
 
@@ -126,22 +116,18 @@ const Index = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            {!user || (user && userRole === 'interviewee') ? (
-              <Link to={user ? "/book" : "/auth?role=interviewee"}>
+            {!user || user && userRole === 'interviewee' ? <Link to={user ? "/book" : "/auth?role=interviewee"}>
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
                   Book a Mock Interview
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
-              </Link>
-            ) : null}
+              </Link> : null}
             
-            {!user || (user && userRole === 'interviewer') ? (
-              <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
-                <Button variant="outline" size="lg" className="border-2 border-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl backdrop-blur-sm bg-zinc-500 hover:bg-zinc-400 text-slate-50">
+            {!user || user && userRole === 'interviewer' ? <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
+                <Button variant="outline" size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 bg-gradient-to-r ">
                   Become an Interviewer
                 </Button>
-              </Link>
-            ) : null}
+              </Link> : null}
           </div>
 
           {/* Feature Highlights */}
@@ -429,8 +415,6 @@ const Index = () => {
       <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
