@@ -384,6 +384,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_financial_data: {
+        Args: { encrypted_data: string; encryption_key?: string }
+        Returns: string
+      }
+      encrypt_financial_data: {
+        Args: { data_text: string; encryption_key?: string }
+        Returns: string
+      }
       get_my_payout_details: {
         Args: Record<PropertyKey, never>
         Returns: {
