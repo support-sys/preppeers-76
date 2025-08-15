@@ -476,7 +476,7 @@ const Interviewers = () => {
 
                 {/* LinkedIn URL */}
                 <div>
-                  <Label htmlFor="linkedinUrl" className="text-white">LinkedIn URL</Label>
+                  <Label htmlFor="linkedinUrl" className="text-white">LinkedIn URL *</Label>
                   <Input
                     id="linkedinUrl"
                     name="linkedinUrl"
@@ -485,6 +485,7 @@ const Interviewers = () => {
                     onChange={handleInputChange}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                     placeholder="Enter your LinkedIn URL"
+                    required
                   />
                 </div>
 
