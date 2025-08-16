@@ -124,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: updateData, error: updateError } = await supabase
         .from('payment_sessions')
         .update({
-          payment_status: 'successful',
+          payment_status: 'completed',
           cashfree_payment_id: payment_id ? String(payment_id) : null
         })
         .eq('id', sessionId)
@@ -145,6 +145,31 @@ const handler = async (req: Request): Promise<Response> => {
         });
       } else {
         console.log('Payment session updated successfully:', updateData);
+        
+        // Trigger auto-booking in background if payment is successful
+        if (updateData && updateData.length > 0) {
+          const paymentSession = updateData[0];
+          console.log('🔄 Triggering auto-book interview for payment session:', sessionId);
+          
+          // Use background task to auto-book interview
+          try {
+            const autoBookResponse = await supabase.functions.invoke('auto-book-interview', {
+              body: {
+                payment_session_id: sessionId,
+                user_id: paymentSession.user_id
+              }
+            });
+            
+            if (autoBookResponse.error) {
+              console.error('Auto-book interview failed:', autoBookResponse.error);
+            } else {
+              console.log('✅ Auto-book interview response:', autoBookResponse.data);
+            }
+          } catch (autoBookError) {
+            console.error('Error calling auto-book interview:', autoBookError);
+            // Don't fail the webhook if auto-booking fails
+          }
+        }
       }
       
       return new Response(JSON.stringify({ 
