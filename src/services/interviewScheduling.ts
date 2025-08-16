@@ -8,7 +8,8 @@ import {
   parseExperience, 
   getAlternativeTimeSlots,
   checkEnhancedSkillsMatch,
-  checkEnhancedExperienceMatch
+  checkEnhancedExperienceMatch,
+  MINIMUM_SKILL_THRESHOLD
 } from "@/utils/interviewerMatching";
 
 // Helper function to convert time slot format to ISO datetime
@@ -120,19 +121,36 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
 
       console.log(`\n🔍 === EVALUATING INTERVIEWER ${index + 1}: ${interviewer.company || 'Unknown'} ===`);
 
-      // 1. Enhanced Skills matching (50 points max)
+      // 1. Enhanced Skills matching (60 points max) - Now primary factor
       console.log('\n📋 STEP 1: Enhanced Skills Evaluation');
       const skillsResult = checkEnhancedSkillsMatch(
         candidateData,
         interviewer.skills || [], 
         interviewer.technologies || []
       );
+      
+      // Enforce minimum skill threshold - block poor matches
+      if (skillsResult.score < MINIMUM_SKILL_THRESHOLD) {
+        console.log(`❌ Interviewer ${index + 1} BLOCKED: Skills score ${skillsResult.score} below minimum threshold ${MINIMUM_SKILL_THRESHOLD}`);
+        return {
+          ...interviewer,
+          matchScore: 0,
+          matchReasons: [],
+          matchDetails: ['Insufficient skill match - blocked'],
+          alternativeTimeSlots: [],
+          timeMatch: false,
+          hasExactTimeMatch: false,
+          skillQuality: skillsResult.quality,
+          blocked: true
+        };
+      }
+      
       totalScore += skillsResult.score;
       if (skillsResult.match) {
-        allReasons.push('Advanced skills match');
+        allReasons.push(`${skillsResult.quality.charAt(0).toUpperCase() + skillsResult.quality.slice(1)} skills match`);
       }
       allDetails.push(...skillsResult.details);
-      console.log(`✅ Skills evaluation: +${skillsResult.score}/50 points`);
+      console.log(`✅ Skills evaluation: +${skillsResult.score}/60 points (${skillsResult.quality} quality)`);
 
       // 2. Enhanced Experience matching (25 points max)
       console.log('\n👨‍💼 STEP 2: Enhanced Experience Evaluation');
@@ -147,23 +165,24 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       allDetails.push(...experienceResult.details);
       console.log(`✅ Experience evaluation: +${experienceResult.score}/25 points`);
 
-      // 3. Time slot availability (25 points max)
-      console.log('\n⏰ STEP 4: Time Availability Evaluation');
+      // 3. Time slot availability (15 points max) - Reduced priority
+      console.log('\n⏰ STEP 3: Time Availability Evaluation');
       const timeMatch = checkTimeSlotMatch(candidateData.timeSlot || '', interviewer.current_time_slots);
       if (timeMatch) {
-        totalScore += 25;
-        allReasons.push('Time available');
+        totalScore += 15; // Reduced from 25 to 15
+        allReasons.push('Perfect time match');
         allDetails.push('Exact time slot match found');
-        console.log('✅ Time available: +25 points');
+        console.log('✅ Time available: +15 points');
       } else {
-        console.log('❌ Time not available: +0 points');
+        console.log('❌ Preferred time not available: +0 points');
       }
 
       // Get alternative time slots for this interviewer
       const alternativeTimeSlots = getAlternativeTimeSlots(interviewer.current_time_slots);
       if (alternativeTimeSlots.length > 0 && !timeMatch) {
-        totalScore += 5; // Small bonus for having alternatives
+        totalScore += 3; // Small bonus for having alternatives
         allDetails.push(`${alternativeTimeSlots.length} alternative time slots available`);
+        console.log(`✅ Alternative times available: +3 points`);
       }
 
       console.log(`\n🎯 ENHANCED FINAL SCORE for ${interviewer.company}: ${totalScore}/100`);
@@ -179,24 +198,46 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
         matchDetails: allDetails,
         alternativeTimeSlots,
         timeMatch,
-        hasExactTimeMatch: timeMatch
+        hasExactTimeMatch: timeMatch,
+        skillQuality: skillsResult.quality,
+        blocked: false
       };
     });
 
-    // First, try to find interviewers with exact time matches
-    const exactMatchInterviewers = scoredInterviewers.filter(i => i.timeMatch);
+    // Filter out blocked interviewers (those below minimum skill threshold)
+    const validInterviewers = scoredInterviewers.filter(i => !i.blocked);
+    
+    if (validInterviewers.length === 0) {
+      console.log('❌ No interviewers meet minimum skill requirements');
+      return null;
+    }
+
+    // First, try to find interviewers with exact time matches and good skill quality
+    const excellentMatchInterviewers = validInterviewers.filter(i => 
+      i.timeMatch && (i.skillQuality === 'excellent' || i.skillQuality === 'good')
+    );
+    excellentMatchInterviewers.sort((a, b) => b.matchScore - a.matchScore);
+
+    if (excellentMatchInterviewers.length > 0) {
+      const bestExactMatch = excellentMatchInterviewers[0];
+      console.log(`\n🏆 Best exact time + skills match: ${bestExactMatch.company || 'Unknown'} - Score: ${bestExactMatch.matchScore}/100 (${bestExactMatch.skillQuality})`);
+      return bestExactMatch;
+    }
+
+    // Next, try exact time matches with any skill quality above minimum
+    const exactMatchInterviewers = validInterviewers.filter(i => i.timeMatch);
     exactMatchInterviewers.sort((a, b) => b.matchScore - a.matchScore);
 
     if (exactMatchInterviewers.length > 0) {
       const bestExactMatch = exactMatchInterviewers[0];
-      console.log(`\n🏆 Best exact time match: ${bestExactMatch.company || 'Unknown'} - Score: ${bestExactMatch.matchScore}/100`);
+      console.log(`\n🏆 Best exact time match: ${bestExactMatch.company || 'Unknown'} - Score: ${bestExactMatch.matchScore}/100 (${bestExactMatch.skillQuality})`);
       return bestExactMatch;
     }
 
     // If no exact matches, find the best interviewer with alternative time slots
-    console.log('\n⏰ No exact time matches found. Looking for best alternative...');
+    console.log('\n⏰ No exact time matches found. Looking for best alternatives...');
     
-    const interviewersWithAlternatives = scoredInterviewers.filter(i => 
+    const interviewersWithAlternatives = validInterviewers.filter(i => 
       i.alternativeTimeSlots && i.alternativeTimeSlots.length > 0
     );
 
@@ -205,19 +246,30 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       return null;
     }
 
-    // Sort by match score first, then by earliest alternative time slot
+    // Sort by skill quality first, then by match score, then by earliest alternative time slot
     interviewersWithAlternatives.sort((a, b) => {
+      // Prioritize skill quality
+      const qualityOrder = { excellent: 4, good: 3, poor: 2, none: 1 };
+      const aQuality = qualityOrder[a.skillQuality] || 1;
+      const bQuality = qualityOrder[b.skillQuality] || 1;
+      
+      if (bQuality !== aQuality) {
+        return bQuality - aQuality;
+      }
+      
+      // Then by match score
       if (b.matchScore !== a.matchScore) {
         return b.matchScore - a.matchScore;
       }
-      // If scores are equal, prefer the one with earlier time slots
+      
+      // Finally by earliest time slot
       const aEarliest = a.alternativeTimeSlots[0] || '';
       const bEarliest = b.alternativeTimeSlots[0] || '';
       return aEarliest.localeCompare(bEarliest);
     });
 
     const bestAlternativeMatch = interviewersWithAlternatives[0];
-    console.log(`\n🏆 Best alternative match: ${bestAlternativeMatch.company || 'Unknown'} - Score: ${bestAlternativeMatch.matchScore}/100`);
+    console.log(`\n🏆 Best alternative match: ${bestAlternativeMatch.company || 'Unknown'} - Score: ${bestAlternativeMatch.matchScore}/100 (${bestAlternativeMatch.skillQuality})`);
     console.log(`⏰ Alternative time slots: ${bestAlternativeMatch.alternativeTimeSlots.join(', ')}`);
     
     return bestAlternativeMatch;

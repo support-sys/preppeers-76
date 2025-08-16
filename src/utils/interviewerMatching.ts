@@ -30,10 +30,29 @@ export interface MatchedInterviewer {
 
 // Enhanced skill category mapping with technologies
 export const skillCategoryMapping: { [key: string]: string[] } = {
-  "Frontend Development": ["React", "Vue.js", "Angular", "JavaScript", "TypeScript", "HTML/CSS", "Next.js", "Svelte"],
-  "Backend Development": ["Node.js", "Python", "Java", "Go", "Ruby", "PHP", "C#", ".NET", "Spring Boot"],
-  "Full Stack Development": ["MERN Stack", "MEAN Stack", "Django", "Rails", "Laravel", "Express.js"],
-  "System Design": ["Microservices", "Database Design", "Scalability", "Load Balancing", "Caching", "API Design"]
+  "Frontend Development": ["React", "Vue.js", "Angular", "JavaScript", "TypeScript", "HTML/CSS", "Next.js", "Svelte", "React.js", "Vue", "Angular.js"],
+  "Backend Development": ["Node.js", "Python", "Java", "Go", "Ruby", "PHP", "C#", ".NET", "Spring Boot", "Django", "Flask", "Express"],
+  "Full Stack Development": ["MERN Stack", "MEAN Stack", "Django", "Rails", "Laravel", "Express.js", "React", "Node.js"],
+  "System Design": ["Microservices", "Database Design", "Scalability", "Load Balancing", "Caching", "API Design"],
+  "Mobile Development": ["React Native", "Flutter", "iOS", "Android", "Swift", "Kotlin"],
+  "DevOps": ["AWS", "Docker", "Kubernetes", "CI/CD", "Jenkins", "Azure", "GCP"]
+};
+
+// Skill match quality thresholds
+export const SKILL_MATCH_THRESHOLDS = {
+  EXCELLENT: 40, // Same category + specific tech overlap
+  GOOD: 20,      // Related categories or some tech overlap  
+  POOR: 5,       // Minimal overlap - requires user consent
+  NONE: 0        // No overlap - block matching
+};
+
+export const MINIMUM_SKILL_THRESHOLD = 20; // Require at least 20 points for matching
+
+// Enhanced experience requirements
+export const EXPERIENCE_REQUIREMENTS = {
+  MINIMUM_MENTOR_GAP: 1,  // Minimum 1 year gap for mentorship
+  IDEAL_MENTOR_GAP: 3,    // Ideal 2-5 years gap
+  MAXIMUM_MENTOR_GAP: 10  // Maximum useful gap
 };
 
 /*
@@ -260,12 +279,12 @@ export const parseExperience = (experienceStr: string): number => {
   return 2; // Default to 2 years
 };
 
-// Enhanced skills matching using candidate's specific skills
+// Enhanced skills matching with semantic understanding and minimum thresholds
 export const checkEnhancedSkillsMatch = (
   candidate: MatchingCandidate, 
   interviewerSkills: string[], 
   interviewerTechnologies: string[]
-): { match: boolean; score: number; details: string[] } => {
+): { match: boolean; score: number; details: string[]; quality: string } => {
   console.log('\n🎯 === ENHANCED SKILLS MATCHING DEBUG ===');
   console.log('👤 Candidate data:', {
     skillCategories: candidate.skillCategories,
@@ -280,43 +299,101 @@ export const checkEnhancedSkillsMatch = (
   const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
   const allInterviewerSkills = [...skillsArray, ...technologiesArray];
 
-  // 1. Skill Categories Matching (30 points max)
+  // 1. Hard Category Filter (30 points max) - Prioritize same category matches
+  let categoryScore = 0;
   if (candidate.skillCategories && candidate.skillCategories.length > 0) {
-    const categoryMatches = candidate.skillCategories.filter(category => 
+    const exactCategoryMatches = candidate.skillCategories.filter(category => 
       skillsArray.includes(category)
     );
-    if (categoryMatches.length > 0) {
-      const categoryScore = Math.min(30, categoryMatches.length * 10);
-      totalScore += categoryScore;
-      matchDetails.push(`${categoryMatches.length} skill categories match: ${categoryMatches.join(', ')}`);
+    
+    if (exactCategoryMatches.length > 0) {
+      categoryScore = Math.min(30, exactCategoryMatches.length * 15); // Higher points for exact category matches
+      matchDetails.push(`🎯 Exact skill category match: ${exactCategoryMatches.join(', ')}`);
+    } else {
+      // Check for semantic category matches (e.g., React.js -> Frontend Development)
+      const semanticMatches = [];
+      for (const candidateCategory of candidate.skillCategories) {
+        const relatedTechs = skillCategoryMapping[candidateCategory] || [];
+        const techMatches = relatedTechs.filter(tech => 
+          allInterviewerSkills.some(iSkill => 
+            iSkill.toLowerCase().includes(tech.toLowerCase()) ||
+            tech.toLowerCase().includes(iSkill.toLowerCase())
+          )
+        );
+        if (techMatches.length > 0) {
+          semanticMatches.push(`${candidateCategory} (${techMatches.join(', ')})`);
+        }
+      }
+      if (semanticMatches.length > 0) {
+        categoryScore = Math.min(20, semanticMatches.length * 10); // Lower points for semantic matches
+        matchDetails.push(`🔗 Related skill matches: ${semanticMatches.join('; ')}`);
+      }
     }
+    totalScore += categoryScore;
   }
 
-  // 2. Specific Skills Matching (20 points max)
+  // 2. Specific Technology Matching (30 points max)
+  let techScore = 0;
   if (candidate.specificSkills && candidate.specificSkills.length > 0) {
-    const skillMatches = candidate.specificSkills.filter(skill => 
-      allInterviewerSkills.some(interviewerSkill => 
-        skill.toLowerCase() === interviewerSkill.toLowerCase() ||
-        skill.toLowerCase().includes(interviewerSkill.toLowerCase()) ||
-        interviewerSkill.toLowerCase().includes(skill.toLowerCase())
-      )
-    );
-    if (skillMatches.length > 0) {
-      const skillScore = Math.min(20, skillMatches.length * 5);
-      totalScore += skillScore;
-      matchDetails.push(`${skillMatches.length} specific skills match: ${skillMatches.join(', ')}`);
+    const exactTechMatches = [];
+    const partialTechMatches = [];
+    
+    for (const skill of candidate.specificSkills) {
+      const exactMatch = allInterviewerSkills.find(iSkill => 
+        skill.toLowerCase() === iSkill.toLowerCase()
+      );
+      if (exactMatch) {
+        exactTechMatches.push(skill);
+        techScore += 10; // High points for exact matches
+      } else {
+        const partialMatch = allInterviewerSkills.find(iSkill => 
+          skill.toLowerCase().includes(iSkill.toLowerCase()) ||
+          iSkill.toLowerCase().includes(skill.toLowerCase())
+        );
+        if (partialMatch) {
+          partialTechMatches.push(skill);
+          techScore += 5; // Lower points for partial matches
+        }
+      }
     }
+    
+    techScore = Math.min(30, techScore);
+    if (exactTechMatches.length > 0) {
+      matchDetails.push(`✅ Exact technology matches: ${exactTechMatches.join(', ')}`);
+    }
+    if (partialTechMatches.length > 0) {
+      matchDetails.push(`🔍 Related technology matches: ${partialTechMatches.join(', ')}`);
+    }
+    totalScore += techScore;
   }
 
-  const finalMatch = totalScore >= 15; // Require at least 15 points for a match
-  console.log(`📊 Enhanced skills matching result: ${totalScore}/50 points, Match: ${finalMatch}`);
+  // Determine match quality and enforce minimum threshold
+  let quality = 'none';
+  let finalMatch = false;
+  
+  if (totalScore >= SKILL_MATCH_THRESHOLDS.EXCELLENT) {
+    quality = 'excellent';
+    finalMatch = true;
+  } else if (totalScore >= SKILL_MATCH_THRESHOLDS.GOOD) {
+    quality = 'good'; 
+    finalMatch = true;
+  } else if (totalScore >= SKILL_MATCH_THRESHOLDS.POOR) {
+    quality = 'poor';
+    finalMatch = true; // Allow but require user consent
+  } else {
+    quality = 'none';
+    finalMatch = false; // Block matching
+  }
+
+  console.log(`📊 Enhanced skills matching result: ${totalScore}/60 points, Quality: ${quality}, Match: ${finalMatch}`);
   console.log('🎯 Match details:', matchDetails);
   console.log('=== END ENHANCED SKILLS MATCHING DEBUG ===\n');
 
   return {
     match: finalMatch,
     score: totalScore,
-    details: matchDetails
+    details: matchDetails,
+    quality
   };
 };
 

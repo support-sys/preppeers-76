@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, CheckCircle, Clock, Calendar, Star, Award, ArrowRight } from "lucide-react";
+import MatchQualityIndicator from "@/components/MatchQualityIndicator";
+import PoorMatchWarning from "@/components/PoorMatchWarning";
 
 interface InterviewerPreviewProps {
   matchedInterviewer: any;
@@ -20,16 +22,57 @@ const InterviewerPreview = ({
   onGoBack,
   formData 
 }: InterviewerPreviewProps) => {
+  const isPoorMatch = matchedInterviewer?.skillQuality === 'poor';
+  const isExcellentMatch = matchedInterviewer?.skillQuality === 'excellent';
+  const isGoodMatch = matchedInterviewer?.skillQuality === 'good';
+
+  const getMatchTitle = () => {
+    if (isExcellentMatch) return "Excellent Match Found! 🎯";
+    if (isGoodMatch) return "Good Match Found! ✅";
+    if (isPoorMatch) return "Interviewer Found ⚠️";
+    return "Match Found 📋";
+  };
+
+  const getMatchDescription = () => {
+    if (isExcellentMatch) return "We found an excellent interviewer with perfect skill alignment.";
+    if (isGoodMatch) return "We found a good interviewer with strong skill compatibility."; 
+    if (isPoorMatch) return "We found an available interviewer, but with limited skill overlap.";
+    return "We found an interviewer for your requirements.";
+  };
+
+  // Show poor match warning if skill quality is poor
+  if (isPoorMatch) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-2xl mx-auto">
+            <PoorMatchWarning 
+              matchQuality={matchedInterviewer.skillQuality}
+              matchScore={matchedInterviewer.matchScore}
+              skillCategories={formData?.skillCategories || []}
+              onAcceptMatch={onProceedToPayment}
+              onWaitForBetter={() => {
+                // For now, just go back - in future this could trigger notifications
+                onGoBack();
+              }}
+              onModifyRequirements={onGoBack}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-4">
-              Perfect Match Found! 🎯
+              {getMatchTitle()}
             </h1>
             <p className="text-xl text-blue-200">
-              We found an excellent interviewer for you. Review the details below and proceed to secure your slot.
+              {getMatchDescription()} Review the details below and proceed to secure your slot.
             </p>
           </div>
 
@@ -49,12 +92,21 @@ const InterviewerPreview = ({
               </CardHeader>
               
               <CardContent className="space-y-6">
+                {/* Match Quality Indicator */}
+                {matchedInterviewer?.skillQuality && (
+                  <MatchQualityIndicator 
+                    quality={matchedInterviewer.skillQuality}
+                    score={matchedInterviewer.matchScore || 0}
+                    maxScore={100}
+                  />
+                )}
+
                 {/* Match Reasons */}
                 {matchedInterviewer?.matchReasons && (
                   <div className="bg-white/5 backdrop-blur-sm border border-green-400/30 p-4 rounded-xl">
                     <div className="flex items-center space-x-2 mb-3">
                       <Star className="w-5 h-5 text-green-400" />
-                      <h4 className="font-semibold text-green-400">Why this is a perfect match:</h4>
+                      <h4 className="font-semibold text-green-400">Match Highlights:</h4>
                     </div>
                     <ul className="text-sm text-green-200 space-y-2">
                       {matchedInterviewer.matchReasons.map((reason: string, index: number) => (
@@ -62,6 +114,18 @@ const InterviewerPreview = ({
                           <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
                           <span>{reason}</span>
                         </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Match Details */}
+                {matchedInterviewer?.matchDetails && matchedInterviewer.matchDetails.length > 0 && (
+                  <div className="bg-white/5 backdrop-blur-sm border border-blue-400/30 p-4 rounded-xl">
+                    <h4 className="font-semibold text-blue-400 mb-3">Detailed Match Analysis:</h4>
+                    <ul className="text-sm text-blue-200 space-y-1">
+                      {matchedInterviewer.matchDetails.map((detail: string, index: number) => (
+                        <li key={index}>• {detail}</li>
                       ))}
                     </ul>
                   </div>
