@@ -84,10 +84,10 @@ const InterviewerPreview = ({
                   <User className="w-10 h-10 text-blue-400" />
                 </div>
                 <CardTitle className="text-2xl font-bold text-blue-400">
-                  {matchedInterviewer?.company || 'Senior Interviewer'}
+                  {matchedInterviewer?.name || matchedInterviewer?.full_name || 'Senior Interviewer'}
                 </CardTitle>
                 <CardDescription className="text-lg text-blue-200">
-                  {matchedInterviewer?.position || 'Experienced Professional'}
+                  {matchedInterviewer?.position || 'Experienced Professional'} at {matchedInterviewer?.company || 'Top Company'}
                 </CardDescription>
               </CardHeader>
               
