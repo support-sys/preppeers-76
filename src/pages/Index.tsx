@@ -124,8 +124,9 @@ const Index = () => {
               </Link> : null}
             
             {!user || user && userRole === 'interviewer' ? <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
-                <Button variant="outline" size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 bg-gradient-to-r ">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
                   Become an Interviewer
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
               </Link> : null}
           </div>
