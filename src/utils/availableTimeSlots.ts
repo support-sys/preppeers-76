@@ -12,21 +12,34 @@ interface AvailableTimeSlot {
 export const getAvailableTimeSlotsForInterviewer = async (
   interviewerId: string,
   interviewerTimeSlots: any,
+  candidatePreferredDate?: string, // ISO date string or date-like string
   daysToCheck: number = 14
 ): Promise<AvailableTimeSlot[]> => {
   if (!interviewerTimeSlots) return [];
 
   const availableSlots: AvailableTimeSlot[] = [];
-  const today = startOfDay(new Date());
+  
+  // Parse candidate's preferred date or use today as fallback
+  let startDate = startOfDay(new Date());
+  if (candidatePreferredDate) {
+    try {
+      const preferredDate = new Date(candidatePreferredDate);
+      if (!isNaN(preferredDate.getTime())) {
+        startDate = startOfDay(preferredDate);
+      }
+    } catch (error) {
+      console.log('Could not parse candidate preferred date, using today:', error);
+    }
+  }
 
   try {
-    // Get all blocked time slots for this interviewer for the next 2 weeks
-    const endDate = addDays(today, daysToCheck);
+    // Get all blocked time slots for this interviewer from the preferred date onwards
+    const endDate = addDays(startDate, daysToCheck);
     const { data: blockedSlots, error } = await supabase
       .from('interviewer_time_blocks')
       .select('blocked_date, start_time, end_time')
       .eq('interviewer_id', interviewerId)
-      .gte('blocked_date', format(today, 'yyyy-MM-dd'))
+      .gte('blocked_date', format(startDate, 'yyyy-MM-dd'))
       .lte('blocked_date', format(endDate, 'yyyy-MM-dd'));
 
     if (error) {
@@ -47,9 +60,9 @@ export const getAvailableTimeSlotsForInterviewer = async (
       });
     });
 
-    // Check each day for the next 2 weeks
-    for (let i = 1; i <= daysToCheck; i++) {
-      const checkDate = addDays(today, i);
+    // Check each day starting from the preferred date
+    for (let i = 0; i <= daysToCheck; i++) {
+      const checkDate = addDays(startDate, i);
       const dayName = format(checkDate, 'EEEE'); // Monday, Tuesday, etc.
       const dateString = format(checkDate, 'yyyy-MM-dd');
       const displayDate = format(checkDate, 'dd/MM/yyyy');
@@ -85,11 +98,21 @@ export const getAvailableTimeSlotsForInterviewer = async (
       });
     }
 
-    // Sort by date and time, return first 3 available slots
+    // Sort by date and time
+    // Prioritize slots on the same day as preferred date, then later dates
     availableSlots.sort((a, b) => {
+      const aIsPreferredDay = isSameDay(new Date(a.date), startDate);
+      const bIsPreferredDay = isSameDay(new Date(b.date), startDate);
+      
+      // Prioritize slots on the preferred day
+      if (aIsPreferredDay && !bIsPreferredDay) return -1;
+      if (!aIsPreferredDay && bIsPreferredDay) return 1;
+      
+      // Then sort by date
       if (a.date !== b.date) {
         return a.date.localeCompare(b.date);
       }
+      // Finally sort by time
       return a.startTime.localeCompare(b.startTime);
     });
 

@@ -198,7 +198,8 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       // Get enhanced alternative time slots with specific dates
       const availableTimeSlots = await getAvailableTimeSlotsForInterviewer(
         interviewer.id,
-        interviewer.current_time_slots
+        interviewer.current_time_slots,
+        candidateData.timeSlot // Pass candidate's preferred date
       );
       const alternativeTimeSlots = availableTimeSlots.map(slot => slot.displayText);
       
