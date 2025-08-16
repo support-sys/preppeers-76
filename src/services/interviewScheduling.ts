@@ -11,6 +11,7 @@ import {
   checkEnhancedExperienceMatch,
   MINIMUM_SKILL_THRESHOLD
 } from "@/utils/interviewerMatching";
+import { getAvailableTimeSlotsForInterviewer } from "@/utils/availableTimeSlots";
 
 // Helper function to convert time slot format to ISO datetime
 const convertTimeSlotToISODate = (timeSlot: string): string => {
@@ -19,7 +20,24 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
     return timeSlot;
   }
   
-  // Handle format like "Tuesday 09:00-17:00"
+  // Handle new format like "Monday, 16/08/2025 10:00-11:00"
+  if (timeSlot.includes(',') && timeSlot.includes('/')) {
+    const parts = timeSlot.split(' ');
+    if (parts.length >= 3) {
+      const datePart = parts[1]; // "16/08/2025"
+      const timePart = parts[2]; // "10:00-11:00"
+      const startTime = timePart.split('-')[0]; // "10:00"
+      
+      // Parse date from dd/mm/yyyy format
+      const [day, month, year] = datePart.split('/').map(Number);
+      const [hours, minutes] = startTime.split(':').map(Number);
+      
+      const targetDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+      return targetDate.toISOString();
+    }
+  }
+  
+  // Handle legacy format like "Tuesday 09:00-17:00"
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = new Date();
   
@@ -114,7 +132,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
 
     // Score and rank interviewers using enhanced matching
     console.log('\n🎯 === EVALUATING EACH INTERVIEWER WITH ENHANCED MATCHING ===');
-    const scoredInterviewers = filteredInterviewers.map((interviewer, index) => {
+    const scoredInterviewers = await Promise.all(filteredInterviewers.map(async (interviewer, index) => {
       let totalScore = 0;
       const allReasons = [];
       const allDetails = [];
@@ -177,8 +195,13 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
         console.log('❌ Preferred time not available: +0 points');
       }
 
-      // Get alternative time slots for this interviewer
-      const alternativeTimeSlots = getAlternativeTimeSlots(interviewer.current_time_slots);
+      // Get enhanced alternative time slots with specific dates
+      const availableTimeSlots = await getAvailableTimeSlotsForInterviewer(
+        interviewer.id,
+        interviewer.current_time_slots
+      );
+      const alternativeTimeSlots = availableTimeSlots.map(slot => slot.displayText);
+      
       if (alternativeTimeSlots.length > 0 && !timeMatch) {
         totalScore += 3; // Small bonus for having alternatives
         allDetails.push(`${alternativeTimeSlots.length} alternative time slots available`);
@@ -202,7 +225,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
         skillQuality: skillsResult.quality,
         blocked: false
       };
-    });
+    }));
 
     // Filter out blocked interviewers (those below minimum skill threshold)
     const validInterviewers = scoredInterviewers.filter(i => !i.blocked);
