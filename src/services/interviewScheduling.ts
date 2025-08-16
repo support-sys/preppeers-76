@@ -406,75 +406,11 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       throw new Error(`You already have an interview scheduled with this interviewer at ${new Date(conflictingInterview.scheduled_time).toLocaleString()}`);
     }
     
-    // Get the interviewer's profile to get their email
-    console.log('🔍 Looking for interviewer profile with user_id:', interviewer.user_id);
-    
-    // First check if we have user_id
-    if (!interviewer.user_id) {
-      console.error('❌ No user_id found in interviewer object');
-      throw new Error('Interviewer user ID not found. Cannot schedule interview.');
-    }
-    
-    const { data: interviewerProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('email, full_name')
-      .eq('id', interviewer.user_id)
-      .maybeSingle();
-
-    console.log('📧 Profile lookup result:', { interviewerProfile, profileError });
-
-    if (profileError) {
-      console.error('❌ Error fetching interviewer profile:', profileError);
-      throw new Error('Error fetching interviewer profile.');
-    }
-
-    let interviewerEmail: string;
-    let interviewerName: string;
-
-    if (!interviewerProfile) {
-      console.error('❌ No profile found for user_id:', interviewer.user_id);
-      // Let's check if there are any profiles at all
-      const { data: allProfiles } = await supabase
-        .from('profiles')
-        .select('id, email, full_name')
-        .limit(5);
-      console.log('📋 Sample profiles in database:', allProfiles);
-      
-      // Try to get interviewer info directly from interviewers table as fallback
-      const { data: interviewerData } = await supabase
-        .from('interviewers')
-        .select('user_id, company, position')
-        .eq('id', interviewer.id)
-        .maybeSingle();
-      
-      if (interviewerData) {
-        // Try to get auth user email as final fallback
-        console.log('🔄 Trying to get email from auth user data...');
-        // For now, we'll use a placeholder email and create a profile
-        interviewerEmail = `interviewer-${interviewer.user_id}@temp.com`;
-        interviewerName = interviewer.company || 'Professional Interviewer';
-        
-        console.log('⚠️  Using fallback interviewer details:', { 
-          email: interviewerEmail, 
-          name: interviewerName 
-        });
-      } else {
-        throw new Error(`Interviewer profile not found for user_id: ${interviewer.user_id}. Please ensure the interviewer has a valid profile.`);
-      }
-    } else {
-      if (!interviewerProfile.email) {
-        console.error('❌ No email found in profile for user_id:', interviewer.user_id);
-        console.log('📧 Profile data:', interviewerProfile);
-        throw new Error(`Interviewer email not found in profile for user_id: ${interviewer.user_id}. Please ensure the interviewer profile has a valid email.`);
-      }
-      
-      interviewerEmail = interviewerProfile.email;
-      interviewerName = interviewerProfile.full_name || interviewer.company || 'Professional Interviewer';
-    }
-    
-    console.log('✅ Found interviewer details:', { 
-      email: interviewerEmail, 
-      name: interviewerName 
+    // Call the edge function to handle interview scheduling with profile lookup
+    console.log('📞 Calling schedule-interview edge function with interviewer data:', {
+      interviewer_id: interviewer.id,
+      interviewer_user_id: interviewer.user_id,
+      candidate_data: candidate
     });
     
 
@@ -493,14 +429,13 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       console.warn('Could not fetch latest resume_url from interviewees table:', resumeFetchError);
     }
     
-    // Create interview record data
+    // Create interview record data - let edge function handle profile lookup
     const interviewData = {
       interviewer_id: interviewer.id,
+      interviewer_user_id: interviewer.user_id, // Pass user_id so edge function can look up profile
       candidate_id: userEmail, // Use email as consistent identifier
       candidate_name: userFullName || userEmail.split('@')[0],
       candidate_email: userEmail,
-      interviewer_email: interviewerEmail,
-      interviewer_name: interviewerName,
       target_role: candidate.skillCategories?.join(', ') || 'Not specified',
       experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
       scheduled_time: scheduledDateTime,

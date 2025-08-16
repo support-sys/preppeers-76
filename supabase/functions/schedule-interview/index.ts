@@ -9,11 +9,12 @@ const corsHeaders = {
 
 interface InterviewData {
   interviewer_id: string;
+  interviewer_user_id?: string; // Add user_id for profile lookup
   candidate_id: string;
   candidate_name: string;
   candidate_email: string;
-  interviewer_email: string;
-  interviewer_name?: string;
+  interviewer_email?: string; // Make optional since we'll look it up
+  interviewer_name?: string; // Make optional since we'll look it up
   target_role: string;
   experience: string;
   scheduled_time: string;
@@ -35,6 +36,38 @@ serve(async (req) => {
     const interviewData: InterviewData = await req.json();
     console.log("Received interview data:", interviewData);
 
+    // Look up interviewer profile if email/name not provided
+    let interviewerEmail = interviewData.interviewer_email;
+    let interviewerName = interviewData.interviewer_name;
+    
+    if (!interviewerEmail && interviewData.interviewer_user_id) {
+      console.log("Looking up interviewer profile for user_id:", interviewData.interviewer_user_id);
+      
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', interviewData.interviewer_user_id)
+        .single();
+      
+      if (profileError) {
+        console.error("Error fetching interviewer profile:", profileError);
+        throw new Error("Failed to fetch interviewer profile");
+      }
+      
+      if (profile) {
+        interviewerEmail = profile.email;
+        interviewerName = profile.full_name;
+        console.log("Found interviewer profile:", { email: interviewerEmail, name: interviewerName });
+      } else {
+        console.error("No profile found for interviewer user_id:", interviewData.interviewer_user_id);
+        throw new Error("Interviewer profile not found");
+      }
+    }
+    
+    if (!interviewerEmail) {
+      throw new Error("Interviewer email is required but not found");
+    }
+
     // Create Google Meet link
     console.log("Creating Google Meet link...");
     const meetResponse = await supabaseClient.functions.invoke('create-google-meet', {
@@ -44,7 +77,7 @@ serve(async (req) => {
         description: `Mock interview session for ${interviewData.candidate_name} applying for ${interviewData.target_role}`,
         startTime: interviewData.scheduled_time,
         endTime: new Date(new Date(interviewData.scheduled_time).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour later
-        attendees: [interviewData.candidate_email, interviewData.interviewer_email],
+        attendees: [interviewData.candidate_email, interviewerEmail],
       }
     });
 
@@ -67,8 +100,8 @@ serve(async (req) => {
         candidate_id: interviewData.candidate_id,
         candidate_name: interviewData.candidate_name,
         candidate_email: interviewData.candidate_email,
-        interviewer_email: interviewData.interviewer_email,
-        interviewer_name: interviewData.interviewer_name,
+        interviewer_email: interviewerEmail,
+        interviewer_name: interviewerName,
         target_role: interviewData.target_role,
         experience: interviewData.experience,
         scheduled_time: interviewData.scheduled_time,
@@ -95,7 +128,7 @@ serve(async (req) => {
       .eq("id", interviewData.interviewer_id)
       .single();
 
-    const interviewerName = interviewData.interviewer_name || interviewerData?.company || "Professional Interviewer";
+    const finalInterviewerName = interviewerName || interviewerData?.company || "Professional Interviewer";
 
     // Send confirmation emails
     console.log("Sending confirmation emails...");
@@ -103,8 +136,8 @@ serve(async (req) => {
       body: {
         candidateEmail: interviewData.candidate_email,
         candidateName: interviewData.candidate_name,
-        interviewerEmail: interviewData.interviewer_email,
-        interviewerName: interviewerName,
+        interviewerEmail: interviewerEmail,
+        interviewerName: finalInterviewerName,
         targetRole: interviewData.target_role,
         scheduledTime: interviewData.scheduled_time,
         meetLink: meetLink,
