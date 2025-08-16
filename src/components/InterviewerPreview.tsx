@@ -25,7 +25,7 @@ const InterviewerPreview = ({
   onGoBack,
   formData 
 }: InterviewerPreviewProps) => {
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(formData?.timeSlot || '');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
   const isPoorMatch = matchedInterviewer?.skillQuality === 'poor';
   const isExcellentMatch = matchedInterviewer?.skillQuality === 'excellent';
   const isGoodMatch = matchedInterviewer?.skillQuality === 'good';
@@ -184,21 +184,6 @@ const InterviewerPreview = ({
                     </div>
                     <div className="space-y-4">
                       <RadioGroup value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                        {/* Show original preference */}
-                        {formData?.timeSlot && (
-                          <div className="flex items-center space-x-2 p-3 rounded-lg border border-orange-400/30 bg-orange-400/10">
-                            <RadioGroupItem value={formData.timeSlot} id="original-time" />
-                            <Label htmlFor="original-time" className="flex-1 cursor-pointer">
-                              <div className="text-orange-200">
-                                <strong>Your original preference:</strong> {formData.timeSlot}
-                                <div className="text-xs text-orange-300 mt-1">
-                                  (Subject to interviewer availability)
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                        )}
-                        
                         {/* Show alternative time slots */}
                         {matchedInterviewer?.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0 ? (
                           matchedInterviewer.alternativeTimeSlots.slice(0, 2).map((slot: string, index: number) => (
@@ -206,7 +191,7 @@ const InterviewerPreview = ({
                               <RadioGroupItem value={slot} id={`alt-time-${index}`} />
                               <Label htmlFor={`alt-time-${index}`} className="flex-1 cursor-pointer">
                                 <div className="text-green-200">
-                                  <strong>Available option {index + 1}:</strong> {slot}
+                                  <strong>Available slot {index + 1}:</strong> {slot}
                                   <div className="text-xs text-green-300 mt-1">
                                     ✓ Confirmed available
                                   </div>
