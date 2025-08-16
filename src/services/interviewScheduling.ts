@@ -47,12 +47,7 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
       // Validate the date
       if (isNaN(targetDate.getTime())) {
         console.error('❌ Invalid date created from parsed values');
-        // Fallback to tomorrow 10 AM
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(10, 0, 0, 0);
-        console.log('🔄 Using fallback date:', tomorrow.toISOString());
-        return tomorrow.toISOString();
+        throw new Error(`Invalid date created from time slot: ${timeSlot}`);
       }
       
       const isoString = targetDate.toISOString();
@@ -69,14 +64,7 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
   // Extract day and time from the slot
   const parts = timeSlot.split(' ');
   if (parts.length < 2) {
-    // Fallback: schedule for tomorrow if format is unclear
-    console.error('❌ Unknown format, using fallback date');
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(10, 0, 0, 0); // Default to 10 AM
-    const fallbackISO = tomorrow.toISOString();
-    console.log('🔄 Fallback date:', fallbackISO);
-    return fallbackISO;
+    throw new Error(`Invalid time slot format: ${timeSlot}. Expected format like "Monday 10:00-11:00" or "Monday, 16/08/2025 10:00-11:00"`);
   }
   
   const dayName = parts[0];
@@ -88,14 +76,7 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
   // Find the target day
   const targetDayIndex = daysOfWeek.indexOf(dayName);
   if (targetDayIndex === -1) {
-    // Fallback: schedule for tomorrow if day is invalid
-    console.error('❌ Invalid day name, using fallback date');
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(10, 0, 0, 0);
-    const fallbackISO = tomorrow.toISOString();
-    console.log('🔄 Fallback date:', fallbackISO);
-    return fallbackISO;
+    throw new Error(`Invalid day name in time slot: ${timeSlot}. Expected day like "Monday", "Tuesday", etc.`);
   }
   
   // Calculate how many days ahead this day is
@@ -129,13 +110,8 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
     console.log('✅ Legacy format converted to ISO:', isoString);
     return isoString;
   } catch (error) {
-    console.error('❌ Error setting time, using fallback:', error);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(10, 0, 0, 0);
-    const fallbackISO = tomorrow.toISOString();
-    console.log('🔄 Fallback date:', fallbackISO);
-    return fallbackISO;
+    console.error('❌ Error setting time:', error);
+    throw new Error(`Failed to parse time slot: ${timeSlot}. ${error}`);
   }
 };
 
