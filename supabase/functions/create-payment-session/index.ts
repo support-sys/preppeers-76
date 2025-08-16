@@ -12,6 +12,7 @@ interface PaymentSessionRequest {
   customer_id: string;
   customer_name: string;
   customer_email: string;
+  customer_phone?: string;
   order_id: string;
   return_url: string;
   notify_url: string;
@@ -41,6 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
       customer_id,
       customer_name,
       customer_email,
+      customer_phone,
       order_id,
       return_url,
       notify_url,
@@ -124,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
         customer_id: sanitizedCustomerId,
         customer_name: customer_name || 'Customer',
         customer_email,
-        customer_phone: '9999999999' // Required field for test mode
+        customer_phone: customer_phone || '9999999999' // Fallback to test number if not provided
       },
       order_meta: {
         return_url: return_url || `${new URL(req.url).origin}/book?payment=success`,
