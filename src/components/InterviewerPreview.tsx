@@ -178,9 +178,30 @@ const InterviewerPreview = ({
                       <Clock className="w-5 h-5 text-blue-400" />
                       <h4 className="font-semibold text-blue-400">Alternative Time Available</h4>
                     </div>
-                    <p className="text-blue-200 text-sm">
-                      Best available match with alternative timing
-                    </p>
+                    <div className="space-y-2 text-sm">
+                      {formData?.timeSlot && (
+                        <div className="text-orange-200">
+                          <strong>Your preference:</strong> {formData.timeSlot}
+                        </div>
+                      )}
+                      {matchedInterviewer?.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0 ? (
+                        <div className="text-blue-200">
+                          <strong>Available alternatives:</strong>
+                          <ul className="mt-1 ml-4 space-y-1">
+                            {matchedInterviewer.alternativeTimeSlots.slice(0, 3).map((slot: string, index: number) => (
+                              <li key={index}>• {slot}</li>
+                            ))}
+                            {matchedInterviewer.alternativeTimeSlots.length > 3 && (
+                              <li className="text-slate-400">... and {matchedInterviewer.alternativeTimeSlots.length - 3} more options</li>
+                            )}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p className="text-blue-200">
+                          Best available match with flexible timing options
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
