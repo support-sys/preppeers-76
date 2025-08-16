@@ -98,7 +98,7 @@ const InterviewerPreview = ({
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : matchedInterviewer?.hasExactTimeMatch ? (
                   <div className="bg-white/5 backdrop-blur-sm border border-green-400/30 p-4 rounded-xl">
                     <div className="flex items-center space-x-2 mb-2">
                       <Calendar className="w-5 h-5 text-green-400" />
@@ -106,6 +106,16 @@ const InterviewerPreview = ({
                     </div>
                     <p className="text-green-200 text-sm">
                       Available for your preferred time: {formData?.timeSlot}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white/5 backdrop-blur-sm border border-blue-400/30 p-4 rounded-xl">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Clock className="w-5 h-5 text-blue-400" />
+                      <h4 className="font-semibold text-blue-400">Alternative Time Available</h4>
+                    </div>
+                    <p className="text-blue-200 text-sm">
+                      Best available match with alternative timing
                     </p>
                   </div>
                 )}
