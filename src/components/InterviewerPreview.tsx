@@ -1,8 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { User, CheckCircle, Clock, Calendar, Star, Award, ArrowRight } from "lucide-react";
 import MatchQualityIndicator from "@/components/MatchQualityIndicator";
 import PoorMatchWarning from "@/components/PoorMatchWarning";
+import { useState } from "react";
 
 interface InterviewerPreviewProps {
   matchedInterviewer: any;
@@ -10,7 +13,7 @@ interface InterviewerPreviewProps {
     candidatePreferred: string;
     interviewerAvailable: string;
   };
-  onProceedToPayment: () => void;
+  onProceedToPayment: (selectedTimeSlot?: string) => void;
   onGoBack: () => void;
   formData: any;
 }
@@ -22,6 +25,7 @@ const InterviewerPreview = ({
   onGoBack,
   formData 
 }: InterviewerPreviewProps) => {
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(formData?.timeSlot || '');
   const isPoorMatch = matchedInterviewer?.skillQuality === 'poor';
   const isExcellentMatch = matchedInterviewer?.skillQuality === 'excellent';
   const isGoodMatch = matchedInterviewer?.skillQuality === 'good';
@@ -174,32 +178,53 @@ const InterviewerPreview = ({
                   </div>
                 ) : (
                   <div className="bg-white/5 backdrop-blur-sm border border-blue-400/30 p-4 rounded-xl">
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center space-x-2 mb-4">
                       <Clock className="w-5 h-5 text-blue-400" />
-                      <h4 className="font-semibold text-blue-400">Alternative Time Available</h4>
+                      <h4 className="font-semibold text-blue-400">Choose Your Interview Time</h4>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      {formData?.timeSlot && (
-                        <div className="text-orange-200">
-                          <strong>Your preference:</strong> {formData.timeSlot}
+                    <div className="space-y-4">
+                      <RadioGroup value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                        {/* Show original preference */}
+                        {formData?.timeSlot && (
+                          <div className="flex items-center space-x-2 p-3 rounded-lg border border-orange-400/30 bg-orange-400/10">
+                            <RadioGroupItem value={formData.timeSlot} id="original-time" />
+                            <Label htmlFor="original-time" className="flex-1 cursor-pointer">
+                              <div className="text-orange-200">
+                                <strong>Your original preference:</strong> {formData.timeSlot}
+                                <div className="text-xs text-orange-300 mt-1">
+                                  (Subject to interviewer availability)
+                                </div>
+                              </div>
+                            </Label>
+                          </div>
+                        )}
+                        
+                        {/* Show alternative time slots */}
+                        {matchedInterviewer?.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0 ? (
+                          matchedInterviewer.alternativeTimeSlots.slice(0, 2).map((slot: string, index: number) => (
+                            <div key={index} className="flex items-center space-x-2 p-3 rounded-lg border border-green-400/30 bg-green-400/10">
+                              <RadioGroupItem value={slot} id={`alt-time-${index}`} />
+                              <Label htmlFor={`alt-time-${index}`} className="flex-1 cursor-pointer">
+                                <div className="text-green-200">
+                                  <strong>Available option {index + 1}:</strong> {slot}
+                                  <div className="text-xs text-green-300 mt-1">
+                                    ✓ Confirmed available
+                                  </div>
+                                </div>
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-blue-200 text-sm p-3 rounded-lg border border-blue-400/30 bg-blue-400/10">
+                            Best available match with flexible timing options. Final time will be confirmed after payment.
+                          </div>
+                        )}
+                      </RadioGroup>
+                      
+                      {selectedTimeSlot && (
+                        <div className="text-center text-sm text-green-300 bg-green-400/10 p-2 rounded-lg border border-green-400/30">
+                          Selected: <strong>{selectedTimeSlot}</strong>
                         </div>
-                      )}
-                      {matchedInterviewer?.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0 ? (
-                        <div className="text-blue-200">
-                          <strong>Available alternatives:</strong>
-                          <ul className="mt-1 ml-4 space-y-1">
-                            {matchedInterviewer.alternativeTimeSlots.slice(0, 3).map((slot: string, index: number) => (
-                              <li key={index}>• {slot}</li>
-                            ))}
-                            {matchedInterviewer.alternativeTimeSlots.length > 3 && (
-                              <li className="text-slate-400">... and {matchedInterviewer.alternativeTimeSlots.length - 3} more options</li>
-                            )}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p className="text-blue-200">
-                          Best available match with flexible timing options
-                        </p>
                       )}
                     </div>
                   </div>
@@ -251,10 +276,11 @@ const InterviewerPreview = ({
 
                 <div className="space-y-3">
                   <Button 
-                    onClick={onProceedToPayment}
+                    onClick={() => onProceedToPayment(selectedTimeSlot)}
                     className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all duration-300 transform hover:scale-105"
+                    disabled={!selectedTimeSlot}
                   >
-                    Proceed to Payment
+                    {selectedTimeSlot ? 'Proceed to Payment' : 'Select a Time Slot'}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                   

@@ -10,6 +10,7 @@ export const useBookingFlow = () => {
   const [formData, setFormData] = useState<any>(null);
   const [matchedInterviewer, setMatchedInterviewer] = useState<any>(null);
   const [alternativeTimeSlot, setAlternativeTimeSlot] = useState<any>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -61,7 +62,12 @@ export const useBookingFlow = () => {
     }
   };
 
-  const handleProceedToPayment = () => {
+  const handleProceedToPayment = (timeSlot?: string) => {
+    if (timeSlot) {
+      setSelectedTimeSlot(timeSlot);
+      // Update formData with selected time slot
+      setFormData(prev => ({ ...prev, selectedTimeSlot: timeSlot }));
+    }
     setCurrentStep('payment');
   };
 
@@ -72,9 +78,14 @@ export const useBookingFlow = () => {
     try {
       // Now finalize the booking with the already matched interviewer
       if (matchedInterviewer && formData) {
+        // Use selected time slot if available, otherwise use original formData
+        const scheduleData = selectedTimeSlot 
+          ? { ...formData, timeSlot: selectedTimeSlot }
+          : formData;
+          
         await scheduleInterview(
           matchedInterviewer, 
-          formData, 
+          scheduleData, 
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || ''
         );
@@ -244,6 +255,7 @@ export const useBookingFlow = () => {
     setFormData(null);
     setMatchedInterviewer(null);
     setAlternativeTimeSlot(null);
+    setSelectedTimeSlot('');
     document.title = 'Book Your Mock Interview';
   };
 
@@ -252,6 +264,7 @@ export const useBookingFlow = () => {
     formData,
     matchedInterviewer,
     alternativeTimeSlot,
+    selectedTimeSlot,
     isLoading,
     handleFormSubmit,
     handleProceedToPayment,

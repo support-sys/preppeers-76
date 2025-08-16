@@ -357,11 +357,13 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     console.log("Full interviewer object:", { interviewer: interviewer.company });
     
     // Convert time slot to proper ISO datetime format first
-    let selectedTimeSlot = candidate.timeSlot;
+    // Prioritize selectedTimeSlot from candidate data (from UI selection)
+    let selectedTimeSlot = candidate.selectedTimeSlot || candidate.timeSlot;
     if (interviewer.timeMatch) {
-      selectedTimeSlot = candidate.timeSlot;
+      selectedTimeSlot = candidate.selectedTimeSlot || candidate.timeSlot;
     } else if (interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
-      selectedTimeSlot = interviewer.alternativeTimeSlots[0];
+      // Use the selected time slot from UI if available, otherwise use first alternative
+      selectedTimeSlot = candidate.selectedTimeSlot || interviewer.alternativeTimeSlots[0];
     }
     const scheduledDateTime = convertTimeSlotToISODate(selectedTimeSlot);
 
