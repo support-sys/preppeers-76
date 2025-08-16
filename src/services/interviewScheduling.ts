@@ -23,36 +23,89 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
     return timeSlot;
   }
   
-  // Handle new format like "Monday, 16/08/2025 10:00-11:00"
+  // Handle new format like "Monday, 16/08/2025 10:00-11:00" or "Tuesday, 26/08/2025 10:00-11:00"
   if (timeSlot.includes(',') && timeSlot.includes('/')) {
-    const parts = timeSlot.split(' ');
-    console.log('📝 Parsing new format. Parts:', parts);
+    console.log('📝 Parsing new format with comma and date');
     
-    if (parts.length >= 3) {
-      const datePart = parts[1]; // "16/08/2025"
-      const timePart = parts[2]; // "10:00-11:00"
-      const startTime = timePart.split('-')[0]; // "10:00"
+    try {
+      // Split the time slot and handle potential extra spaces
+      const parts = timeSlot.trim().split(/\s+/);
+      console.log('📝 Parts after split:', parts);
       
-      console.log('📅 Date part:', datePart, 'Time part:', timePart, 'Start time:', startTime);
-      
-      // Parse date from dd/mm/yyyy format
-      const [day, month, year] = datePart.split('/').map(Number);
-      const [hours, minutes] = startTime.split(':').map(Number);
-      
-      console.log('🔢 Parsed values - Day:', day, 'Month:', month, 'Year:', year, 'Hours:', hours, 'Minutes:', minutes);
-      
-      const targetDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
-      console.log('📆 Created date object:', targetDate);
-      
-      // Validate the date
-      if (isNaN(targetDate.getTime())) {
-        console.error('❌ Invalid date created from parsed values');
-        throw new Error(`Invalid date created from time slot: ${timeSlot}`);
+      if (parts.length >= 3) {
+        // Remove comma from day name if present
+        const dayName = parts[0].replace(',', '');
+        const datePart = parts[1]; // "26/08/2025"  
+        const timePart = parts[2]; // "10:00-11:00"
+        
+        console.log('📅 Parsed components:', { dayName, datePart, timePart });
+        
+        // Extract start time from time range
+        const startTime = timePart.split('-')[0];
+        console.log('⏰ Start time:', startTime);
+        
+        // Validate date part format (DD/MM/YYYY)
+        const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+        const dateMatch = datePart.match(dateRegex);
+        
+        if (!dateMatch) {
+          throw new Error(`Invalid date format: ${datePart}. Expected DD/MM/YYYY`);
+        }
+        
+        // Parse date components
+        const day = parseInt(dateMatch[1], 10);
+        const month = parseInt(dateMatch[2], 10);
+        const year = parseInt(dateMatch[3], 10);
+        
+        // Validate time format (HH:MM)
+        const timeRegex = /^(\d{1,2}):(\d{2})$/;
+        const timeMatch = startTime.match(timeRegex);
+        
+        if (!timeMatch) {
+          throw new Error(`Invalid time format: ${startTime}. Expected HH:MM`);
+        }
+        
+        const hours = parseInt(timeMatch[1], 10);
+        const minutes = parseInt(timeMatch[2], 10);
+        
+        console.log('🔢 Parsed values - Day:', day, 'Month:', month, 'Year:', year, 'Hours:', hours, 'Minutes:', minutes);
+        
+        // Validate ranges
+        if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2020 || year > 2030) {
+          throw new Error(`Invalid date values: day=${day}, month=${month}, year=${year}`);
+        }
+        
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+          throw new Error(`Invalid time values: hours=${hours}, minutes=${minutes}`);
+        }
+        
+        // Create date object (month is 0-indexed in JavaScript)
+        const targetDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+        console.log('📆 Created date object:', targetDate);
+        
+        // Validate the created date
+        if (isNaN(targetDate.getTime())) {
+          throw new Error('Failed to create valid date object');
+        }
+        
+        // Additional check: verify the date components match
+        if (targetDate.getDate() !== day || 
+            targetDate.getMonth() !== (month - 1) || 
+            targetDate.getFullYear() !== year ||
+            targetDate.getHours() !== hours ||
+            targetDate.getMinutes() !== minutes) {
+          throw new Error('Date validation failed: created date does not match input');
+        }
+        
+        const isoString = targetDate.toISOString();
+        console.log('✅ Successfully converted to ISO:', isoString);
+        return isoString;
+      } else {
+        throw new Error(`Insufficient parts in time slot: ${parts.length}. Expected at least 3 parts.`);
       }
-      
-      const isoString = targetDate.toISOString();
-      console.log('✅ Converted to ISO:', isoString);
-      return isoString;
+    } catch (error) {
+      console.error('❌ Error parsing new format:', error);
+      throw new Error(`Failed to parse time slot "${timeSlot}": ${error.message}`);
     }
   }
   
