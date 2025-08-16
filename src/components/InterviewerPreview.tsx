@@ -25,7 +25,9 @@ const InterviewerPreview = ({
   onGoBack,
   formData 
 }: InterviewerPreviewProps) => {
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
+  // Set default time slot for exact matches
+  const defaultTimeSlot = matchedInterviewer?.hasExactTimeMatch ? formData?.timeSlot : '';
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(defaultTimeSlot);
   const isPoorMatch = matchedInterviewer?.skillQuality === 'poor';
   const isExcellentMatch = matchedInterviewer?.skillQuality === 'excellent';
   const isGoodMatch = matchedInterviewer?.skillQuality === 'good';
