@@ -103,7 +103,28 @@ const CashfreePayment = ({
       if (!user) throw new Error('User not authenticated');
 
       // Get user's mobile number from metadata or candidate data
-      const userMobile = user.user_metadata?.mobile_number || candidateData?.mobileNumber || candidateData?.mobile_number;
+      let userMobile = user.user_metadata?.mobile_number || candidateData?.mobileNumber || candidateData?.mobile_number;
+      
+      // Validate and format phone number for Cashfree
+      if (userMobile) {
+        // Remove any non-numeric characters
+        userMobile = userMobile.replace(/\D/g, '');
+        
+        // Ensure it's a valid Indian mobile number format
+        if (userMobile.length === 10) {
+          userMobile = '+91' + userMobile; // Add India country code
+        } else if (userMobile.length === 12 && userMobile.startsWith('91')) {
+          userMobile = '+' + userMobile; // Add + prefix
+        } else if (userMobile.length === 13 && userMobile.startsWith('+91')) {
+          // Already in correct format
+        } else {
+          // Invalid format, use a default placeholder
+          userMobile = '+919999999999'; // Default placeholder
+        }
+      } else {
+        // No phone number available, use default
+        userMobile = '+919999999999';
+      }
 
       // Create payment session in database
       const { data: sessionData, error: sessionError } = await supabase
@@ -165,7 +186,7 @@ const CashfreePayment = ({
           customer_id: userEmail,
           customer_name: userName,
           customer_email: userEmail,
-          customer_phone: dbSession.userMobile || candidateData?.mobileNumber || candidateData?.mobile_number,
+          customer_phone: dbSession.userMobile,
           order_id: `ORDER_${dbSession.id}`,
           return_url: `${window.location.origin}/book?payment=success&session_id=${dbSession.id}`,
           notify_url: `https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook`,
