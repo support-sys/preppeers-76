@@ -15,29 +15,54 @@ import { getAvailableTimeSlotsForInterviewer } from "@/utils/availableTimeSlots"
 
 // Helper function to convert time slot format to ISO datetime
 const convertTimeSlotToISODate = (timeSlot: string): string => {
+  console.log('🔄 Converting time slot to ISO date:', timeSlot);
+  
   // If it's already an ISO date, return as is
   if (timeSlot.includes('T') || timeSlot.match(/^\d{4}-\d{2}-\d{2}/)) {
+    console.log('✅ Already ISO format, returning as is');
     return timeSlot;
   }
   
   // Handle new format like "Monday, 16/08/2025 10:00-11:00"
   if (timeSlot.includes(',') && timeSlot.includes('/')) {
     const parts = timeSlot.split(' ');
+    console.log('📝 Parsing new format. Parts:', parts);
+    
     if (parts.length >= 3) {
       const datePart = parts[1]; // "16/08/2025"
       const timePart = parts[2]; // "10:00-11:00"
       const startTime = timePart.split('-')[0]; // "10:00"
       
+      console.log('📅 Date part:', datePart, 'Time part:', timePart, 'Start time:', startTime);
+      
       // Parse date from dd/mm/yyyy format
       const [day, month, year] = datePart.split('/').map(Number);
       const [hours, minutes] = startTime.split(':').map(Number);
       
+      console.log('🔢 Parsed values - Day:', day, 'Month:', month, 'Year:', year, 'Hours:', hours, 'Minutes:', minutes);
+      
       const targetDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
-      return targetDate.toISOString();
+      console.log('📆 Created date object:', targetDate);
+      
+      // Validate the date
+      if (isNaN(targetDate.getTime())) {
+        console.error('❌ Invalid date created from parsed values');
+        // Fallback to tomorrow 10 AM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(10, 0, 0, 0);
+        console.log('🔄 Using fallback date:', tomorrow.toISOString());
+        return tomorrow.toISOString();
+      }
+      
+      const isoString = targetDate.toISOString();
+      console.log('✅ Converted to ISO:', isoString);
+      return isoString;
     }
   }
   
   // Handle legacy format like "Tuesday 09:00-17:00"
+  console.log('📝 Parsing legacy format');
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = new Date();
   
@@ -45,24 +70,32 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
   const parts = timeSlot.split(' ');
   if (parts.length < 2) {
     // Fallback: schedule for tomorrow if format is unclear
+    console.error('❌ Unknown format, using fallback date');
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(10, 0, 0, 0); // Default to 10 AM
-    return tomorrow.toISOString();
+    const fallbackISO = tomorrow.toISOString();
+    console.log('🔄 Fallback date:', fallbackISO);
+    return fallbackISO;
   }
   
   const dayName = parts[0];
   const timeRange = parts[1];
   const startTime = timeRange.split('-')[0];
   
+  console.log('📝 Legacy format - Day:', dayName, 'Time range:', timeRange, 'Start time:', startTime);
+  
   // Find the target day
   const targetDayIndex = daysOfWeek.indexOf(dayName);
   if (targetDayIndex === -1) {
     // Fallback: schedule for tomorrow if day is invalid
+    console.error('❌ Invalid day name, using fallback date');
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(10, 0, 0, 0);
-    return tomorrow.toISOString();
+    const fallbackISO = tomorrow.toISOString();
+    console.log('🔄 Fallback date:', fallbackISO);
+    return fallbackISO;
   }
   
   // Calculate how many days ahead this day is
@@ -77,10 +110,33 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
   targetDate.setDate(today.getDate() + daysAhead);
   
   // Set the time
-  const [hours, minutes] = startTime.split(':').map(Number);
-  targetDate.setHours(hours, minutes, 0, 0);
-  
-  return targetDate.toISOString();
+  try {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    console.log('🔢 Setting time - Hours:', hours, 'Minutes:', minutes);
+    
+    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      throw new Error('Invalid time values');
+    }
+    
+    targetDate.setHours(hours, minutes, 0, 0);
+    
+    // Validate the final date
+    if (isNaN(targetDate.getTime())) {
+      throw new Error('Invalid final date');
+    }
+    
+    const isoString = targetDate.toISOString();
+    console.log('✅ Legacy format converted to ISO:', isoString);
+    return isoString;
+  } catch (error) {
+    console.error('❌ Error setting time, using fallback:', error);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    const fallbackISO = tomorrow.toISOString();
+    console.log('🔄 Fallback date:', fallbackISO);
+    return fallbackISO;
+  }
 };
 
 export const findMatchingInterviewer = async (candidateData: MatchingCandidate): Promise<MatchedInterviewer | null> => {
@@ -308,7 +364,20 @@ export const checkForConflictingTimeBlocks = async (interviewerId: string, sched
   try {
     console.log(`🔍 Checking for conflicting time blocks for interviewer ${interviewerId} at ${scheduledTime}`);
     
+    // Validate the scheduledTime input
+    if (!scheduledTime || typeof scheduledTime !== 'string') {
+      console.error('❌ Invalid scheduledTime provided:', scheduledTime);
+      return false; // Allow booking if input is invalid
+    }
+    
     const scheduledDate = new Date(scheduledTime);
+    
+    // Check if the date is valid
+    if (isNaN(scheduledDate.getTime())) {
+      console.error('❌ Invalid date created from scheduledTime:', scheduledTime);
+      return false; // Allow booking if date is invalid
+    }
+    
     const scheduledDateStr = scheduledDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     const startTime = scheduledDate.toTimeString().slice(0, 5); // HH:MM format
     const endTime = new Date(scheduledDate.getTime() + 60 * 60 * 1000).toTimeString().slice(0, 5); // +1 hour
