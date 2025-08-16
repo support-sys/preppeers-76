@@ -126,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
         customer_id: sanitizedCustomerId,
         customer_name: customer_name || 'Customer',
         customer_email,
-        customer_phone: customer_phone || '9999999999' // Fallback to test number if not provided
+        customer_phone: customer_phone || '+919999999999' // Fallback to test number with country code if not provided
       },
       order_meta: {
         return_url: return_url || `${new URL(req.url).origin}/book?payment=success`,

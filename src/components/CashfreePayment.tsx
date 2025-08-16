@@ -102,8 +102,8 @@ const CashfreePayment = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's mobile number from metadata
-      const userMobile = user.user_metadata?.mobile_number;
+      // Get user's mobile number from metadata or candidate data
+      const userMobile = user.user_metadata?.mobile_number || candidateData?.mobileNumber || candidateData?.mobile_number;
 
       // Create payment session in database
       const { data: sessionData, error: sessionError } = await supabase
@@ -165,7 +165,7 @@ const CashfreePayment = ({
           customer_id: userEmail,
           customer_name: userName,
           customer_email: userEmail,
-          customer_phone: dbSession.userMobile,
+          customer_phone: dbSession.userMobile || candidateData?.mobileNumber || candidateData?.mobile_number,
           order_id: `ORDER_${dbSession.id}`,
           return_url: `${window.location.origin}/book?payment=success&session_id=${dbSession.id}`,
           notify_url: `https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook`,
