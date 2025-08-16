@@ -17,8 +17,8 @@ import { getAvailableTimeSlotsForInterviewer } from "@/utils/availableTimeSlots"
 const convertTimeSlotToISODate = (timeSlot: string): string => {
   console.log('🔄 Converting time slot to ISO date:', timeSlot);
   
-  // If it's already an ISO date, return as is
-  if (timeSlot.includes('T') || timeSlot.match(/^\d{4}-\d{2}-\d{2}/)) {
+  // If it's already an ISO date (contains T and matches ISO format), return as is
+  if (timeSlot.includes('T') && timeSlot.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)) {
     console.log('✅ Already ISO format, returning as is');
     return timeSlot;
   }
