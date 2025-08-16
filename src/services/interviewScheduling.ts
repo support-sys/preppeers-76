@@ -178,7 +178,8 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
         matchReasons: allReasons,
         matchDetails: allDetails,
         alternativeTimeSlots,
-        timeMatch
+        timeMatch,
+        hasExactTimeMatch: timeMatch
       };
     });
 
