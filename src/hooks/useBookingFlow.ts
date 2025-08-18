@@ -96,8 +96,8 @@ export const useBookingFlow = () => {
         
         setCurrentStep('success');
         toast({
-          title: "Interview Scheduled!",
-          description: "Your interview has been scheduled successfully!",
+          title: "Interview Scheduled! 🎉",
+          description: "Your interview has been scheduled successfully! Check your dashboard for details.",
         });
       } else {
         toast({
@@ -186,8 +186,8 @@ export const useBookingFlow = () => {
         setCurrentStep('success');
         document.title = 'Interview Scheduled Successfully!';
         toast({
-          title: "Interview Scheduled!",
-          description: "Your interview has been scheduled successfully!",
+          title: "Interview Scheduled! 🎉",
+          description: "Your interview has been scheduled successfully! Check your dashboard for details.",
         });
       } else {
         console.log('No interviewer found, showing no-match state');
@@ -227,8 +227,8 @@ export const useBookingFlow = () => {
       
       setCurrentStep('success');
       toast({
-        title: "Interview Scheduled!",
-        description: "Your interview has been scheduled successfully!",
+        title: "Interview Scheduled! 🎉",
+        description: "Your interview has been scheduled successfully! Check your dashboard for details.",
       });
     } catch (error) {
       console.error("Error scheduling interview:", error);
