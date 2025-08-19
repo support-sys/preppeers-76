@@ -67,11 +67,12 @@ export const useRescheduleFlow = (interview: Interview) => {
         const candidatePreferredTime = candidateData.timeSlot;
         const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time');
         
-        if (!hasExactTimeMatch && candidatePreferredTime) {
-          // Show alternative time slot for confirmation
+        if (!hasExactTimeMatch && interviewer.alternativeTimeSlots && interviewer.alternativeTimeSlots.length > 0) {
+          // Show alternative time slots for confirmation - similar to new booking flow
           setAlternativeTimeSlot({
             candidatePreferred: candidatePreferredTime,
-            interviewerAvailable: interviewer.alternativeTimeSlots?.[0] || 'Next available slot'
+            availableSlots: interviewer.alternativeTimeSlots.slice(0, 2), // Show up to 2 slots
+            interviewerAvailable: interviewer.alternativeTimeSlots[0] // Keep for backward compatibility
           });
           setCurrentStep('time-confirmation');
           return;
@@ -146,14 +147,20 @@ export const useRescheduleFlow = (interview: Interview) => {
     }
   };
 
-  const handleAcceptAlternativeTime = async () => {
+  const handleAcceptAlternativeTime = async (selectedTimeSlot?: string) => {
     if (!matchedInterviewer || !rescheduleData) return;
     
     setIsLoading(true);
     try {
+      // Use selected time slot if provided, otherwise use the first alternative
+      const timeSlotToUse = selectedTimeSlot || alternativeTimeSlot?.interviewerAvailable;
+      const scheduleData = timeSlotToUse 
+        ? { ...rescheduleData, timeSlot: timeSlotToUse }
+        : rescheduleData;
+        
       await scheduleInterview(
         matchedInterviewer, 
-        rescheduleData, 
+        scheduleData, 
         interview.candidate_email,
         interview.candidate_name
       );

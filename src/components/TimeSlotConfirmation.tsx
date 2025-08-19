@@ -1,14 +1,17 @@
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Calendar, User, CheckCircle, AlertCircle } from "lucide-react";
+import { Clock, Calendar, User, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { format, parseISO } from 'date-fns';
 
 interface TimeSlotConfirmationProps {
   matchedInterviewer: any;
   alternativeTimeSlot: {
     candidatePreferred: string;
     interviewerAvailable: string;
+    availableSlots?: string[];
   };
-  onAccept: () => void;
+  onAccept: (selectedSlot?: string) => void;
   onWaitForBetter: () => void;
   isLoading?: boolean;
 }
@@ -20,6 +23,58 @@ const TimeSlotConfirmation = ({
   onWaitForBetter,
   isLoading = false 
 }: TimeSlotConfirmationProps) => {
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
+
+  const handleAccept = async () => {
+    await onAccept(selectedSlot);
+  };
+
+  const formatTimeSlot = (timeSlot: string) => {
+    try {
+      // Handle different time slot formats
+      if (timeSlot.includes(',') && timeSlot.includes('-')) {
+        // Format: "Tuesday, 07/10/2025 09:00-10:00"
+        const [datePart, timePart] = timeSlot.split(' ');
+        const [dayName, dateStr] = datePart.split(', ');
+        const [day, month, year] = dateStr.split('/');
+        const [startTime] = timePart.split('-');
+        
+        const fullDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${startTime}:00`;
+        const date = parseISO(fullDateTime);
+        
+        return {
+          day: format(date, 'EEEE'),
+          date: format(date, 'MMM d, yyyy'),
+          time: format(date, 'h:mm a')
+        };
+      } else {
+        // Fallback for ISO strings
+        const date = parseISO(timeSlot);
+        return {
+          day: format(date, 'EEEE'),
+          date: format(date, 'MMM d, yyyy'),
+          time: format(date, 'h:mm a')
+        };
+      }
+    } catch (error) {
+      console.error('Error formatting time slot:', error);
+      return {
+        day: 'Unknown',
+        date: 'Unknown',
+        time: timeSlot
+      };
+    }
+  };
+
+  const formatCandidatePreferred = (timeSlot: string) => {
+    try {
+      const date = parseISO(timeSlot);
+      return `${format(date, 'EEEE')}, ${format(date, 'MMM d, yyyy')} at ${format(date, 'h:mm a')}`;
+    } catch (error) {
+      return timeSlot;
+    }
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Card className="shadow-2xl backdrop-blur-lg border-2 bg-white/10 border-blue-400/30">
@@ -65,22 +120,55 @@ const TimeSlotConfirmation = ({
           </div>
 
           {/* Time Slot Comparison */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white/5 backdrop-blur-sm border border-red-400/30 p-4 rounded-xl">
-              <div className="flex items-center space-x-2 mb-2">
-                <Calendar className="w-5 h-5 text-red-400" />
-                <h4 className="font-semibold text-red-400">Your Preference</h4>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-red-900/20 border border-red-800/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <XCircle className="w-5 h-5 text-red-400" />
+                <div>
+                  <p className="text-sm font-medium text-red-300">Your Preferred Time</p>
+                  <p className="text-xs text-red-400">{formatCandidatePreferred(alternativeTimeSlot.candidatePreferred)}</p>
+                  <p className="text-xs text-red-500 mt-1">Not available with this interviewer</p>
+                </div>
               </div>
-              <p className="text-red-200">{alternativeTimeSlot.candidatePreferred}</p>
             </div>
-            
-            <div className="bg-white/5 backdrop-blur-sm border border-green-400/30 p-4 rounded-xl">
-              <div className="flex items-center space-x-2 mb-2">
-                <Calendar className="w-5 h-5 text-green-400" />
-                <h4 className="font-semibold text-green-400">Interviewer Available</h4>
+
+            {alternativeTimeSlot.availableSlots && alternativeTimeSlot.availableSlots.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-slate-200">Choose from available slots:</p>
+                {alternativeTimeSlot.availableSlots.map((slot, index) => {
+                  const formatted = formatTimeSlot(slot);
+                  return (
+                    <div 
+                      key={index}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedSlot === slot
+                          ? 'bg-green-900/20 border-green-800/30 text-green-300'
+                          : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600/50 text-slate-300'
+                      }`}
+                      onClick={() => setSelectedSlot(slot)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className={`w-5 h-5 ${selectedSlot === slot ? 'text-green-400' : 'text-slate-500'}`} />
+                        <div>
+                          <p className="text-sm font-medium">{formatted.day}, {formatted.date}</p>
+                          <p className="text-xs opacity-75">{formatted.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <p className="text-green-200">{alternativeTimeSlot.interviewerAvailable}</p>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 bg-green-900/20 border border-green-800/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <div>
+                    <p className="text-sm font-medium text-green-300">Next Available Slot</p>
+                    <p className="text-xs text-green-400">{alternativeTimeSlot.interviewerAvailable}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recommendation Message */}
@@ -103,8 +191,8 @@ const TimeSlotConfirmation = ({
           {/* Action Buttons */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Button 
-              onClick={onAccept}
-              disabled={isLoading}
+              onClick={handleAccept}
+              disabled={isLoading || (alternativeTimeSlot.availableSlots && !selectedSlot)}
               className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all duration-300 transform hover:scale-105"
             >
               {isLoading ? 'Scheduling...' : 'Accept & Schedule Interview'}
@@ -121,7 +209,10 @@ const TimeSlotConfirmation = ({
           </div>
 
           <p className="text-center text-sm text-slate-400">
-            Note: If you choose to wait, we'll notify you when an interviewer becomes available for your preferred time slot.
+            {alternativeTimeSlot.availableSlots && alternativeTimeSlot.availableSlots.length > 0 
+              ? "Please select a time slot above to proceed with scheduling."
+              : "Note: If you choose to wait, we'll notify you when an interviewer becomes available for your preferred time slot."
+            }
           </p>
         </CardContent>
       </Card>
