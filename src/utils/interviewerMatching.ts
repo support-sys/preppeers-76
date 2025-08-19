@@ -30,12 +30,92 @@ export interface MatchedInterviewer {
 
 // Enhanced skill category mapping with technologies
 export const skillCategoryMapping: { [key: string]: string[] } = {
-  "Frontend Development": ["React", "Vue.js", "Angular", "JavaScript", "TypeScript", "HTML/CSS", "Next.js", "Svelte", "React.js", "Vue", "Angular.js"],
-  "Backend Development": ["Node.js", "Python", "Java", "Go", "Ruby", "PHP", "C#", ".NET", "Spring Boot", "Django", "Flask", "Express"],
-  "Full Stack Development": ["MERN Stack", "MEAN Stack", "Django", "Rails", "Laravel", "Express.js", "React", "Node.js"],
-  "System Design": ["Microservices", "Database Design", "Scalability", "Load Balancing", "Caching", "API Design"],
-  "Mobile Development": ["React Native", "Flutter", "iOS", "Android", "Swift", "Kotlin"],
-  "DevOps": ["AWS", "Docker", "Kubernetes", "CI/CD", "Jenkins", "Azure", "GCP"]
+  "Frontend Developer": [
+    "HTML", "CSS", "JavaScript", "TypeScript",
+    "React", "Vue.js", "Angular", "Svelte", "Next.js",
+    "State Management (Redux, Vuex, Pinia)",
+    "Responsive Design", "API Integration", "Jest", "Cypress"
+  ],
+  "Java Backend Developer": [
+    "Java", "Spring Boot", "Hibernate/JPA",
+    "REST APIs", "Microservices", "SQL", "NoSQL",
+    "Kafka", "RabbitMQ", "Redis", "Docker", "Kubernetes",
+    "CI/CD (Jenkins, GitHub Actions)", "JUnit", "Mockito"
+  ],
+  "Node.js Backend Developer": [
+    "Node.js", "Express.js", "Nest.js",
+    "REST APIs", "GraphQL", "MongoDB", "PostgreSQL", "MySQL",
+    "Redis", "Message Queues", "Microservices",
+    "Docker", "Kubernetes", "CI/CD", "Mocha", "Jest"
+  ],
+  "Python Backend Developer": [
+    "Python", "Django", "Flask", "FastAPI",
+    "REST APIs", "SQLAlchemy", "PostgreSQL", "MySQL",
+    "Celery", "Redis", "Microservices", "Docker",
+    "Kubernetes", "CI/CD", "Pytest"
+  ],
+  ".NET Backend Developer": [
+    "C#", ".NET Core", "ASP.NET", "Entity Framework",
+    "SQL Server", "REST APIs", "Microservices",
+    "Docker", "Kubernetes", "CI/CD", "Redis", "xUnit"
+  ],
+  "Go Backend Developer": [
+    "Go", "Gin", "Echo", "gRPC",
+    "REST APIs", "PostgreSQL", "MongoDB", "Redis",
+    "Microservices", "Docker", "Kubernetes", "CI/CD", "Testing (Go Test)"
+  ],
+  "Ruby Backend Developer": [
+    "Ruby", "Rails", "PostgreSQL", "MySQL",
+    "REST APIs", "GraphQL", "Redis",
+    "Docker", "CI/CD", "RSpec"
+  ],
+  "PHP Backend Developer": [
+    "PHP", "Laravel", "Symfony",
+    "MySQL", "PostgreSQL", "REST APIs",
+    "Redis", "Docker", "CI/CD", "PHPUnit"
+  ],
+  "Full Stack (MERN)": [
+    "React", "Node.js", "Express.js", "MongoDB",
+    "JavaScript", "TypeScript", "REST APIs", "GraphQL",
+    "JWT/Auth", "State Management", "Docker", "CI/CD"
+  ],
+  "Full Stack (MEAN)": [
+    "Angular", "Node.js", "Express.js", "MongoDB",
+    "JavaScript", "TypeScript", "REST APIs", "GraphQL",
+    "JWT/Auth", "Docker", "CI/CD"
+  ],
+  "Full Stack (Java)": [
+    "Java", "Spring Boot", "React", "Angular",
+    "SQL", "NoSQL", "REST APIs", "Microservices",
+    "Kafka", "Redis", "Docker", "CI/CD"
+  ],
+  "Mobile Developer (Android)": [
+    "Java", "Kotlin", "Android SDK", "Jetpack Compose",
+    "XML Layouts", "SQLite", "Room", "REST APIs", "Firebase",
+    "Unit Testing (JUnit, Espresso)"
+  ],
+  "Mobile Developer (iOS)": [
+    "Swift", "SwiftUI", "Objective-C",
+    "iOS SDK", "CoreData", "SQLite",
+    "REST APIs", "Firebase", "Unit Testing (XCTest)"
+  ],
+  "Mobile Developer (Cross-Platform)": [
+    "React Native", "Flutter", "Dart",
+    "JavaScript", "TypeScript", "REST APIs",
+    "Firebase", "SQLite", "CI/CD"
+  ],
+  "DevOps Engineer": [
+    "Linux", "Shell Scripting", "CI/CD Pipelines",
+    "Docker", "Kubernetes", "Terraform", "Ansible",
+    "AWS", "GCP", "Azure", "Monitoring (Prometheus, Grafana)",
+    "Logging (ELK Stack)", "Git", "Networking Basics"
+  ],
+  "Data Engineer": [
+    "Python", "SQL", "Spark", "Hadoop",
+    "ETL Pipelines", "Airflow", "Kafka",
+    "Data Warehousing (Redshift, BigQuery, Snowflake)",
+    "NoSQL (MongoDB, Cassandra)", "Docker", "Cloud (AWS/GCP/Azure)"
+  ]
 };
 
 // Skill match quality thresholds
@@ -52,7 +132,7 @@ export const MINIMUM_SKILL_THRESHOLD = 20; // Require at least 20 points for mat
 export const EXPERIENCE_REQUIREMENTS = {
   MINIMUM_MENTOR_GAP: 1,  // Minimum 1 year gap for mentorship
   IDEAL_MENTOR_GAP: 3,    // Ideal 2-5 years gap
-  MAXIMUM_MENTOR_GAP: 10  // Maximum useful gap
+  MAXIMUM_MENTOR_GAP: 5  // Maximum useful gap
 };
 
 /*
