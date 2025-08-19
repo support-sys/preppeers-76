@@ -31,13 +31,43 @@ const TimeSlotConfirmation = ({
 
   const formatTimeSlot = (timeSlot: string) => {
     try {
+      // Check if timeSlot is valid
+      if (!timeSlot || typeof timeSlot !== 'string') {
+        console.error('Invalid timeSlot provided:', timeSlot);
+        return {
+          day: 'Unknown',
+          date: 'Unknown',
+          time: 'Invalid time'
+        };
+      }
+
       // Handle different time slot formats
       if (timeSlot.includes(',') && timeSlot.includes('-')) {
         // Format: "Tuesday, 07/10/2025 09:00-10:00"
-        const [datePart, timePart] = timeSlot.split(' ');
-        const [dayName, dateStr] = datePart.split(', ');
-        const [day, month, year] = dateStr.split('/');
-        const [startTime] = timePart.split('-');
+        const parts = timeSlot.split(' ');
+        if (parts.length < 2) {
+          throw new Error('Invalid format - not enough parts');
+        }
+        
+        const [datePart, timePart] = parts;
+        const dateComponents = datePart.split(', ');
+        if (dateComponents.length < 2) {
+          throw new Error('Invalid date format');
+        }
+        
+        const [dayName, dateStr] = dateComponents;
+        const dateNumbers = dateStr.split('/');
+        if (dateNumbers.length < 3) {
+          throw new Error('Invalid date numbers format');
+        }
+        
+        const [day, month, year] = dateNumbers;
+        const timeComponents = timePart.split('-');
+        if (timeComponents.length < 1) {
+          throw new Error('Invalid time format');
+        }
+        
+        const [startTime] = timeComponents;
         
         const fullDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${startTime}:00`;
         const date = parseISO(fullDateTime);
@@ -57,11 +87,11 @@ const TimeSlotConfirmation = ({
         };
       }
     } catch (error) {
-      console.error('Error formatting time slot:', error);
+      console.error('Error formatting time slot:', error, 'TimeSlot value:', timeSlot);
       return {
         day: 'Unknown',
         date: 'Unknown',
-        time: timeSlot
+        time: timeSlot || 'Invalid time'
       };
     }
   };
