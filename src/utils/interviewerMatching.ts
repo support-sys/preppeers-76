@@ -42,12 +42,6 @@ export const skillCategoryMapping: { [key: string]: string[] } = {
     "Kafka", "RabbitMQ", "Redis", "Docker", "Kubernetes",
     "CI/CD (Jenkins, GitHub Actions)", "JUnit", "Mockito"
   ],
-  "Node.js Backend Developer": [
-    "Node.js", "Express.js", "Nest.js",
-    "REST APIs", "GraphQL", "MongoDB", "PostgreSQL", "MySQL",
-    "Redis", "Message Queues", "Microservices",
-    "Docker", "Kubernetes", "CI/CD", "Mocha", "Jest"
-  ],
   "Python Backend Developer": [
     "Python", "Django", "Flask", "FastAPI",
     "REST APIs", "SQLAlchemy", "PostgreSQL", "MySQL",
