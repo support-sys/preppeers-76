@@ -43,22 +43,32 @@ const TimeSlotConfirmation = ({
 
       // Handle different time slot formats
       if (timeSlot.includes(',') && timeSlot.includes('-')) {
-        // Format: "Tuesday, 07/10/2025 09:00-10:00"
-        const parts = timeSlot.split(' ');
-        if (parts.length < 2) {
-          throw new Error('Invalid format - not enough parts');
+        // Format: "Tuesday, 21/10/2025 09:00-10:00"
+        console.log('Parsing timeSlot:', timeSlot);
+        
+        // Split by comma first to get day name
+        const commaIndex = timeSlot.indexOf(',');
+        if (commaIndex === -1) {
+          throw new Error('No comma found in timeSlot');
         }
         
-        const [datePart, timePart] = parts;
-        const dateComponents = datePart.split(', ');
-        if (dateComponents.length < 2) {
-          throw new Error('Invalid date format');
+        const dayName = timeSlot.substring(0, commaIndex).trim();
+        const remaining = timeSlot.substring(commaIndex + 1).trim(); // "21/10/2025 09:00-10:00"
+        
+        // Split the remaining part by space to separate date and time
+        const spaceIndex = remaining.lastIndexOf(' '); // Find last space before time
+        if (spaceIndex === -1) {
+          throw new Error('No space found between date and time');
         }
         
-        const [dayName, dateStr] = dateComponents;
+        const dateStr = remaining.substring(0, spaceIndex).trim(); // "21/10/2025"
+        const timePart = remaining.substring(spaceIndex + 1).trim(); // "09:00-10:00"
+        
+        console.log('Parsed components:', { dayName, dateStr, timePart });
+        
         const dateNumbers = dateStr.split('/');
-        if (dateNumbers.length < 3) {
-          throw new Error('Invalid date numbers format');
+        if (dateNumbers.length !== 3) {
+          throw new Error('Invalid date format - expected DD/MM/YYYY');
         }
         
         const [day, month, year] = dateNumbers;
@@ -70,6 +80,7 @@ const TimeSlotConfirmation = ({
         const [startTime] = timeComponents;
         
         const fullDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${startTime}:00`;
+        console.log('Formatted DateTime:', fullDateTime);
         const date = parseISO(fullDateTime);
         
         return {
