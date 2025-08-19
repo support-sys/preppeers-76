@@ -40,35 +40,10 @@ const skillOptions = {
     "SQL Server", "REST APIs", "Microservices",
     "Docker", "Kubernetes", "CI/CD", "Redis", "xUnit"
   ],
-  "Go Backend Developer": [
-    "Go", "Gin", "Echo", "gRPC",
-    "REST APIs", "PostgreSQL", "MongoDB", "Redis",
-    "Microservices", "Docker", "Kubernetes", "CI/CD", "Testing (Go Test)"
-  ],
-  "Ruby Backend Developer": [
-    "Ruby", "Rails", "PostgreSQL", "MySQL",
-    "REST APIs", "GraphQL", "Redis",
-    "Docker", "CI/CD", "RSpec"
-  ],
-  "PHP Backend Developer": [
-    "PHP", "Laravel", "Symfony",
-    "MySQL", "PostgreSQL", "REST APIs",
-    "Redis", "Docker", "CI/CD", "PHPUnit"
-  ],
-  "Full Stack (MERN)": [
-    "React", "Node.js", "Express.js", "MongoDB",
-    "JavaScript", "TypeScript", "REST APIs", "GraphQL",
+  "Full Stack Developer": [
+    "Angular", "React", "Node.js", "Express.js", "Java", "Spring Boot", "MongoDB",
+    "JavaScript", "TypeScript", "REST APIs", "GraphQL", "Microservices",
     "JWT/Auth", "State Management", "Docker", "CI/CD"
-  ],
-  "Full Stack (MEAN)": [
-    "Angular", "Node.js", "Express.js", "MongoDB",
-    "JavaScript", "TypeScript", "REST APIs", "GraphQL",
-    "JWT/Auth", "Docker", "CI/CD"
-  ],
-  "Full Stack (Java)": [
-    "Java", "Spring Boot", "React", "Angular",
-    "SQL", "NoSQL", "REST APIs", "Microservices",
-    "Kafka", "Redis", "Docker", "CI/CD"
   ],
   "Mobile Developer (Android)": [
     "Java", "Kotlin", "Android SDK", "Jetpack Compose",
@@ -90,12 +65,6 @@ const skillOptions = {
     "Docker", "Kubernetes", "Terraform", "Ansible",
     "AWS", "GCP", "Azure", "Monitoring (Prometheus, Grafana)",
     "Logging (ELK Stack)", "Git", "Networking Basics"
-  ],
-  "Data Engineer": [
-    "Python", "SQL", "Spark", "Hadoop",
-    "ETL Pipelines", "Airflow", "Kafka",
-    "Data Warehousing (Redshift, BigQuery, Snowflake)",
-    "NoSQL (MongoDB, Cassandra)", "Docker", "Cloud (AWS/GCP/Azure)"
   ]
 };
 
