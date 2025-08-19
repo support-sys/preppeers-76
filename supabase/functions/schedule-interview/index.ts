@@ -16,6 +16,7 @@ interface InterviewData {
   interviewer_email?: string; // Make optional since we'll look it up
   interviewer_name?: string; // Make optional since we'll look it up
   target_role: string;
+  specific_skills?: string[];
   experience: string;
   scheduled_time: string;
   status: string;
@@ -103,6 +104,7 @@ serve(async (req) => {
         interviewer_email: interviewerEmail,
         interviewer_name: interviewerName,
         target_role: interviewData.target_role,
+        specific_skills: interviewData.specific_skills || [],
         experience: interviewData.experience,
         scheduled_time: interviewData.scheduled_time,
         status: interviewData.status,

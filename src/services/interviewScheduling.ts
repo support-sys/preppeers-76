@@ -535,6 +535,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       candidate_name: userFullName || userEmail.split('@')[0],
       candidate_email: userEmail,
       target_role: candidate.skillCategories?.join(', ') || 'Not specified',
+      specific_skills: candidate.specificSkills || [],
       experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
       scheduled_time: scheduledDateTime,
       status: 'scheduled',

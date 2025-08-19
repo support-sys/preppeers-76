@@ -11,6 +11,7 @@ interface Interview {
   candidate_name: string;
   candidate_email: string;
   target_role: string;
+  specific_skills?: string[];
   experience: string;
   scheduled_time: string;
   status: string;

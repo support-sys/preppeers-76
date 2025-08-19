@@ -9,6 +9,7 @@ interface Interview {
   candidate_name: string;
   candidate_email: string;
   target_role: string;
+  specific_skills?: string[];
   experience: string;
   scheduled_time: string;
   status: string;
@@ -40,6 +41,7 @@ export const useRescheduleFlow = (interview: Interview) => {
     
     const candidateData = {
       skillCategories: skillCategories,
+      specificSkills: interview.specific_skills || [],
       experience: interview.experience,
       timeSlot: preferredDateTime.toISOString(),
       resume: undefined

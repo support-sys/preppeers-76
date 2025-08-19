@@ -258,6 +258,7 @@ export type Database = {
           reminder_emails_sent: Json | null
           resume_url: string | null
           scheduled_time: string
+          specific_skills: string[] | null
           status: string
           target_role: string
           updated_at: string
@@ -278,6 +279,7 @@ export type Database = {
           reminder_emails_sent?: Json | null
           resume_url?: string | null
           scheduled_time: string
+          specific_skills?: string[] | null
           status?: string
           target_role: string
           updated_at?: string
@@ -298,6 +300,7 @@ export type Database = {
           reminder_emails_sent?: Json | null
           resume_url?: string | null
           scheduled_time?: string
+          specific_skills?: string[] | null
           status?: string
           target_role?: string
           updated_at?: string
