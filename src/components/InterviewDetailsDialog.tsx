@@ -40,7 +40,7 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
     if (open && interview) {
       fetchCandidateDetails();
     }
-  }, [open, interview]);
+  }, [open, interview, userRole]);
 
   const fetchInterviewerDetails = async () => {
     try {
@@ -205,8 +205,24 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
             </div>
             <div className="flex items-center gap-2 text-slate-300">
               <Building className="w-4 h-4" />
-              <span className="text-sm">{interview?.target_role}</span>
+              <span className="text-sm">Role: {interview?.target_role}</span>
             </div>
+            {userRole === 'interviewee' && candidateDetails.skills && candidateDetails.skills.length > 0 && 
+             candidateDetails.skills[0] !== "Skills not specified" && (
+              <div className="flex items-start gap-2 text-slate-300">
+                <Code className="w-4 h-4 mt-0.5" />
+                <div>
+                  <span className="text-sm">Skills: </span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {candidateDetails.skills.map((skill, index) => (
+                      <span key={index} className="bg-blue-600/20 text-blue-300 px-2 py-1 rounded-md text-xs">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {userRole === 'interviewee' ? (

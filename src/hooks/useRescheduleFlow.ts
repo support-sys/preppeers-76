@@ -42,8 +42,7 @@ export const useRescheduleFlow = (interview: Interview) => {
       skillCategories: skillCategories,
       experience: interview.experience,
       timeSlot: preferredDateTime.toISOString(),
-      resume: undefined,
-      excludeInterviewerId: interview.interviewer_id // Exclude current interviewer
+      resume: undefined
     };
 
     setRescheduleData({ ...candidateData, originalData: data });
