@@ -30,6 +30,8 @@ const TimeSlotConfirmation = ({
   };
 
   const formatTimeSlot = (timeSlot: string) => {
+    console.log('formatTimeSlot called with:', timeSlot);
+    
     try {
       // Check if timeSlot is valid
       if (!timeSlot || typeof timeSlot !== 'string') {
@@ -44,44 +46,40 @@ const TimeSlotConfirmation = ({
       // Handle different time slot formats
       if (timeSlot.includes(',') && timeSlot.includes('-')) {
         // Format: "Tuesday, 21/10/2025 09:00-10:00"
-        console.log('Parsing timeSlot:', timeSlot);
+        console.log('Processing complex format for:', timeSlot);
         
-        // Split by comma first to get day name
-        const commaIndex = timeSlot.indexOf(',');
-        if (commaIndex === -1) {
-          throw new Error('No comma found in timeSlot');
+        // Use regex to parse the format more reliably
+        const match = timeSlot.match(/^(\w+),\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+        
+        if (!match) {
+          console.error('Regex match failed for timeSlot:', timeSlot);
+          // Fallback to manual parsing
+          const commaIndex = timeSlot.indexOf(',');
+          const dayName = timeSlot.substring(0, commaIndex).trim();
+          const remaining = timeSlot.substring(commaIndex + 1).trim();
+          const spaceIndex = remaining.lastIndexOf(' ');
+          const dateStr = remaining.substring(0, spaceIndex).trim();
+          const timePart = remaining.substring(spaceIndex + 1).trim();
+          const [startTime] = timePart.split('-');
+          
+          console.log('Manual parsing result:', { dayName, dateStr, startTime });
+          
+          // Just return a simple format for now
+          return {
+            day: dayName,
+            date: dateStr,
+            time: startTime
+          };
         }
         
-        const dayName = timeSlot.substring(0, commaIndex).trim();
-        const remaining = timeSlot.substring(commaIndex + 1).trim(); // "21/10/2025 09:00-10:00"
-        
-        // Split the remaining part by space to separate date and time
-        const spaceIndex = remaining.lastIndexOf(' '); // Find last space before time
-        if (spaceIndex === -1) {
-          throw new Error('No space found between date and time');
-        }
-        
-        const dateStr = remaining.substring(0, spaceIndex).trim(); // "21/10/2025"
-        const timePart = remaining.substring(spaceIndex + 1).trim(); // "09:00-10:00"
-        
-        console.log('Parsed components:', { dayName, dateStr, timePart });
-        
-        const dateNumbers = dateStr.split('/');
-        if (dateNumbers.length !== 3) {
-          throw new Error('Invalid date format - expected DD/MM/YYYY');
-        }
-        
-        const [day, month, year] = dateNumbers;
-        const timeComponents = timePart.split('-');
-        if (timeComponents.length < 1) {
-          throw new Error('Invalid time format');
-        }
-        
-        const [startTime] = timeComponents;
+        const [, dayName, day, month, year, startTime, endTime] = match;
+        console.log('Regex parsing result:', { dayName, day, month, year, startTime, endTime });
         
         const fullDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${startTime}:00`;
         console.log('Formatted DateTime:', fullDateTime);
+        
         const date = parseISO(fullDateTime);
+        console.log('Parsed date object:', date);
         
         return {
           day: format(date, 'EEEE'),
@@ -90,6 +88,7 @@ const TimeSlotConfirmation = ({
         };
       } else {
         // Fallback for ISO strings
+        console.log('Processing ISO format for:', timeSlot);
         const date = parseISO(timeSlot);
         return {
           day: format(date, 'EEEE'),
@@ -99,9 +98,11 @@ const TimeSlotConfirmation = ({
       }
     } catch (error) {
       console.error('Error formatting time slot:', error, 'TimeSlot value:', timeSlot);
+      
+      // Emergency fallback - just display the raw string
       return {
-        day: 'Unknown',
-        date: 'Unknown',
+        day: 'Available',
+        date: 'Time slot',
         time: timeSlot || 'Invalid time'
       };
     }
