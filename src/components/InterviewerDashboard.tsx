@@ -196,7 +196,9 @@ const InterviewerDashboard = () => {
       'entry.273813679': interview.candidate_email, // interviewee email
       'entry.2000148292': interview.candidate_name, // interviewee name
       'entry.357973421': interview.target_role, // interviewee role
-      'entry.715683291': interview.specific_skills?.join(', ') || 'Not specified', // interviewee skillset from specific_skills
+      'entry.715683291': (interview.specific_skills && interview.specific_skills.length > 0) 
+        ? interview.specific_skills.join(', ') 
+        : (interview.experience || 'Not specified'), // interviewee skillset from specific_skills, fallback to experience
       'entry.927252494': interviewerProfile.email, // interviewer email
       'entry.908773004': interviewerProfile.name, // interviewer name
       'entry.1957722280': interviewerProfile.role, // interviewer role
