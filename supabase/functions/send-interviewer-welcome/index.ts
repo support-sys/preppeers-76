@@ -1,41 +1,30 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
-
-interface WelcomeEmailRequest {
-  interviewer_name: string;
-  interviewer_email: string;
-  company: string;
-  position: string;
-  experience_years: number;
-  skills: string[];
-  technologies: string[];
-  payout_method: string;
-}
-
-const handler = async (req: Request): Promise<Response> => {
+const handler = async (req)=>{
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
-
   try {
-    const emailData: WelcomeEmailRequest = await req.json();
+    const emailData = await req.json();
     console.log("Sending welcome email to:", emailData.interviewer_email);
-
     const skillsList = emailData.skills.join(", ");
     const technologiesList = emailData.technologies.join(", ");
-
     const emailResponse = await resend.emails.send({
-      from: "InterviewWise <onboarding@resend.dev>",
-      to: [emailData.interviewer_email],
+      from: "IntervieWise <support@interviewise.in>",
+      to: [
+        emailData.interviewer_email
+      ],
+      cc: [
+        "support@interviewise.in"
+      ],
       subject: "🎉 Welcome to InterviewWise - Assessment & Onboarding Details",
       html: `
         <html>
@@ -55,13 +44,21 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="background: white; padding: 20px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2563eb;">
                 <h4 style="margin-top: 0; color: #1e40af;">📋 Technical Skills Assessment</h4>
                 <p>Complete a brief technical evaluation to showcase your expertise in your domain.</p>
-                <p><strong>Assessment Link:</strong> <em>[Assessment link will be provided shortly]</em></p>
+                <p><strong>Assessment Link:</strong> 
+                 <a href="https://forms.gle/axj5Pkam36sgMYyA7" target="_blank" style="color: blue; text-decoration: underline;">
+                  Start Assessment
+                 </a>
+                </p>
               </div>
               
               <div style="background: white; padding: 20px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #16a34a;">
                 <h4 style="margin-top: 0; color: #16a34a;">🤝 Discovery Session</h4>
                 <p>A brief one-on-one session with our team to understand your interviewing style and preferences.</p>
-                <p><strong>Booking Link:</strong> <em>[Discovery session link will be provided shortly]</em></p>
+                <p><strong>Booking Link:</strong> 
+                 <a href="https://calendly.com/interviewise-support/30min" target="_blank" style="color: blue; text-decoration: underline;">
+                    https://calendly.com/interviewise-support/30min
+                 </a>
+                </p>
               </div>
               
               <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin: 20px 0;">
@@ -91,28 +88,30 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           </body>
         </html>
-      `,
+      `
     });
-
     console.log("Welcome email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
+    return new Response(JSON.stringify({
+      success: true,
+      emailId: emailResponse.data?.id
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
-  } catch (error: any) {
-    console.error("Error in send-interviewer-welcome function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        ...corsHeaders
       }
-    );
+    });
+  } catch (error) {
+    console.error("Error in send-interviewer-welcome function:", error);
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      }
+    });
   }
 };
-
 serve(handler);
