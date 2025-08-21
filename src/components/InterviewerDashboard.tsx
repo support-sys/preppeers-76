@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, CalendarX, Settings, User, Video, ExternalLink, FileText, Trash2, Eye } from 'lucide-react';
+import { Calendar, Clock, Users, CalendarX, Settings, User, Video, ExternalLink, FileText, Trash2, Eye, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +35,12 @@ const InterviewerDashboard = () => {
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [isEligible, setIsEligible] = useState<boolean | null>(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
+  const [interviewerProfile, setInterviewerProfile] = useState<{
+    name: string;
+    email: string;
+    role: string;
+  } | null>(null);
 
   useEffect(() => {
     checkEligibilityAndFetchInterviews();
@@ -47,7 +53,7 @@ const InterviewerDashboard = () => {
       // First get the interviewer record to check eligibility
       const { data: interviewerData, error: interviewerError } = await supabase
         .from('interviewers')
-        .select('id, is_eligible')
+        .select('id, is_eligible, position, company')
         .eq('user_id', user.id)
         .single();
 
@@ -58,6 +64,21 @@ const InterviewerDashboard = () => {
       }
 
       setIsEligible(interviewerData.is_eligible);
+
+      // Get profile data for the interviewer
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (!profileError && profileData) {
+        setInterviewerProfile({
+          name: profileData.full_name || 'Unknown',
+          email: profileData.email || user.email || 'Unknown',
+          role: interviewerData.position || 'Software Engineer'
+        });
+      }
 
       // Then fetch interviews for this interviewer
       const { data: interviewsData, error: interviewsError } = await supabase
@@ -141,6 +162,36 @@ const InterviewerDashboard = () => {
   const handleViewDetails = (interview: Interview) => {
     setSelectedInterview(interview);
     setShowDetailsDialog(true);
+  };
+
+  const handleSubmitFeedback = (interview: Interview) => {
+    if (!interviewerProfile) return;
+
+    // Build the Google Form URL with prefilled data
+    const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfqJUiaPDJEO4MdSHR9bS1QUEVjHnKEl07W-tkK148rdhGAog/viewform';
+    
+    const params = new URLSearchParams({
+      'usp': 'pp_url',
+      'entry.273813679': interview.candidate_email, // interviewee email
+      'entry.2000148292': interview.candidate_name, // interviewee name
+      'entry.357973421': interview.target_role, // interviewee role
+      'entry.715683291': interview.experience || 'Not specified', // interviewee skillset (using experience as fallback)
+      'entry.927252494': interviewerProfile.email, // interviewer email
+      'entry.908773004': interviewerProfile.name, // interviewer name
+      'entry.1957722280': interviewerProfile.role, // interviewer role
+      'entry.1204842539': formatDateTimeIST(interview.scheduled_time) // interview timing
+    });
+
+    // Open the form in a new tab
+    window.open(`${baseUrl}?${params.toString()}`, '_blank');
+
+    // Mark feedback as submitted for this interview
+    setFeedbackSubmitted(prev => new Set([...prev, interview.id]));
+
+    toast({
+      title: "Feedback Form Opened",
+      description: "The feedback form has been opened in a new tab. Please complete it and submit.",
+    });
   };
 
   const upcomingInterviews = interviews.filter(interview => {
@@ -423,28 +474,43 @@ const InterviewerDashboard = () => {
                       Status: {interview.status}
                     </p>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
-                      onClick={() => handleViewDetails(interview)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Details
-                    </Button>
-                    {interview.resume_url && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
-                        onClick={() => handleViewResume(interview.resume_url!)}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Resume
-                      </Button>
-                    )}
-                  </div>
+                   <div className="flex space-x-2">
+                     <Button 
+                       size="sm" 
+                       variant="outline"
+                       className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                       onClick={() => handleViewDetails(interview)}
+                     >
+                       <Eye className="w-4 h-4 mr-2" />
+                       Details
+                     </Button>
+                     {interview.resume_url && (
+                       <Button 
+                         size="sm" 
+                         variant="outline"
+                         className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                         onClick={() => handleViewResume(interview.resume_url!)}
+                       >
+                         <FileText className="w-4 h-4 mr-2" />
+                         Resume
+                       </Button>
+                     )}
+                     {interview.status === 'completed' && (
+                       <Button 
+                         size="sm" 
+                         variant="outline"
+                         className={feedbackSubmitted.has(interview.id) 
+                           ? "bg-green-600/20 border-green-400/30 text-green-300" 
+                           : "bg-orange-600/20 border-orange-400/30 text-orange-300 hover:bg-orange-600/30"
+                         }
+                         onClick={() => handleSubmitFeedback(interview)}
+                         disabled={feedbackSubmitted.has(interview.id)}
+                       >
+                         <MessageSquare className="w-4 h-4 mr-2" />
+                         {feedbackSubmitted.has(interview.id) ? 'Feedback Submitted' : 'Submit Feedback'}
+                       </Button>
+                     )}
+                   </div>
                 </div>
               ))}
             </div>
