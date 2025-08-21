@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -27,6 +26,8 @@ const Auth = () => {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   
   const [searchParams] = useSearchParams();
 
@@ -38,9 +39,18 @@ const Auth = () => {
   React.useEffect(() => {
     const mode = searchParams.get('mode');
     const roleParam = searchParams.get('role');
+    const confirmed = searchParams.get('confirmed');
     
     if (mode === 'reset') {
       setShowResetPassword(true);
+      setActiveTab('signin');
+    }
+    
+    if (confirmed === 'true') {
+      toast({
+        title: "Email Confirmed!",
+        description: "Your email has been confirmed. You can now sign in to your account.",
+      });
       setActiveTab('signin');
     }
     
@@ -49,7 +59,7 @@ const Auth = () => {
       setRole(roleParam as 'interviewer' | 'interviewee');
       setActiveTab('signup');
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,25 +101,42 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(email, password, role, fullName, mobileNumber);
+    const { error, data } = await signUp(email, password, role, fullName, mobileNumber);
     
     if (error) {
+      console.error('Signup error:', error);
       toast({
         title: "Sign Up Failed",
-        description: error.message,
+        description: error.message || "An error occurred during signup",
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Account Created!",
-        description: "Please check your email to verify your account.",
-      });
+      console.log('Signup successful:', data);
       
-      // Redirect based on role for better UX
-      if (role === 'interviewer') {
-        navigate('/interviewers'); // Redirect to interviewer profile page to complete setup
+      // Check if email confirmation is required
+      if (data?.user && !data.user.email_confirmed_at) {
+        // Email confirmation required - show confirmation message
+        setSignupEmail(email);
+        setShowEmailConfirmation(true);
+        setActiveTab('signin'); // Switch to signin tab for when they confirm
+        
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to verify your account before signing in.",
+        });
       } else {
-        navigate('/book'); // Redirect to booking page for interviewees
+        // Email confirmation not required or already confirmed
+        toast({
+          title: "Account Created!",
+          description: "Your account has been created successfully.",
+        });
+        
+        // Redirect based on role
+        if (role === 'interviewer') {
+          navigate('/interviewers');
+        } else {
+          navigate('/book');
+        }
       }
     }
     
@@ -182,6 +209,69 @@ const Auth = () => {
     
     setLoading(false);
   };
+
+  // Show email confirmation message
+  if (showEmailConfirmation) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <Navigation />
+        
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-md mx-auto">
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+              <CardHeader className="text-center">
+                <Mail className="w-16 h-16 mx-auto text-blue-400 mb-4" />
+                <CardTitle className="text-2xl font-bold text-white">
+                  Check Your Email
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  We've sent a confirmation link to your email address
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-4">
+                  <p className="text-blue-300 text-sm">
+                    <strong>{signupEmail}</strong>
+                  </p>
+                  <p className="text-blue-200 text-xs mt-2">
+                    Please click the link in the email to verify your account, then return here to sign in.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-slate-300 text-sm">
+                    Didn't receive the email? Check your spam folder.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowEmailConfirmation(false);
+                      setActiveTab('signup');
+                    }}
+                    className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  >
+                    Back to Sign Up
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowEmailConfirmation(false);
+                      setActiveTab('signin');
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    Already Confirmed? Sign In
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">

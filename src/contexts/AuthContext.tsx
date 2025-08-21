@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: 'interviewer' | 'interviewee' | null;
-  signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => Promise<{ error: any, data?: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -34,11 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email_confirmed_at);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Fetch user role from profiles table with setTimeout to avoid deadlock
+        if (session?.user && session.user.email_confirmed_at) {
+          // Only fetch user role for confirmed users
           setTimeout(async () => {
             const { data: profile } = await supabase
               .from('profiles')
@@ -58,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email_confirmed_at);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -67,9 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth?confirmed=true`;
     
-    const { error } = await supabase.auth.signUp({
+    console.log('Signing up user with redirect URL:', redirectUrl);
+    
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -81,7 +86,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     });
-    return { error };
+
+    // Log the signup response for debugging
+    console.log('Signup response:', { data, error });
+    console.log('User confirmation status:', data?.user?.email_confirmed_at);
+
+    return { error, data };
   };
 
   const signIn = async (email: string, password: string) => {
