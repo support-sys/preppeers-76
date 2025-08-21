@@ -495,21 +495,21 @@ const InterviewerDashboard = () => {
                          Resume
                        </Button>
                      )}
-                     {interview.status === 'completed' && (
-                       <Button 
-                         size="sm" 
-                         variant="outline"
-                         className={feedbackSubmitted.has(interview.id) 
-                           ? "bg-green-600/20 border-green-400/30 text-green-300" 
-                           : "bg-orange-600/20 border-orange-400/30 text-orange-300 hover:bg-orange-600/30"
-                         }
-                         onClick={() => handleSubmitFeedback(interview)}
-                         disabled={feedbackSubmitted.has(interview.id)}
-                       >
-                         <MessageSquare className="w-4 h-4 mr-2" />
-                         {feedbackSubmitted.has(interview.id) ? 'Feedback Submitted' : 'Submit Feedback'}
-                       </Button>
-                     )}
+                      {interview.status !== 'cancelled' && new Date(interview.scheduled_time) <= new Date() && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className={feedbackSubmitted.has(interview.id) 
+                            ? "bg-green-600/20 border-green-400/30 text-green-300" 
+                            : "bg-orange-600/20 border-orange-400/30 text-orange-300 hover:bg-orange-600/30"
+                          }
+                          onClick={() => handleSubmitFeedback(interview)}
+                          disabled={feedbackSubmitted.has(interview.id)}
+                        >
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          {feedbackSubmitted.has(interview.id) ? 'Feedback Submitted' : 'Submit Feedback'}
+                        </Button>
+                      )}
                    </div>
                 </div>
               ))}
