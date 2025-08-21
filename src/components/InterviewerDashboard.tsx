@@ -188,6 +188,8 @@ const InterviewerDashboard = () => {
   const handleSubmitFeedback = async (interview: Interview) => {
     if (!interviewerProfile) return;
 
+    console.log('Submitting feedback for interview:', interview.id);
+
     // Build the Google Form URL with prefilled data
     const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfqJUiaPDJEO4MdSHR9bS1QUEVjHnKEl07W-tkK148rdhGAog/viewform';
     
@@ -210,12 +212,17 @@ const InterviewerDashboard = () => {
 
     // Update feedback_submitted in database
     try {
-      const { error } = await supabase
+      console.log('Updating feedback_submitted for interview:', interview.id);
+      const { data, error } = await supabase
         .from('interviews')
         .update({ feedback_submitted: true })
-        .eq('id', interview.id);
+        .eq('id', interview.id)
+        .select();
+
+      console.log('Update result:', { data, error });
 
       if (error) {
+        console.error('Database update error:', error);
         throw error;
       }
 
@@ -231,7 +238,7 @@ const InterviewerDashboard = () => {
     } catch (error) {
       console.error('Error updating feedback status:', error);
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to update feedback status. Please try again.",
         variant: "destructive",
       });
