@@ -142,6 +142,50 @@ serve(async (req)=>{
         throw new Error(`Failed to send reminder email: ${reminderResult.error.message}`);
       }
       console.log("Reminder email sent successfully:", reminderResult.data?.id);
+    } else if (emailData.type === 'feedback_reminder') {
+      // Send feedback reminder email to interviewer
+      console.log("Sending feedback reminder email to interviewer:", emailData.interviewerEmail);
+      const feedbackReminderResult = await resend.emails.send({
+        from: "Interviewise Platform <support@interviewise.in>",
+        to: [
+          emailData.interviewerEmail
+        ],
+        cc: [
+          "support@interviewise.in"
+        ],
+        subject: `Interview Completed - Please Submit Feedback | ${emailData.targetRole}`,
+        html: `
+          <h1>Interview Completed - Feedback Required</h1>
+          <p>Dear ${emailData.interviewerName},</p>
+          <p>Thank you for conducting the interview! The following interview session has been completed:</p>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Interview Details</h3>
+            <p><strong>Candidate:</strong> ${emailData.candidateName} (${emailData.candidateEmail})</p>
+            <p><strong>Position:</strong> ${emailData.targetRole}</p>
+            <p><strong>Date & Time:</strong> ${formattedDate}</p>
+            <p><strong>Experience Level:</strong> ${emailData.experience || 'Not specified'}</p>
+          </div>
+          <p><strong>📝 Please Submit Your Feedback</strong></p>
+          <p>Your feedback is crucial for helping candidates improve their interview skills. Please follow these steps:</p>
+          <ol>
+            <li>Log in to your <a href="https://interviewise.netlify.app/dashboard" target="_blank" style="color: #2754C5; text-decoration: underline;">Interviewise Dashboard</a></li>
+            <li>Go to the <strong>"Past Interviews"</strong> section</li>
+            <li>Find this interview and click <strong>"Submit Feedback"</strong></li>
+            <li>Complete the feedback form with your assessment</li>
+          </ol>
+          <div style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2754C5;">
+            <p style="margin: 0; color: #1a365d;"><strong>💡 Reminder:</strong> Quality feedback helps candidates understand their strengths and areas for improvement, making their next interview experience more successful.</p>
+          </div>
+          <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+          <p>Thank you for being part of the Interviewise community!</p>
+          <p>Best regards,<br>The Interviewise Platform Team</p>
+        `
+      });
+      if (feedbackReminderResult.error) {
+        console.error("Failed to send feedback reminder email:", feedbackReminderResult.error);
+        throw new Error(`Failed to send feedback reminder email: ${feedbackReminderResult.error.message}`);
+      }
+      console.log("Feedback reminder email sent successfully:", feedbackReminderResult.data?.id);
     }
     console.log("Email sent successfully");
     return new Response(JSON.stringify({

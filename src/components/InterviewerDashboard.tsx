@@ -113,6 +113,27 @@ const InterviewerDashboard = () => {
             
             // Update the local status as well
             interview.status = 'completed';
+
+            // Send feedback reminder email to interviewer
+            try {
+              console.log('Sending feedback reminder email for interview:', interview.id);
+              await supabase.functions.invoke('send-interview-emails', {
+                body: {
+                  type: 'feedback_reminder',
+                  interviewerEmail: interview.interviewer_email,
+                  interviewerName: interviewerProfile?.name || 'Interviewer',
+                  candidateName: interview.candidate_name,
+                  candidateEmail: interview.candidate_email,
+                  targetRole: interview.target_role,
+                  experience: interview.experience,
+                  scheduledTime: interview.scheduled_time
+                }
+              });
+              console.log('Feedback reminder email sent successfully for interview:', interview.id);
+            } catch (emailError) {
+              console.error('Failed to send feedback reminder email:', emailError);
+              // Don't throw error - we don't want to block the status update
+            }
           }
         }
 
