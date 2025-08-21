@@ -24,6 +24,7 @@ interface Interview {
   resume_url?: string;
   google_meet_link?: string;
   google_calendar_event_id?: string;
+  specific_skills?: string[];
 }
 
 const InterviewerDashboard = () => {
@@ -91,10 +92,30 @@ const InterviewerDashboard = () => {
         console.error('Error fetching interviews:', interviewsError);
       } else {
         // Remove duplicates and filter out rescheduled interviews
-        const uniqueInterviews = interviewsData?.filter((interview, index, self) => 
+        let uniqueInterviews = interviewsData?.filter((interview, index, self) => 
           index === self.findIndex(i => i.id === interview.id) && 
           interview.status !== 'rescheduled'
         ) || [];
+
+        // Auto-update status from 'scheduled' to 'completed' for past interviews
+        const now = new Date();
+        const interviewsToUpdate = uniqueInterviews.filter(interview => 
+          interview.status === 'scheduled' && 
+          new Date(interview.scheduled_time) <= now
+        );
+
+        if (interviewsToUpdate.length > 0) {
+          for (const interview of interviewsToUpdate) {
+            await supabase
+              .from('interviews')
+              .update({ status: 'completed' })
+              .eq('id', interview.id);
+            
+            // Update the local status as well
+            interview.status = 'completed';
+          }
+        }
+
         setInterviews(uniqueInterviews);
       }
     } catch (error) {
@@ -175,7 +196,7 @@ const InterviewerDashboard = () => {
       'entry.273813679': interview.candidate_email, // interviewee email
       'entry.2000148292': interview.candidate_name, // interviewee name
       'entry.357973421': interview.target_role, // interviewee role
-      'entry.715683291': interview.experience || 'Not specified', // interviewee skillset (using experience as fallback)
+      'entry.715683291': interview.specific_skills?.join(', ') || 'Not specified', // interviewee skillset from specific_skills
       'entry.927252494': interviewerProfile.email, // interviewer email
       'entry.908773004': interviewerProfile.name, // interviewer name
       'entry.1957722280': interviewerProfile.role, // interviewer role
