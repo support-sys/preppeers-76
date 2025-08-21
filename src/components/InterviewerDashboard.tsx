@@ -21,6 +21,7 @@ interface Interview {
   experience: string;
   scheduled_time: string;
   status: string;
+  feedback_submitted: boolean;
   resume_url?: string;
   google_meet_link?: string;
   google_calendar_event_id?: string;
@@ -36,7 +37,6 @@ const InterviewerDashboard = () => {
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [isEligible, setIsEligible] = useState<boolean | null>(null);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
   const [interviewerProfile, setInterviewerProfile] = useState<{
     name: string;
     email: string;
@@ -185,7 +185,7 @@ const InterviewerDashboard = () => {
     setShowDetailsDialog(true);
   };
 
-  const handleSubmitFeedback = (interview: Interview) => {
+  const handleSubmitFeedback = async (interview: Interview) => {
     if (!interviewerProfile) return;
 
     // Build the Google Form URL with prefilled data
@@ -208,13 +208,34 @@ const InterviewerDashboard = () => {
     // Open the form in a new tab
     window.open(`${baseUrl}?${params.toString()}`, '_blank');
 
-    // Mark feedback as submitted for this interview
-    setFeedbackSubmitted(prev => new Set([...prev, interview.id]));
+    // Update feedback_submitted in database
+    try {
+      const { error } = await supabase
+        .from('interviews')
+        .update({ feedback_submitted: true })
+        .eq('id', interview.id);
 
-    toast({
-      title: "Feedback Form Opened",
-      description: "The feedback form has been opened in a new tab. Please complete it and submit.",
-    });
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setInterviews(prev => prev.map(int => 
+        int.id === interview.id ? { ...int, feedback_submitted: true } : int
+      ));
+
+      toast({
+        title: "Feedback Form Opened",
+        description: "The feedback form has been opened in a new tab. Please complete it and submit.",
+      });
+    } catch (error) {
+      console.error('Error updating feedback status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update feedback status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const upcomingInterviews = interviews.filter(interview => {
@@ -518,21 +539,21 @@ const InterviewerDashboard = () => {
                          Resume
                        </Button>
                      )}
-                      {interview.status !== 'cancelled' && new Date(interview.scheduled_time) <= new Date() && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className={feedbackSubmitted.has(interview.id) 
-                            ? "bg-green-600/20 border-green-400/30 text-green-300" 
-                            : "bg-orange-600/20 border-orange-400/30 text-orange-300 hover:bg-orange-600/30"
-                          }
-                          onClick={() => handleSubmitFeedback(interview)}
-                          disabled={feedbackSubmitted.has(interview.id)}
-                        >
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          {feedbackSubmitted.has(interview.id) ? 'Feedback Submitted' : 'Submit Feedback'}
-                        </Button>
-                      )}
+                       {interview.status !== 'cancelled' && new Date(interview.scheduled_time) <= new Date() && (
+                         <Button 
+                           size="sm" 
+                           variant="outline"
+                           className={interview.feedback_submitted 
+                             ? "bg-green-600/20 border-green-400/30 text-green-300" 
+                             : "bg-orange-600/20 border-orange-400/30 text-orange-300 hover:bg-orange-600/30"
+                           }
+                           onClick={() => handleSubmitFeedback(interview)}
+                           disabled={interview.feedback_submitted}
+                         >
+                           <MessageSquare className="w-4 h-4 mr-2" />
+                           {interview.feedback_submitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                         </Button>
+                       )}
                    </div>
                 </div>
               ))}

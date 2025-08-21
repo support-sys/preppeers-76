@@ -249,6 +249,7 @@ export type Database = {
           created_at: string
           email_confirmation_sent: boolean | null
           experience: string | null
+          feedback_submitted: boolean
           google_calendar_event_id: string | null
           google_meet_link: string | null
           id: string
@@ -270,6 +271,7 @@ export type Database = {
           created_at?: string
           email_confirmation_sent?: boolean | null
           experience?: string | null
+          feedback_submitted?: boolean
           google_calendar_event_id?: string | null
           google_meet_link?: string | null
           id?: string
@@ -291,6 +293,7 @@ export type Database = {
           created_at?: string
           email_confirmation_sent?: boolean | null
           experience?: string | null
+          feedback_submitted?: boolean
           google_calendar_event_id?: string | null
           google_meet_link?: string | null
           id?: string
