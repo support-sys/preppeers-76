@@ -439,7 +439,7 @@ const Interviewers = () => {
                     value={interviewerData.experienceYears}
                     onChange={handleInputChange}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                    placeholder="Enter years of experience"
+                    placeholder="Minimum 3 Years Experience Required for Interviewer"
                     min={3}
                     required
                   />
