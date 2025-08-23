@@ -280,7 +280,7 @@ const Index = () => {
             <div className="text-center">
               <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
                 <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 group">
-                  Become an Interviewer
+                    Add Your Interviewer Profile
                   <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
               </Link>
@@ -310,11 +310,11 @@ const Index = () => {
                   </div>
                   <div className="ml-4">
                     <h4 className="text-white font-semibold">Rahul Sharma</h4>
-                    <p className="text-slate-400 text-sm">Software Engineer @ Google</p>
+                    <p className="text-slate-400 text-sm">Java Bacnedk Developer</p>
                   </div>
                 </div>
                 <p className="text-slate-300">
-                  "The mock interviews helped me identify my weak areas and gave me confidence. Landed my dream job at Google!"
+                  "The mock interviews helped me identify my weak areas and gave me confidence. Landed my dream job at JP Morgan!"
                 </p>
               </div>
 
@@ -325,7 +325,7 @@ const Index = () => {
                   </div>
                   <div className="ml-4">
                     <h4 className="text-white font-semibold">Priya Patel</h4>
-                    <p className="text-slate-400 text-sm">Frontend Developer @ Microsoft</p>
+                    <p className="text-slate-400 text-sm">Frontend Developer</p>
                   </div>
                 </div>
                 <p className="text-slate-300">
@@ -340,7 +340,7 @@ const Index = () => {
                   </div>
                   <div className="ml-4">
                     <h4 className="text-white font-semibold">Amit Kumar</h4>
-                    <p className="text-slate-400 text-sm">Data Scientist @ Amazon</p>
+                    <p className="text-slate-400 text-sm">Data Analyst</p>
                   </div>
                 </div>
                 <p className="text-slate-300">
