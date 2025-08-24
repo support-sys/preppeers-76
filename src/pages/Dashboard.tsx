@@ -167,13 +167,13 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <Navigation />
         
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-8 sm:py-20">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <div className="text-center mb-8 sm:mb-12">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
                 Welcome back, {user?.user_metadata?.full_name || user?.email}!
               </h1>
-              <p className="text-xl text-slate-300">
+              <p className="text-lg sm:text-xl text-slate-300 px-4">
                 Manage your interview sessions and help candidates succeed
               </p>
             </div>
@@ -191,13 +191,13 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-20">
+      <div className="container mx-auto px-4 py-8 sm:py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
               Welcome back, {user?.user_metadata?.full_name || user?.email}!
             </h1>
-            <p className="text-xl text-slate-300">
+            <p className="text-lg sm:text-xl text-slate-300 px-4">
               {userRole === 'interviewer' 
                 ? 'Manage your interview sessions and help candidates succeed'
                 : 'Practice interviews and improve your skills'
@@ -235,13 +235,13 @@ const Dashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {upcomingInterviews.map((interview) => (
-                    <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                      <div className="flex-1">
-                        <h3 className="text-white font-semibold">{interview.target_role}</h3>
-                        <p className="text-slate-300">
+                    <div key={interview.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white/5 rounded-lg space-y-3 sm:space-y-0">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-semibold truncate">{interview.target_role}</h3>
+                        <p className="text-slate-300 text-sm sm:text-base">
                           {formatDateTimeIST(interview.scheduled_time)} • {interview.experience} experience
                         </p>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-slate-400 text-sm truncate">
                           {userRole === 'interviewer' 
                             ? `Candidate: ${interview.candidate_email}`
                             : `Interviewer: ${interview.interviewer_email}`
@@ -260,55 +260,55 @@ const Dashboard = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex flex-wrap gap-2 sm:space-x-2 sm:flex-nowrap">
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                          className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30 flex-shrink-0"
                           onClick={() => handleViewDetails(interview)}
                         >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Details
+                          <Eye className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Details</span>
                         </Button>
                         {interview.google_meet_link ? (
                           <Button 
                             size="sm" 
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-700 flex-shrink-0"
                             onClick={() => handleJoinMeeting(interview.google_meet_link!)}
                           >
-                            <Video className="w-4 h-4 mr-2" />
-                            Join Meet
-                            <ExternalLink className="w-3 h-3 ml-1" />
+                            <Video className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Join Meet</span>
+                            <ExternalLink className="w-3 h-3 ml-1 hidden sm:inline" />
                           </Button>
                         ) : (
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-shrink-0"
                             disabled
                           >
-                            <Video className="w-4 h-4 mr-2" />
-                            No Link
+                            <Video className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">No Link</span>
                           </Button>
                         )}
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="bg-yellow-600/20 border-yellow-400/30 text-yellow-300 hover:bg-yellow-600/30"
+                          className="bg-yellow-600/20 border-yellow-400/30 text-yellow-300 hover:bg-yellow-600/30 flex-shrink-0"
                           onClick={() => handleReschedule(interview)}
                         >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Reschedule
+                          <Edit className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Reschedule</span>
                         </Button>
                         {userRole === 'interviewer' && (
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
+                            className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30 flex-shrink-0"
                             onClick={() => handleDeleteInterview(interview)}
                           >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Cancel
+                            <Trash2 className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Cancel</span>
                           </Button>
                         )}
                       </div>
@@ -319,7 +319,7 @@ const Dashboard = () => {
             </Card>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {userRole === 'interviewer' ? (
               <>
                 <Card className="bg-white/10 backdrop-blur-lg border-white/20">
@@ -417,13 +417,13 @@ const Dashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {pastInterviews.slice(0, 3).map((interview) => (
-                    <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                      <div>
-                        <h3 className="text-white font-semibold">{interview.target_role}</h3>
-                        <p className="text-slate-300">
+                    <div key={interview.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white/5 rounded-lg space-y-3 sm:space-y-0">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-semibold truncate">{interview.target_role}</h3>
+                        <p className="text-slate-300 text-sm sm:text-base">
                           {formatDateTimeIST(interview.scheduled_time)} • {interview.experience} experience
                         </p>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-slate-400 text-sm truncate">
                           {userRole === 'interviewer' 
                             ? `Candidate: ${interview.candidate_email}`
                             : `Interviewer: ${interview.interviewer_email}`
@@ -433,15 +433,15 @@ const Dashboard = () => {
                           Status: {interview.status}
                         </p>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex justify-end sm:justify-start">
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                          className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30 flex-shrink-0"
                           onClick={() => handleViewDetails(interview)}
                         >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Details
+                          <Eye className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Details</span>
                         </Button>
                       </div>
                     </div>
