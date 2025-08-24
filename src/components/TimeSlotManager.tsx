@@ -241,14 +241,14 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
   return (
     <Card className="bg-white/10 backdrop-blur-lg border-white/20">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-white">Manage Schedule</CardTitle>
-            <CardDescription className="text-slate-300">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div className="flex-1">
+            <CardTitle className="text-white text-xl sm:text-2xl">Manage Schedule</CardTitle>
+            <CardDescription className="text-slate-300 text-sm sm:text-base">
               Set your availability and time slots for interviews. Each time slot should be exactly 1 hour.
             </CardDescription>
           </div>
-          <Button variant="outline" onClick={onClose} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+          <Button variant="outline" onClick={onClose} className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
@@ -268,34 +268,37 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
             </div>
 
             {availability[day]?.available && (
-              <div className="ml-6 space-y-3">
+              <div className="ml-4 sm:ml-6 space-y-3">
                 {availability[day]?.timeSlots.map((slot) => (
-                  <div key={slot.id} className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-slate-300 text-sm">From:</Label>
-                      <Input
-                        type="time"
-                        value={slot.start}
-                        onChange={(e) => updateTimeSlot(day, slot.id, 'start', e.target.value)}
-                        className="bg-white/10 border-white/20 text-white w-32"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-slate-300 text-sm">To:</Label>
-                      <Input
-                        type="time"
-                        value={slot.end}
-                        onChange={(e) => updateTimeSlot(day, slot.id, 'end', e.target.value)}
-                        className="bg-white/10 border-white/20 text-white w-32"
-                      />
+                  <div key={slot.id} className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-3 bg-white/5 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 flex-1">
+                      <div className="flex items-center space-x-2 flex-1">
+                        <Label className="text-slate-300 text-sm w-12">From:</Label>
+                        <Input
+                          type="time"
+                          value={slot.start}
+                          onChange={(e) => updateTimeSlot(day, slot.id, 'start', e.target.value)}
+                          className="bg-white/10 border-white/20 text-white flex-1 min-w-0"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 flex-1">
+                        <Label className="text-slate-300 text-sm w-12">To:</Label>
+                        <Input
+                          type="time"
+                          value={slot.end}
+                          onChange={(e) => updateTimeSlot(day, slot.id, 'end', e.target.value)}
+                          className="bg-white/10 border-white/20 text-white flex-1 min-w-0"
+                        />
+                      </div>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => removeTimeSlot(day, slot.id)}
-                      className="bg-red-500/20 border-red-500/20 text-red-400 hover:bg-red-500/30"
+                      className="bg-red-500/20 border-red-500/20 text-red-400 hover:bg-red-500/30 w-full sm:w-auto"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Remove</span>
                     </Button>
                   </div>
                 ))}
@@ -304,7 +307,7 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
                   variant="outline"
                   size="sm"
                   onClick={() => addTimeSlot(day)}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Time Slot
