@@ -352,20 +352,20 @@ const InterviewerDashboard = () => {
         </Card>
       )}
 
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">Interviewer Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Interviewer Dashboard</h1>
         {isEligible && (
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <Button 
               onClick={() => setActiveView('profile')}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
             >
               <User className="w-4 h-4 mr-2" />
               Profile Settings
             </Button>
             <Button 
               onClick={() => setActiveView('time-slots')}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
             >
               <Clock className="w-4 h-4 mr-2" />
               Manage Schedule
@@ -373,7 +373,7 @@ const InterviewerDashboard = () => {
             <Button 
               variant="outline" 
               onClick={() => setActiveView('block-dates')}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto"
             >
               <CalendarX className="w-4 h-4 mr-2" />
               Block Dates
@@ -383,7 +383,7 @@ const InterviewerDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="bg-white/10 backdrop-blur-lg border-white/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center">
@@ -438,13 +438,13 @@ const InterviewerDashboard = () => {
           ) : (
             <div className="space-y-4">
               {upcomingInterviews.map((interview) => (
-                <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
-                    <p className="text-slate-300">
+                <div key={interview.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white/5 rounded-lg space-y-3 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold truncate">{interview.candidate_name}</h3>
+                    <p className="text-slate-300 text-sm sm:text-base">
                       {formatDateTimeIST(interview.scheduled_time)} • {interview.target_role}
                     </p>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-400 text-sm truncate">
                       Experience: {interview.experience} • {interview.candidate_email}
                     </p>
                     {interview.google_meet_link && (
@@ -460,56 +460,56 @@ const InterviewerDashboard = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2 sm:space-x-2 sm:flex-nowrap">
                     <Button 
                       size="sm" 
                       variant="outline"
-                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30 flex-shrink-0"
                       onClick={() => handleViewDetails(interview)}
                     >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Details
+                      <Eye className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Details</span>
                     </Button>
                     {interview.resume_url && (
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30 flex-shrink-0"
                         onClick={() => handleViewResume(interview.resume_url!)}
                       >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Resume
+                        <FileText className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Resume</span>
                       </Button>
                     )}
                     {interview.google_meet_link ? (
                       <Button 
                         size="sm" 
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-green-600 hover:bg-green-700 flex-shrink-0"
                         onClick={() => handleJoinMeeting(interview.google_meet_link!)}
                       >
-                        <Video className="w-4 h-4 mr-2" />
-                        Join Meet
-                        <ExternalLink className="w-3 h-3 ml-1" />
+                        <Video className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Join Meet</span>
+                        <ExternalLink className="w-3 h-3 ml-1 hidden sm:inline" />
                       </Button>
                     ) : (
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-shrink-0"
                         disabled
                       >
-                        <Video className="w-4 h-4 mr-2" />
-                        No Link
+                        <Video className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">No Link</span>
                       </Button>
                     )}
                     <Button 
                       size="sm" 
                       variant="outline"
-                      className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
+                      className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30 flex-shrink-0"
                       onClick={() => handleDeleteInterview(interview)}
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Cancel
+                      <Trash2 className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Cancel</span>
                     </Button>
                   </div>
                 </div>
@@ -533,53 +533,54 @@ const InterviewerDashboard = () => {
           ) : (
             <div className="space-y-4">
               {pastInterviews.map((interview) => (
-                <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                  <div>
-                    <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
-                    <p className="text-slate-300">
+                <div key={interview.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white/5 rounded-lg space-y-3 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold truncate">{interview.candidate_name}</h3>
+                    <p className="text-slate-300 text-sm sm:text-base">
                       {formatDateTimeIST(interview.scheduled_time)} • {interview.target_role}
                     </p>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-400 text-sm truncate">
                       Experience: {interview.experience} • {interview.candidate_email}
                     </p>
                     <p className="text-slate-400 text-sm capitalize">
                       Status: {interview.status}
                     </p>
                   </div>
-                   <div className="flex space-x-2">
+                   <div className="flex flex-wrap gap-2 sm:space-x-2 sm:flex-nowrap">
                      <Button 
                        size="sm" 
                        variant="outline"
-                       className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                       className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30 flex-shrink-0"
                        onClick={() => handleViewDetails(interview)}
                      >
-                       <Eye className="w-4 h-4 mr-2" />
-                       Details
+                       <Eye className="w-4 h-4 sm:mr-2" />
+                       <span className="hidden sm:inline">Details</span>
                      </Button>
                      {interview.resume_url && (
                        <Button 
                          size="sm" 
                          variant="outline"
-                         className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                         className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30 flex-shrink-0"
                          onClick={() => handleViewResume(interview.resume_url!)}
                        >
-                         <FileText className="w-4 h-4 mr-2" />
-                         Resume
+                         <FileText className="w-4 h-4 sm:mr-2" />
+                         <span className="hidden sm:inline">Resume</span>
                        </Button>
                      )}
                        {interview.status !== 'cancelled' && new Date(interview.scheduled_time) <= new Date() && (
                          <Button 
                            size="sm" 
                            variant="outline"
-                           className={interview.feedback_submitted 
+                           className={`${interview.feedback_submitted 
                              ? "bg-green-600/20 border-green-400/30 text-green-300" 
                              : "bg-orange-600/20 border-orange-400/30 text-orange-300 hover:bg-orange-600/30"
-                           }
+                           } flex-shrink-0`}
                            onClick={() => handleSubmitFeedback(interview)}
                            disabled={interview.feedback_submitted}
                          >
-                           <MessageSquare className="w-4 h-4 mr-2" />
-                           {interview.feedback_submitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                           <MessageSquare className="w-4 h-4 sm:mr-2" />
+                           <span className="hidden sm:inline">{interview.feedback_submitted ? 'Feedback Submitted' : 'Submit Feedback'}</span>
+                           <span className="sm:hidden">{interview.feedback_submitted ? 'Done' : 'Feedback'}</span>
                          </Button>
                        )}
                    </div>
