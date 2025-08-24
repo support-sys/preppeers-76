@@ -97,7 +97,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-white/10">
+          <div className="md:hidden py-4 border-t border-white/10 bg-slate-900/98 backdrop-blur-sm">
             {navItems.map((item) => (
               <Link
                 key={item.name}

@@ -58,7 +58,7 @@ const UserMenu = () => {
           {user.email}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-slate-800 border-slate-600" align="end">
+      <DropdownMenuContent className="w-56 bg-slate-800 border-slate-600 z-50" align="end" sideOffset={5}>
         <DropdownMenuLabel className="text-white">
           My Account
         </DropdownMenuLabel>

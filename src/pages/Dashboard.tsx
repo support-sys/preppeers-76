@@ -164,10 +164,10 @@ const Dashboard = () => {
 
   if (userRole === 'interviewer' && profileComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-x-hidden">
         <Navigation />
         
-        <div className="container mx-auto px-4 py-8 sm:py-20">
+        <div className="container mx-auto px-4 py-8 sm:py-20 max-w-full">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
               <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
@@ -188,10 +188,10 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-x-hidden">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8 sm:py-20">
+      <div className="container mx-auto px-4 py-8 sm:py-20 max-w-full">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
