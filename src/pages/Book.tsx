@@ -137,7 +137,7 @@ const Book = () => {
               {/* Always show the registration form to allow multiple bookings */}
               <CandidateRegistrationForm
                 onSubmit={handleFormSubmit}
-                isLoading={isLoading}
+                loading={isLoading}
               />
               
               {hasSuccessfulPayment && paymentSession && (
