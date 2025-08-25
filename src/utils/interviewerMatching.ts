@@ -1,7 +1,7 @@
 
 export interface MatchingCandidate {
-  experienceYears?: number;
-  experience?: string;
+  experienceYears: number;
+  experienceMonths: number;
   timeSlot?: string;
   resume?: File | undefined;
   // Enhanced candidate data
@@ -91,11 +91,11 @@ export const SKILL_MATCH_THRESHOLDS = {
 
 export const MINIMUM_SKILL_THRESHOLD = 20; // Require at least 20 points for matching
 
-// Enhanced experience requirements
+// Enhanced experience requirements (in months)
 export const EXPERIENCE_REQUIREMENTS = {
-  MINIMUM_MENTOR_GAP: 1,  // Minimum 1 year gap for mentorship
-  IDEAL_MENTOR_GAP: 3,    // Ideal 2-5 years gap
-  MAXIMUM_MENTOR_GAP: 5  // Maximum useful gap
+  MINIMUM_MENTOR_GAP: 12,  // Minimum 1 year gap for mentorship
+  IDEAL_MENTOR_GAP: 36,    // Ideal 3 years gap
+  MAXIMUM_MENTOR_GAP: 60   // Maximum 5 years gap
 };
 
 /*
@@ -302,24 +302,29 @@ export const checkSkillsMatch = (candidateSkillCategories: string[], candidateSp
   return matchFound;
 };
 
+// Convert years and months to total months
+export const convertToTotalMonths = (years: number, months: number): number => {
+  return (years || 0) * 12 + (months || 0);
+};
+
 export const parseExperience = (experienceStr: string): number => {
   if (!experienceStr) return 0;
   
   // Extract numbers from experience string
   const numbers = experienceStr.match(/\d+/g);
   if (numbers && numbers.length > 0) {
-    return parseInt(numbers[0]);
+    return parseInt(numbers[0]) * 12; // Convert to months
   }
   
   // Handle text-based experience
   if (experienceStr.toLowerCase().includes('0-1') || experienceStr.toLowerCase().includes('entry')) {
-    return 1;
+    return 12; // 1 year in months
   }
   if (experienceStr.toLowerCase().includes('5+') || experienceStr.toLowerCase().includes('5 +')) {
-    return 5;
+    return 60; // 5 years in months
   }
   
-  return 2; // Default to 2 years
+  return 24; // Default to 2 years in months
 };
 
 // Enhanced skills matching with semantic understanding and minimum thresholds
@@ -447,9 +452,11 @@ export const checkEnhancedExperienceMatch = (
 ): { match: boolean; score: number; details: string[] } => {
   console.log('\n💼 === ENHANCED EXPERIENCE MATCHING DEBUG ===');
   
-  const candidateExp = candidate.experienceYears || parseExperience(candidate.experience);
-  console.log(`👤 Candidate experience: ${candidateExp} years`);
-  console.log(`👨‍💼 Interviewer experience: ${interviewerExperience} years`);
+  const candidateExpMonths = convertToTotalMonths(candidate.experienceYears, candidate.experienceMonths);
+  const interviewerExpMonths = interviewerExperience * 12; // Convert interviewer years to months
+  
+  console.log(`👤 Candidate experience: ${candidate.experienceYears}y ${candidate.experienceMonths}m (${candidateExpMonths} months total)`);
+  console.log(`👨‍💼 Interviewer experience: ${interviewerExperience} years (${interviewerExpMonths} months total)`);
   
   let score = 0;
   const details: string[] = [];
@@ -459,23 +466,24 @@ export const checkEnhancedExperienceMatch = (
     return { match: false, score: 0, details: ['No experience data available'] };
   }
 
-  const expDifference = interviewerExperience - candidateExp;
-  console.log(`📊 Experience difference: ${expDifference} years`);
+  const expDifferenceMonths = interviewerExpMonths - candidateExpMonths;
+  const expDifferenceYears = expDifferenceMonths / 12;
+  console.log(`📊 Experience difference: ${expDifferenceYears.toFixed(1)} years (${expDifferenceMonths} months)`);
 
-  // Scoring based on experience gap
-  if (expDifference >= 2 && expDifference <= 8) {
+  // Scoring based on experience gap (using months for precision)
+  if (expDifferenceMonths >= 24 && expDifferenceMonths <= 96) {
     // Ideal mentorship gap: 2-8 years
     score = 25;
-    details.push(`Ideal mentorship gap: ${expDifference} years difference`);
-  } else if (expDifference >= 1 && expDifference < 2) {
+    details.push(`Ideal mentorship gap: ${expDifferenceYears.toFixed(1)} years difference`);
+  } else if (expDifferenceMonths >= 12 && expDifferenceMonths < 24) {
     // Good gap: 1-2 years
     score = 20;
-    details.push(`Good experience gap: ${expDifference} years difference`);
-  } else if (expDifference > 8) {
+    details.push(`Good experience gap: ${expDifferenceYears.toFixed(1)} years difference`);
+  } else if (expDifferenceMonths > 96) {
     // Large gap but still valuable
     score = 15;
-    details.push(`Senior mentor: ${expDifference} years more experience`);
-  } else if (expDifference >= 0) {
+    details.push(`Senior mentor: ${expDifferenceYears.toFixed(1)} years more experience`);
+  } else if (expDifferenceMonths >= 0) {
     // Peer level
     score = 10;
     details.push(`Peer level: similar experience levels`);

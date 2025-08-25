@@ -9,6 +9,7 @@ import {
   getAlternativeTimeSlots,
   checkEnhancedSkillsMatch,
   checkEnhancedExperienceMatch,
+  convertToTotalMonths,
   MINIMUM_SKILL_THRESHOLD
 } from "@/utils/interviewerMatching";
 import { getAvailableTimeSlotsForInterviewer } from "@/utils/availableTimeSlots";
@@ -173,7 +174,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
     console.log('\n🚀 === STARTING INTERVIEWER MATCHING PROCESS ===');
     console.log('👤 Candidate Data:', {
       experienceYears: candidateData.experienceYears,
-      experience: candidateData.experience,
+      experienceMonths: candidateData.experienceMonths,
       timeSlot: candidateData.timeSlot,
       hasResume: !!candidateData.resume,
       skillCategories: candidateData.skillCategories,
@@ -212,8 +213,9 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       console.log(`   ⏰ Time Slots: ${JSON.stringify(interviewer.current_time_slots)}`);
     });
 
-    const candidateExperience = candidateData.experienceYears || parseExperience(candidateData.experience || '');
-    console.log(`\n👤 Candidate parsed experience: ${candidateExperience} years`);
+    const candidateExperienceMonths = convertToTotalMonths(candidateData.experienceYears, candidateData.experienceMonths);
+    const candidateExperienceYears = candidateExperienceMonths / 12;
+    console.log(`\n👤 Candidate parsed experience: ${candidateExperienceYears.toFixed(1)} years (${candidateExperienceMonths} months total)`);
 
     // Score and rank interviewers using enhanced matching
     console.log('\n🎯 === EVALUATING EACH INTERVIEWER WITH ENHANCED MATCHING ===');

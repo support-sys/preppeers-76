@@ -39,10 +39,41 @@ export const useRescheduleFlow = (interview: Interview) => {
     // Parse skills from target_role field (which now contains skill categories)
     const skillCategories = interview.target_role?.split(', ').filter(Boolean) || [];
     
+    // Parse experience string into years and months
+    const parseExperienceString = (expStr: string) => {
+      if (!expStr) return { years: 0, months: 0 };
+      
+      // Try to extract years and months from patterns like "3 years 6 months" or "3.5 years"
+      const yearMatch = expStr.match(/(\d+(?:\.\d+)?)\s*years?/i);
+      const monthMatch = expStr.match(/(\d+)\s*months?/i);
+      
+      let years = 0;
+      let months = 0;
+      
+      if (yearMatch) {
+        const yearValue = parseFloat(yearMatch[1]);
+        years = Math.floor(yearValue);
+        months = Math.round((yearValue - years) * 12);
+      }
+      
+      if (monthMatch) {
+        months += parseInt(monthMatch[1]);
+      }
+      
+      // Handle cases where months >= 12
+      years += Math.floor(months / 12);
+      months = months % 12;
+      
+      return { years, months };
+    };
+    
+    const { years, months } = parseExperienceString(interview.experience || "");
+    
     const candidateData = {
       skillCategories: skillCategories,
       specificSkills: interview.specific_skills || [],
-      experience: interview.experience,
+      experienceYears: years,
+      experienceMonths: months,
       timeSlot: preferredDateTime.toISOString(),
       resume: undefined
     };
