@@ -66,13 +66,19 @@ const skillOptions = {
   ]
 };
 
+/* 
+
+"Mobile Development": ["React Native", "Flutter", "iOS (Swift)", "Android (Kotlin)", "Ionic", "Xamarin"],
+  "DevOps & Cloud": ["AWS", "Azure", "GCP", "Docker", "Kubernetes", "Jenkins", "Terraform", "Ansible"],
+  "Data Science & AI": ["Python", "R", "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "SQL"],
+*/
+
 const Interviewers = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   const [interviewerData, setInterviewerData] = useState({
     experienceYears: "",
-    experienceMonths: "",
     company: "",
     position: "",
     selectedCategories: [] as string[],
@@ -113,26 +119,23 @@ const Interviewers = () => {
   const loadExistingData = async () => {
     if (!user) return;
     
+    // Get basic profile data (non-sensitive)
     const { data } = await supabase
       .from('interviewers')
       .select('id, bio, linkedin_url, github_url, company, position, skills, technologies, experience_years, availability_days, is_eligible, payout_details_verified, payout_details_submitted_at, payout_details_locked')
       .eq('user_id', user.id)
       .maybeSingle();
 
+    // Get sensitive payout details using secure function
     const { data: payoutData } = await supabase.rpc('get_my_payout_details');
 
     if (data) {
+      // Check if profile is locked (has payout details submitted)
       const profileLocked = data.payout_details_submitted_at !== null;
       setIsProfileLocked(profileLocked);
       
-      // Convert total experience back to years and months
-      const totalMonths = data.experience_years || 0;
-      const years = Math.floor(totalMonths / 12);
-      const months = totalMonths % 12;
-      
       setInterviewerData({
-        experienceYears: years.toString(),
-        experienceMonths: months.toString(),
+        experienceYears: data.experience_years?.toString() || "",
         company: data.company || "",
         position: data.position || "",
         selectedCategories: [],
@@ -148,6 +151,7 @@ const Interviewers = () => {
         accountHolderName: payoutData?.[0]?.account_holder_name || ""
       });
       
+      // If profile is locked, mark as submitted to show read-only view
       if (profileLocked) {
         setIsSubmitted(true);
       }
@@ -156,18 +160,13 @@ const Interviewers = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
-    // Validate experience inputs
-    if (name === "experienceYears" || name === "experienceMonths") {
-      const numValue = parseInt(value);
-      if (value !== "" && (isNaN(numValue) || numValue < 0)) {
-        return; // Don't update if negative or invalid
-      }
-      if (name === "experienceMonths" && numValue > 11) {
-        return; // Don't allow months > 11
+     // Convert value to number if it's the experienceYears field
+    if (name === "experienceYears") {
+      const numValue = Number(value);
+      if (numValue < 3 && value !== "") {
+        return; // ❌ stop updating state if less than 3 (but allow empty so user can clear input)
       }
     }
-    
     setInterviewerData(prev => ({
       ...prev,
       [name]: value
@@ -179,6 +178,7 @@ const Interviewers = () => {
       let newCategories = [...prev.selectedCategories];
       if (newCategories.includes(category)) {
         newCategories = newCategories.filter(c => c !== category);
+        // Remove all skills from this category
         const categorySkills = skillOptions[category];
         const filteredSkills = prev.skills.filter(skill => !categorySkills.includes(skill));
         return {
@@ -211,12 +211,6 @@ const Interviewers = () => {
     });
   };
 
-  const getTotalExperience = () => {
-    const years = parseInt(interviewerData.experienceYears) || 0;
-    const months = parseInt(interviewerData.experienceMonths) || 0;
-    return years * 12 + months;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -226,12 +220,7 @@ const Interviewers = () => {
         throw new Error("User not authenticated");
       }
 
-      // Validate minimum experience (36 months = 3 years)
-      const totalExperienceMonths = getTotalExperience();
-      if (totalExperienceMonths < 36) {
-        throw new Error("Minimum 3 years of experience required to become an interviewer");
-      }
-
+      // Check if interviewer record exists
       const { data: existingData } = await supabase
         .from('interviewers')
         .select('id')
@@ -254,11 +243,11 @@ const Interviewers = () => {
       }
 
       const profileData = {
-        experience_years: totalExperienceMonths,
+        experience_years: parseInt(interviewerData.experienceYears),
         company: interviewerData.company,
         position: interviewerData.position,
-        skills: interviewerData.selectedCategories,
-        technologies: interviewerData.skills,
+        skills: interviewerData.selectedCategories, // Store skill categories in the skills field
+        technologies: interviewerData.skills, // Store individual skills in technologies for backward compatibility
         availability_days: [],
         time_slots: {},
         bio: interviewerData.bio,
@@ -269,6 +258,7 @@ const Interviewers = () => {
       };
 
       if (existingData) {
+        // Update existing record
         const { error: profileError } = await supabase
           .from('interviewers')
           .update(profileData)
@@ -276,6 +266,7 @@ const Interviewers = () => {
 
         if (profileError) throw profileError;
       } else {
+        // Insert new record
         const { error: profileError } = await supabase
           .from('interviewers')
           .insert({
@@ -286,6 +277,7 @@ const Interviewers = () => {
         if (profileError) throw profileError;
       }
 
+      // Handle financial data using secure function
       const { error: financialError } = await supabase.rpc('update_my_payout_details', {
         p_payout_method: interviewerData.payoutMethod,
         p_upi_id: interviewerData.payoutMethod === 'upi' ? interviewerData.upiId : null,
@@ -300,6 +292,7 @@ const Interviewers = () => {
         throw financialError;
       }
 
+      // Send welcome email for new registrations
       if (!existingData) {
         try {
           const { data: userProfile } = await supabase
@@ -314,7 +307,7 @@ const Interviewers = () => {
               interviewer_email: user.email,
               company: interviewerData.company,
               position: interviewerData.position,
-              experience_years: Math.floor(totalExperienceMonths / 12),
+              experience_years: parseInt(interviewerData.experienceYears),
               skills: interviewerData.selectedCategories,
               technologies: interviewerData.skills,
               payout_method: interviewerData.payoutMethod
@@ -324,9 +317,11 @@ const Interviewers = () => {
           console.log("Welcome email sent successfully");
         } catch (emailError) {
           console.error("Failed to send welcome email:", emailError);
+          // Don't fail the registration if email fails
         }
       }
 
+      // Database save successful
       toast({
         title: "Profile Saved!",
         description: "Your interviewer profile has been saved to the database."
@@ -435,47 +430,19 @@ const Interviewers = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Experience */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="experienceYears" className="text-white">Years of Experience *</Label>
-                    <Input
-                      id="experienceYears"
-                      name="experienceYears"
-                      type="number"
-                      value={interviewerData.experienceYears}
-                      onChange={handleInputChange}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                      placeholder="Years"
-                      min={0}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="experienceMonths" className="text-white">Additional Months</Label>
-                    <Input
-                      id="experienceMonths"
-                      name="experienceMonths"
-                      type="number"
-                      value={interviewerData.experienceMonths}
-                      onChange={handleInputChange}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-                      placeholder="Months (0-11)"
-                      min={0}
-                      max={11}
-                    />
-                  </div>
-                </div>
-
-                {/* Show total experience and minimum requirement warning */}
-                <div className="text-sm">
-                  <p className="text-slate-300">
-                    Total Experience: {Math.floor(getTotalExperience() / 12)} years {getTotalExperience() % 12} months
-                  </p>
-                  {getTotalExperience() < 36 && (
-                    <p className="text-red-400 mt-1">
-                      ⚠️ Minimum 3 years of experience required
-                    </p>
-                  )}
+                <div>
+                  <Label htmlFor="experienceYears" className="text-white">Years of Experience *</Label>
+                  <Input
+                    id="experienceYears"
+                    name="experienceYears"
+                    type="number"
+                    value={interviewerData.experienceYears}
+                    onChange={handleInputChange}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                    placeholder="Minimum 3 Years Experience Required for Interviewer"
+                    min={3}
+                    required
+                  />
                 </div>
 
                 {/* Company */}
@@ -656,7 +623,7 @@ const Interviewers = () => {
                           type="text"
                           value={interviewerData.bankName}
                           onChange={handleInputChange}
-                          className="bg-white/10 border-white/20 text-white placeholder:text-slash-400"
+                          className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                           placeholder="Enter bank name"
                           required
                         />
@@ -698,7 +665,7 @@ const Interviewers = () => {
                   type="submit"
                   size="lg"
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                  disabled={loading || syncingToSheets || getTotalExperience() < 36}
+                  disabled={loading || syncingToSheets}
                 >
                   {loading ? (
                     <>

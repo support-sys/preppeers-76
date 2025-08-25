@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +62,12 @@ const skillOptions = {
   ]
 };
 
+/*
+"Mobile Development": ["React Native", "Flutter", "iOS (Swift)", "Android (Kotlin)", "Ionic", "Xamarin"],
+  "DevOps & Cloud": ["AWS", "Azure", "GCP", "Docker", "Kubernetes", "Jenkins", "Terraform", "Ansible"],
+  "Data Science & AI": ["Python", "R", "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "SQL"],
+*/
+
 interface ProfileSettingsProps {
   onClose: () => void;
 }
@@ -73,7 +78,6 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     experienceYears: "",
-    experienceMonths: "",
     company: "",
     position: "",
     selectedCategories: [] as string[],
@@ -97,18 +101,12 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
       .maybeSingle();
 
     if (data) {
-      // Convert total experience back to years and months
-      const totalMonths = data.experience_years || 0;
-      const years = Math.floor(totalMonths / 12);
-      const months = totalMonths % 12;
-      
       setProfileData({
-        experienceYears: years.toString(),
-        experienceMonths: months.toString(),
+        experienceYears: data.experience_years?.toString() || "",
         company: data.company || "",
         position: data.position || "",
-        selectedCategories: data.skills || [],
-        skills: data.technologies || [],
+        selectedCategories: data.skills || [], // Load categories from skills field
+        skills: data.technologies || [], // Load individual skills from technologies field
         bio: data.bio || "",
         linkedinUrl: data.linkedin_url || "",
         githubUrl: data.github_url || ""
@@ -118,18 +116,6 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
-    // Validate experience inputs
-    if (name === "experienceYears" || name === "experienceMonths") {
-      const numValue = parseInt(value);
-      if (value !== "" && (isNaN(numValue) || numValue < 0)) {
-        return; // Don't update if negative or invalid
-      }
-      if (name === "experienceMonths" && numValue > 11) {
-        return; // Don't allow months > 11
-      }
-    }
-    
     setProfileData(prev => ({
       ...prev,
       [name]: value
@@ -173,23 +159,12 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
     });
   };
 
-  const getTotalExperience = () => {
-    const years = parseInt(profileData.experienceYears) || 0;
-    const months = parseInt(profileData.experienceMonths) || 0;
-    return years * 12 + months;
-  };
-
   const handleSave = async () => {
     setLoading(true);
     try {
       if (!user) throw new Error("User not authenticated");
 
-      // Validate minimum experience (36 months = 3 years)
-      const totalExperienceMonths = getTotalExperience();
-      if (totalExperienceMonths < 36) {
-        throw new Error("Minimum 3 years of experience required to become an interviewer");
-      }
-
+      // Check if interviewer record exists
       const { data: existingData } = await supabase
         .from('interviewers')
         .select('id')
@@ -197,17 +172,18 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
         .maybeSingle();
 
       const profileUpdateData = {
-        experience_years: totalExperienceMonths, // Store total months in experience_years field
+        experience_years: parseInt(profileData.experienceYears) || null,
         company: profileData.company || null,
         position: profileData.position || null,
-        skills: profileData.selectedCategories,
-        technologies: profileData.skills,
+        skills: profileData.selectedCategories, // Store skill categories in the skills field
+        technologies: profileData.skills, // Store individual skills in technologies field
         bio: profileData.bio || null,
         linkedin_url: profileData.linkedinUrl || null,
         github_url: profileData.githubUrl || null
       };
 
       if (existingData) {
+        // Update existing record
         const { error } = await supabase
           .from('interviewers')
           .update(profileUpdateData)
@@ -215,6 +191,7 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
 
         if (error) throw error;
       } else {
+        // Insert new record
         const { error } = await supabase
           .from('interviewers')
           .insert({
@@ -266,7 +243,7 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label htmlFor="experienceYears" className="text-white">Years of Experience *</Label>
+            <Label htmlFor="experienceYears" className="text-white">Years of Experience</Label>
             <Input
               id="experienceYears"
               name="experienceYears"
@@ -274,39 +251,8 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
               value={profileData.experienceYears}
               onChange={handleInputChange}
               className="bg-white/10 border-white/20 text-white"
-              placeholder="Years"
-              min={0}
             />
           </div>
-          <div>
-            <Label htmlFor="experienceMonths" className="text-white">Additional Months</Label>
-            <Input
-              id="experienceMonths"
-              name="experienceMonths"
-              type="number"
-              value={profileData.experienceMonths}
-              onChange={handleInputChange}
-              className="bg-white/10 border-white/20 text-white"
-              placeholder="Months (0-11)"
-              min={0}
-              max={11}
-            />
-          </div>
-        </div>
-
-        {/* Show total experience and minimum requirement warning */}
-        <div className="text-sm">
-          <p className="text-slate-300">
-            Total Experience: {Math.floor(getTotalExperience() / 12)} years {getTotalExperience() % 12} months
-          </p>
-          {getTotalExperience() < 36 && (
-            <p className="text-red-400 mt-1">
-              ⚠️ Minimum 3 years of experience required
-            </p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="company" className="text-white">Company</Label>
             <Input
@@ -403,11 +349,7 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
           </div>
         </div>
 
-        <Button 
-          onClick={handleSave} 
-          disabled={loading || getTotalExperience() < 36} 
-          className="w-full bg-blue-600 hover:bg-blue-700"
-        >
+        <Button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700">
           <Save className="w-4 h-4 mr-2" />
           {loading ? 'Saving...' : 'Save Changes'}
         </Button>
