@@ -385,6 +385,33 @@ export type Database = {
         }
         Relationships: []
       }
+      trigger_test_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_eligible: boolean | null
+          old_eligible: boolean | null
+          trigger_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_eligible?: boolean | null
+          old_eligible?: boolean | null
+          trigger_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_eligible?: boolean | null
+          old_eligible?: boolean | null
+          trigger_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
