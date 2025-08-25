@@ -97,6 +97,7 @@ const Interviewers = () => {
   const [loading, setLoading] = useState(false);
   const [syncingToSheets, setSyncingToSheets] = useState(false);
   const [isProfileLocked, setIsProfileLocked] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string | undefined}>({});
 
   useEffect(() => {
     if (!user) {

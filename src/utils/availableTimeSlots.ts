@@ -47,6 +47,20 @@ export const getAvailableTimeSlotsForInterviewer = async (
       return [];
     }
 
+    // Also get already scheduled interviews for this interviewer in the same date range
+    const { data: scheduledInterviews, error: interviewsError } = await supabase
+      .from('interviews')
+      .select('scheduled_time')
+      .eq('interviewer_id', interviewerId)
+      .gte('scheduled_time', startDate.toISOString())
+      .lte('scheduled_time', endDate.toISOString())
+      .in('status', ['scheduled', 'confirmed']); // Only consider active interviews
+
+    if (interviewsError) {
+      console.error('Error fetching scheduled interviews:', error);
+      return [];
+    }
+
     // Convert blocked slots to a map for quick lookup
     const blockedSlotsMap = new Map<string, Array<{start: string, end: string}>>();
     (blockedSlots || []).forEach(slot => {
@@ -57,6 +71,22 @@ export const getAvailableTimeSlotsForInterviewer = async (
       blockedSlotsMap.get(dateKey)!.push({
         start: slot.start_time,
         end: slot.end_time
+      });
+    });
+
+    // Convert scheduled interviews to blocked slots map
+    (scheduledInterviews || []).forEach(interview => {
+      const scheduledDate = new Date(interview.scheduled_time);
+      const dateKey = format(scheduledDate, 'yyyy-MM-dd');
+      const startTime = format(scheduledDate, 'HH:mm');
+      const endTime = format(new Date(scheduledDate.getTime() + 60 * 60 * 1000), 'HH:mm'); // +1 hour
+      
+      if (!blockedSlotsMap.has(dateKey)) {
+        blockedSlotsMap.set(dateKey, []);
+      }
+      blockedSlotsMap.get(dateKey)!.push({
+        start: startTime,
+        end: endTime
       });
     });
 
