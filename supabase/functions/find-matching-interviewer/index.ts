@@ -8,10 +8,10 @@ const corsHeaders = {
 
 interface FindMatchingRequest {
   experienceYears: number;
-  experienceMonths: number;
   skillCategories: string[];
   specificSkills: string[];
   timeSlot: string;
+  experience: string;
   resume?: any;
   currentPosition?: string;
   company?: string;
@@ -87,8 +87,7 @@ serve(async (req) => {
       
       // Experience matching (0-30 points)
       if (interviewer.experience_years) {
-        const candidateExp = (requestData.experienceYears || 0) + (requestData.experienceMonths || 0) / 12;
-        const experienceDiff = Math.abs(interviewer.experience_years - candidateExp);
+        const experienceDiff = Math.abs(interviewer.experience_years - requestData.experienceYears);
         if (experienceDiff <= 1) score += 30;
         else if (experienceDiff <= 2) score += 20;
         else if (experienceDiff <= 3) score += 10;
