@@ -140,6 +140,22 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    
+    // Validate time slot to prevent past dates
+    if (name === 'timeSlot' && value) {
+      const selectedDate = new Date(value);
+      const now = new Date();
+      
+      if (selectedDate <= now) {
+        toast({
+          title: "Invalid Time Selection",
+          description: "Please select a future date and time for your interview.",
+          variant: "destructive",
+        });
+        return; // Don't update the state with past time
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? parseInt(value) || 0 : value
@@ -246,6 +262,21 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate time slot is in the future
+    if (formData.timeSlot) {
+      const selectedDate = new Date(formData.timeSlot);
+      const now = new Date();
+      
+      if (selectedDate <= now) {
+        toast({
+          title: "Invalid Time Selection",
+          description: "Please select a future date and time for your interview.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     try {
@@ -468,11 +499,12 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
                   type="datetime-local"
                   value={formData.timeSlot}
                   onChange={handleInputChange}
+                  min={new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16)} // Minimum 1 hour from now
                   className="bg-white/10 border-white/20 text-white"
                   disabled={isLoading}
                 />
                 <p className="text-sm text-slate-400 mt-1">
-                  We'll try to match your preferred time, or suggest alternatives.
+                  We'll try to match your preferred time, or suggest alternatives. Must be at least 1 hour in the future.
                 </p>
               </div>
 
