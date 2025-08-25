@@ -161,16 +161,33 @@ const Interviewers = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
      // Convert value to number if it's the experienceYears field
-    if (name === "experienceYears") {
-      const numValue = Number(value);
-      if (numValue < 3 && value !== "") {
-        return; // ❌ stop updating state if less than 3 (but allow empty so user can clear input)
-      }
-    }
+
     setInterviewerData(prev => ({
       ...prev,
       [name]: value
     }));
+
+      // live-validate experience years
+    if (name === "experienceYears") {
+      if (value === "") {
+        // allow clearing; remove error
+        setErrors(prev => ({ ...prev, experienceYears: undefined }));
+        return;
+      }
+
+      const num = Number(value);
+
+      if (!Number.isFinite(num)) {
+        setErrors(prev => ({ ...prev, experienceYears: "Enter a valid number" }));
+      } else if (num < 3) {
+        setErrors(prev => ({ ...prev, experienceYears: "Minimum 3 years required" }));
+      } else if (!Number.isInteger(num)) {
+        // optional: if you only want whole years
+        setErrors(prev => ({ ...prev, experienceYears: "Use whole years only" }));
+      } else {
+        setErrors(prev => ({ ...prev, experienceYears: undefined }));
+      }
+    }
   };
 
   const handleCategoryChange = (category: string) => {
@@ -441,8 +458,16 @@ const Interviewers = () => {
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                     placeholder="Minimum 3 Years Experience Required for Interviewer"
                     min={3}
+                    step={1} // optional: whole numbers only
+                    aria-invalid={!!errors.experienceYears}
+                    aria-describedby="experienceYears-error"
                     required
                   />
+                   {errors.experienceYears && (
+                    <p id="experienceYears-error" className="mt-1 text-sm text-red-400">
+                      {errors.experienceYears}
+                    </p>
+                  )}
                 </div>
 
                 {/* Company */}
