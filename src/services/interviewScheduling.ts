@@ -168,63 +168,6 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
   }
 };
 
-// New function to try booking the previewed interviewer first
-export const tryPreviewedInterviewer = async (
-  interviewerId: string,
-  candidateData: MatchingCandidate
-): Promise<{ available: boolean; interviewer?: any; alternativeSlots?: string[]; reason?: string }> => {
-  try {
-    console.log('🎯 === TRYING PREVIEWED INTERVIEWER ===');
-    console.log('Interviewer ID:', interviewerId);
-    console.log('Candidate preferred time:', candidateData.timeSlot);
-
-    const { data, error } = await supabase.functions.invoke('try-previewed-interviewer', {
-      body: {
-        interviewer_id: interviewerId,
-        candidate_data: candidateData,
-        preferred_time_slot: candidateData.timeSlot
-      }
-    });
-
-    if (error) {
-      console.error('❌ Error checking previewed interviewer:', error);
-      return { available: false, reason: 'Error checking availability' };
-    }
-
-    console.log('✅ Previewed interviewer check result:', data);
-    
-    if (data.available && data.time_available) {
-      return {
-        available: true,
-        interviewer: {
-          ...data.interviewer,
-          matchReasons: ['Previously selected interviewer', 'Exact time match'],
-          alternativeTimeSlots: []
-        }
-      };
-    } else if (data.available && !data.time_available) {
-      return {
-        available: true,
-        interviewer: {
-          ...data.interviewer,
-          matchReasons: ['Previously selected interviewer'],
-          alternativeTimeSlots: data.alternative_time_slots || []
-        },
-        alternativeSlots: data.alternative_time_slots || []
-      };
-    } else {
-      return { 
-        available: false, 
-        reason: data.reason || 'Interviewer no longer available' 
-      };
-    }
-
-  } catch (error) {
-    console.error('❌ Error in tryPreviewedInterviewer:', error);
-    return { available: false, reason: 'Internal error' };
-  }
-};
-
 export const findMatchingInterviewer = async (candidateData: MatchingCandidate): Promise<MatchedInterviewer | null> => {
   try {
     console.log('\n🚀 === STARTING INTERVIEWER MATCHING PROCESS ===');

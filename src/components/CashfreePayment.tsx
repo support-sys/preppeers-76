@@ -127,7 +127,6 @@ const CashfreePayment = ({
       }
 
       // Create payment session in database
-      console.log('Creating payment session with candidate data:', candidateData);
       const { data: sessionData, error: sessionError } = await supabase
         .from('payment_sessions')
         .insert({
@@ -196,9 +195,7 @@ const CashfreePayment = ({
             candidate_data: {
               target_role: candidateData?.targetRole || candidateData?.target_role || '',
               experience: candidateData?.experience || '',
-              noticePeriod: candidateData?.noticePeriod || candidateData?.notice_period || '',
-              // Include previewed interviewer if available
-              previewedInterviewer: candidateData?.previewedInterviewer || null
+              noticePeriod: candidateData?.noticePeriod || candidateData?.notice_period || ''
             },
             user_email: userEmail,
             user_name: userName
@@ -249,7 +246,6 @@ const CashfreePayment = ({
       // Initialize Cashfree payment with embedded checkout
       const cashfree = new (window as any).Cashfree({
         mode: "production"
-        //mode: "sandbox"
       });
 
       // Show payment form container

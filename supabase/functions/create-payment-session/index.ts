@@ -112,12 +112,6 @@ const handler = async (req: Request): Promise<Response> => {
         orderTags.target_role = String(metadata.candidate_data.target_role || '');
         orderTags.experience = String(metadata.candidate_data.experience || '');
         orderTags.notice_period = String(metadata.candidate_data.noticePeriod || '');
-        
-        // Store previewed interviewer ID if available
-        if (metadata.candidate_data.previewedInterviewer?.id) {
-          orderTags.previewed_interviewer_id = String(metadata.candidate_data.previewedInterviewer.id);
-          console.log('Storing previewed interviewer ID:', orderTags.previewed_interviewer_id);
-        }
       }
     }
 
