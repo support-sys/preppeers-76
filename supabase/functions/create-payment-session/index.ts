@@ -139,7 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('=== Cashfree API Request ===');
     console.log('Request payload:', JSON.stringify(paymentSessionData, null, 2));
 
-    const cashfreeUrl = 'https://sandbox.cashfree.com/pg/orders';
+    const cashfreeUrl = 'https://api.cashfree.com/pg/orders';
     console.log('API URL:', cashfreeUrl);
 
     const requestHeaders = {
