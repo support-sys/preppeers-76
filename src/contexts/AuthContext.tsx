@@ -70,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => {
+    // Use the correct domain for email redirects
     const redirectUrl = `${window.location.origin}/auth?confirmed=true`;
     
     console.log('Signing up user with redirect URL:', redirectUrl);
