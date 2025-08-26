@@ -162,7 +162,9 @@ export const useBookingFlow = () => {
 
     try {
       // First, try the previewed interviewer if available
+      console.log('🔍 Payment session candidate_data:', paymentSession.candidate_data);
       const previewedInterviewerId = paymentSession.candidate_data?.previewedInterviewer?.id;
+      console.log('🎯 Looking for previewed interviewer ID:', previewedInterviewerId);
       
       if (previewedInterviewerId) {
         console.log('🎯 Trying previewed interviewer first:', previewedInterviewerId);
