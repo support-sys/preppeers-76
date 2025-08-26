@@ -65,8 +65,18 @@ export const useBookingFlow = () => {
   const handleProceedToPayment = (timeSlot?: string) => {
     if (timeSlot) {
       setSelectedTimeSlot(timeSlot);
-      // Update formData with selected time slot
-      setFormData(prev => ({ ...prev, selectedTimeSlot: timeSlot }));
+      // Update formData with selected time slot and matched interviewer
+      setFormData(prev => ({ 
+        ...prev, 
+        selectedTimeSlot: timeSlot,
+        previewedInterviewer: matchedInterviewer 
+      }));
+    } else {
+      // Store the previewed interviewer for post-payment booking
+      setFormData(prev => ({ 
+        ...prev, 
+        previewedInterviewer: matchedInterviewer 
+      }));
     }
     setCurrentStep('payment');
   };
@@ -151,17 +161,70 @@ export const useBookingFlow = () => {
     setIsLoading(true);
 
     try {
-      console.log('Finding matching interviewer...');
+      // First, try the previewed interviewer if available
+      const previewedInterviewerId = paymentSession.candidate_data?.previewedInterviewer?.id;
+      
+      if (previewedInterviewerId) {
+        console.log('🎯 Trying previewed interviewer first:', previewedInterviewerId);
+        
+        const { tryPreviewedInterviewer } = await import("@/services/interviewScheduling");
+        const previewResult = await tryPreviewedInterviewer(previewedInterviewerId, paymentSession.candidate_data);
+        
+        if (previewResult.available) {
+          console.log('✅ Previewed interviewer available!');
+          setMatchedInterviewer(previewResult.interviewer);
+          
+          // Check if exact time match or alternative needed
+          const hasExactTimeMatch = previewResult.interviewer.matchReasons?.includes('Exact time match');
+          
+          if (!hasExactTimeMatch && previewResult.alternativeSlots?.length > 0) {
+            setAlternativeTimeSlot({
+              candidatePreferred: paymentSession.candidate_data.timeSlot,
+              interviewerAvailable: previewResult.alternativeSlots[0]
+            });
+            setCurrentStep('time-confirmation');
+            return;
+          }
+          
+          // Direct scheduling for exact matches or no alternatives needed
+          await scheduleInterview(
+            previewResult.interviewer, 
+            paymentSession.candidate_data, 
+            user?.email || '',
+            user?.user_metadata?.full_name || user?.email || ''
+          );
+          
+          await markInterviewMatched(paymentSession.id);
+          
+          setCurrentStep('success');
+          document.title = 'Interview Scheduled Successfully!';
+          toast({
+            title: "Interview Scheduled! 🎉",
+            description: "Your previewed interviewer was available! Check your dashboard for details.",
+          });
+          return;
+        } else {
+          console.log('❌ Previewed interviewer no longer available:', previewResult.reason);
+          toast({
+            title: "Interviewer Changed",
+            description: "Your previewed interviewer is no longer available. Finding you a new match...",
+          });
+        }
+      }
+
+      // Fallback to fresh matching if no previewed interviewer or they're unavailable
+      console.log('Finding new matching interviewer...');
       
       const interviewer = await findMatchingInterviewer(paymentSession.candidate_data);
       
       if (interviewer) {
-        console.log('Interviewer found:', interviewer);
+        console.log('New interviewer found:', interviewer);
         setMatchedInterviewer(interviewer);
         
         // Check if time slots match exactly or if we need confirmation
         const candidatePreferredTime = paymentSession.candidate_data.timeSlot;
-        const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time');
+        const hasExactTimeMatch = interviewer.matchReasons?.includes('Available at preferred time') || 
+                                  interviewer.matchReasons?.includes('Perfect time match');
         
         if (!hasExactTimeMatch && candidatePreferredTime) {
           // Show alternative time slot for confirmation
