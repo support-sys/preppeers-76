@@ -282,7 +282,7 @@ const Auth = () => {
           <Card className="bg-white/10 backdrop-blur-lg border-white/20">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-white">
-                Welcome to InterviewAce
+                Welcome to Interviewise
               </CardTitle>
               <CardDescription className="text-slate-300">
                 Sign in to your account or create a new one
