@@ -7,6 +7,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: 'interviewer' | 'interviewee' | null;
+  profileComplete: boolean;
+  hasScheduledInterview: boolean;
+  justLoggedIn: boolean;
   signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => Promise<{ error: any, data?: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -28,6 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<'interviewer' | 'interviewee' | null>(null);
+  const [profileComplete, setProfileComplete] = useState(false);
+  const [hasScheduledInterview, setHasScheduledInterview] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,9 +55,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .maybeSingle();
             
             setUserRole(profile?.role || null);
+            
+            // Check profile completion and interview status
+            if (profile?.role) {
+              await checkUserStatus(session.user.id, profile.role);
+            }
+            
+            // Set just logged in flag for new sessions
+            if (event === 'SIGNED_IN') {
+              setJustLoggedIn(true);
+              // Clear the flag after 3 seconds
+              setTimeout(() => setJustLoggedIn(false), 3000);
+            }
           }, 0);
         } else {
           setUserRole(null);
+          setProfileComplete(false);
+          setHasScheduledInterview(false);
         }
         
         setLoading(false);
@@ -108,6 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setUserRole(null);
+    setProfileComplete(false);
+    setHasScheduledInterview(false);
+    setJustLoggedIn(false);
     
     // Attempt to sign out from Supabase
     const { error } = await supabase.auth.signOut();
@@ -120,6 +143,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     return { error };
+  };
+
+  const checkUserStatus = async (userId: string, role: 'interviewer' | 'interviewee') => {
+    try {
+      // Check profile completion
+      const tableName = role === 'interviewer' ? 'interviewers' : 'interviewees';
+      const { data: profileData } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      setProfileComplete(!!profileData);
+
+      // Check for scheduled interviews (for interviewees)
+      if (role === 'interviewee') {
+        const { data: interviews } = await supabase
+          .from('interviews')
+          .select('id')
+          .eq('candidate_id', userId)
+          .eq('status', 'scheduled')
+          .limit(1);
+
+        setHasScheduledInterview(!!interviews && interviews.length > 0);
+      }
+    } catch (error) {
+      console.error('Error checking user status:', error);
+    }
   };
 
   const resetPassword = async (email: string) => {
@@ -138,6 +189,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userRole,
+    profileComplete,
+    hasScheduledInterview,
+    justLoggedIn,
     signUp,
     signIn,
     signOut,

@@ -10,6 +10,8 @@ import { findMatchingInterviewer, scheduleInterview } from "@/services/interview
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
 import { supabase } from "@/integrations/supabase/client";
+import { SmartCTAButtons, IntervieweeButton, InterviewerButton } from "@/components/SmartCTAButtons";
+import WelcomeMessage from "@/components/WelcomeMessage";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
   const {
@@ -86,6 +88,7 @@ const Index = () => {
   }
   return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
+      <WelcomeMessage />
       
       {/* Tech Background Pattern */}
       <div className="absolute inset-0 opacity-10">
@@ -115,21 +118,7 @@ const Index = () => {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            {!user || user && userRole === 'interviewee' ? <Link to={user ? "/book" : "/auth?role=interviewee"}>
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
-                  Book a Mock Interview
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </Link> : null}
-            
-            {!user || user && userRole === 'interviewer' ? <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
-                  Become an Interviewer
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </Link> : null}
-          </div>
+          <SmartCTAButtons className="mb-16" />
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
@@ -224,12 +213,10 @@ const Index = () => {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Link to={user ? "/book" : "/auth?role=interviewee"}>
-                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 group">
-                  Start Practicing
-                  <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </Link>
+              <IntervieweeButton 
+                size="lg" 
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-12 py-4 text-xl font-semibold rounded-xl" 
+              />
             </div>
           </div>
         </div>
@@ -278,12 +265,10 @@ const Index = () => {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Link to={user ? "/interviewers" : "/auth?role=interviewer"}>
-                <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25 group">
-                    Add Your Interviewer Profile
-                  <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </Link>
+              <InterviewerButton 
+                size="lg" 
+                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-12 py-4 text-xl font-semibold rounded-xl shadow-green-500/25" 
+              />
             </div>
           </div>
         </div>

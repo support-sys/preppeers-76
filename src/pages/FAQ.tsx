@@ -10,6 +10,7 @@ import { MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { IntervieweeButton } from "@/components/SmartCTAButtons";
 
 const FAQ = () => {
   const faqs = [
@@ -107,11 +108,10 @@ const FAQ = () => {
                     Contact Support
                   </Button>
                 </Link>
-                <Link to="/book">
-                  <Button variant="outline" size="lg" className="bg-transparent border-white text-white hover:bg-white/10 px-8 py-3">
-                    Book Interview
-                  </Button>
-                </Link>
+                <IntervieweeButton 
+                  size="lg" 
+                  className="bg-transparent border-white text-white hover:bg-white/10 px-8 py-3 border" 
+                />
               </div>
             </div>
           </div>
