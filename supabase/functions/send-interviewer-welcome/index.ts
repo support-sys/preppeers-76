@@ -6,27 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-database-trigger"
 };
 
-// Function to verify if request is from database trigger
-const verifyDatabaseTrigger = (req) => {
-  const authHeader = req.headers.get('authorization');
+// Function to log request source for debugging
+const getRequestSource = (req) => {
   const triggerHeader = req.headers.get('x-database-trigger');
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const authHeader = req.headers.get('authorization');
   
-  // Check if it's from database trigger
   if (triggerHeader === 'true') {
-    // Verify anon key is correct
-    if (authHeader === `Bearer ${supabaseAnonKey}`) {
-      return true;
-    }
+    return 'database_trigger';
+  } else if (authHeader) {
+    return 'app_request';
+  } else {
+    return 'direct_call';
   }
-  
-  // Check if it's using service role key (for regular calls)
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (authHeader === `Bearer ${supabaseServiceKey}`) {
-    return true;
-  }
-  
-  return false;
 };
 
 const handler = async (req)=>{
@@ -38,19 +29,9 @@ const handler = async (req)=>{
   }
   
   try {
-    // Verify authentication for database triggers
-    if (!verifyDatabaseTrigger(req)) {
-      console.log("Unauthorized request");
-      return new Response(JSON.stringify({
-        error: "Unauthorized"
-      }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders
-        }
-      });
-    }
+    // Log request source for debugging (no authentication check)
+    const requestSource = getRequestSource(req);
+    console.log("Request from:", requestSource);
     const emailData = await req.json();
     console.log("Sending email to:", emailData.interviewer_email, "Type:", emailData.type);
     
