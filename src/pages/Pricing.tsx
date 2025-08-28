@@ -9,49 +9,50 @@ import Footer from "@/components/Footer";
 const Pricing = () => {
   const plans = [
     {
-      name: "Starter",
-      price: "₹999",
-      description: "Perfect for trying out mock interviews",
+      name: "Essential",
+      price: "₹499",
+      description: "Perfect for quick interview practice and basic feedback",
       features: [
-        "1 Mock Interview",
-        "Live GMeet session",
-        "Basic feedback report",
-        "60-minute session",
-        "Email support"
+        "30-minute focused mock interview session",
+        "Real-time verbal feedback during the interview",
+        "Basic interview performance assessment",
+        "Quick tips and improvement suggestions",
+        "Interview recording (optional)"
       ],
       popular: false,
       buttonText: "Get Started"
     },
     {
       name: "Professional",
-      price: "₹2,499",
-      description: "Most popular choice for serious preparation",
+      price: "₹999",
+      description: "Most popular choice for comprehensive interview preparation",
       features: [
-        "3 Mock Interviews",
-        "Live GMeet sessions",
-        "Detailed improvement plan",
-        "Progress tracking",
-        "Priority support",
-        "Interview tips guide"
+        "60-minute comprehensive mock interview",
+        "Detailed written feedback report (PDF)",
+        "Personalized action plan for improvement",
+        "Interview performance analysis",
+        "Follow-up support and guidance",
+        "Interview recording (optional)",
+        "Priority customer support"
       ],
       popular: true,
       buttonText: "Most Popular"
     },
     {
-      name: "Premium",
-      price: "₹3,999",
-      description: "Complete package for comprehensive preparation",
+      name: "Executive",
+      price: "₹1,299",
+      description: "Premium career development package with complete support",
       features: [
-        "5 Mock Interviews",
-        "Resume review & optimization",
-        "Personalized feedback tracker",
-        "Career guidance session",
-        "LinkedIn profile review",
-        "Job search strategy guide",
-        "24/7 priority support"
+        "60-minute comprehensive mock interview",
+        "Detailed written feedback report (PDF)",
+        "Personalized action plan for improvement",
+        "Professional resume review and optimization",
+        "Career development guidance session",
+        "Priority support and follow-up",
+        "1-month follow-up support"
       ],
       popular: false,
-      buttonText: "Go Premium"
+      buttonText: "Go Executive"
     }
   ];
 
@@ -81,8 +82,8 @@ const Pricing = () => {
             {plans.map((plan, index) => (
               <Card 
                 key={index}
-                className={`bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/15 transition-all duration-300 relative ${
-                  plan.popular ? 'border-2 border-blue-400 scale-105' : ''
+                className={`bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 relative ${
+                  plan.popular ? 'border-2 border-blue-400 transform transition-transform duration-300 hover:scale-105' : ''
                 }`}
               >
                 {plan.popular && (

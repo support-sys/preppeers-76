@@ -122,24 +122,24 @@ const Index = () => {
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-              <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+            <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+              <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 group-hover:scale-110">
                 <Users className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Real Engineers</h3>
               <p className="text-zinc-200">Practice with experienced professionals from top tech companies</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-              <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+            <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+              <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 group-hover:scale-110">
                 <MessageSquare className="w-8 h-8 text-green-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Real Feedback</h3>
               <p className="text-slate-300">Get detailed insights and actionable improvement suggestions</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-              <div className="bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+            <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+              <div className="bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 group-hover:scale-110">
                 <Trophy className="w-8 h-8 text-yellow-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Real Results</h3>
@@ -150,7 +150,7 @@ const Index = () => {
       </div>
 
       {/* For Interviewees Section */}
-      <div className="relative z-10 bg-white/5 backdrop-blur-sm border-t border-white/10">
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto">
             {/* Section Header */}
@@ -166,8 +166,8 @@ const Index = () => {
             {/* Features Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {/* Register and Upload Resume */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <Upload className="w-8 h-8 text-purple-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Register & Upload Resume</h3>
@@ -175,8 +175,8 @@ const Index = () => {
               </div>
 
               {/* Select Target Role */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <User className="w-8 h-8 text-blue-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Select Target Role & Tech Stack</h3>
@@ -184,8 +184,8 @@ const Index = () => {
               </div>
 
               {/* Book Interview Slot */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <Calendar className="w-8 h-8 text-green-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Book an Interview Slot</h3>
@@ -193,17 +193,17 @@ const Index = () => {
               </div>
 
               {/* Join via GMeet */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-red-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-red-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <Video className="w-8 h-8 text-red-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Join via Google Meet</h3>
                 <p className="text-slate-300">Connect seamlessly with your interviewer through integrated video calls</p>
               </div>
 
-              {/* Get Detailed Feedback */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group md:col-span-2 lg:col-span-2">
-                <div className="bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              {/* Get Detailed Feedback - Safari Compatible Grid Spanning */}
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group md:col-span-2 lg:col-span-2" style={{ gridColumn: 'span 2' }}>
+                <div className="bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <FileText className="w-8 h-8 text-yellow-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Get Detailed Feedback & Improvement Plan</h3>
@@ -223,7 +223,7 @@ const Index = () => {
       </div>
 
       {/* For Interviewers Section */}
-      <div className="relative z-10 bg-slate-800/50 backdrop-blur-sm border-t border-white/10">
+      <div className="relative z-10 bg-slate-800/50 border-t border-white/10">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto">
             {/* Section Header */}
@@ -238,24 +238,24 @@ const Index = () => {
 
             {/* Benefits Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <DollarSign className="w-8 h-8 text-green-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Flexible Income</h3>
                 <p className="text-slate-300">Earn ₹500-₹1500 per session based on your experience and conduct interviews on your schedule</p>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <Clock className="w-8 h-8 text-blue-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Work Flexibly</h3>
                 <p className="text-slate-300">Set your own availability and work from anywhere. Perfect for full-time professionals looking for side income</p>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
                   <Network className="w-8 h-8 text-purple-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Build Your Network</h3>
@@ -275,7 +275,7 @@ const Index = () => {
       </div>
 
       {/* Testimonials Section */}
-      <div className="relative z-10 bg-white/5 backdrop-blur-sm border-t border-white/10">
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
@@ -288,14 +288,14 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
                     R
                   </div>
                   <div className="ml-4">
                     <h4 className="text-white font-semibold">Rahul Sharma</h4>
-                    <p className="text-slate-400 text-sm">Java Bacnedk Developer</p>
+                    <p className="text-slate-400 text-sm">Java Backend Developer</p>
                   </div>
                 </div>
                 <p className="text-slate-300">
@@ -303,7 +303,7 @@ const Index = () => {
                 </p>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
                     P
@@ -318,7 +318,7 @@ const Index = () => {
                 </p>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
                     A
@@ -338,7 +338,7 @@ const Index = () => {
       </div>
 
       {/* Pricing Preview Section */}
-      <div className="relative z-10 bg-slate-800/50 backdrop-blur-sm border-t border-white/10">
+      <div className="relative z-10 bg-slate-800/50 border-t border-white/10">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -349,39 +349,42 @@ const Index = () => {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-white mb-2">Starter</h3>
-                <div className="text-4xl font-bold text-blue-400 mb-4">₹999</div>
-                <p className="text-slate-300 mb-6">1 Mock Interview</p>
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2">Essential</h3>
+                <div className="text-4xl font-bold text-blue-400 mb-4">₹499</div>
+                <p className="text-slate-300 mb-6">Quick practice session</p>
                 <ul className="text-slate-300 text-left space-y-2">
-                  <li>• Live GMeet session</li>
-                  <li>• Basic feedback report</li>
-                  <li>• 60-minute session</li>
+                  <li>• 30-minute focused session</li>
+                  <li>• Real-time verbal feedback</li>
+                  <li>• Basic performance assessment</li>
+                  <li>• Quick improvement tips</li>
                 </ul>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-blue-400 hover:bg-white/15 transition-all duration-300 relative">
+              <div className="bg-white/10 rounded-2xl p-8 border-2 border-blue-400 hover:bg-white/15 transition-all duration-300 relative">
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
                   Most Popular
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Professional</h3>
-                <div className="text-4xl font-bold text-blue-400 mb-4">₹2499</div>
-                <p className="text-slate-300 mb-6">3 Mock Interviews + Plan</p>
+                <div className="text-4xl font-bold text-blue-400 mb-4">₹999</div>
+                <p className="text-slate-300 mb-6">Complete interview prep</p>
                 <ul className="text-slate-300 text-left space-y-2">
-                  <li>• 3 live GMeet sessions</li>
-                  <li>• Detailed improvement plan</li>
-                  <li>• Progress tracking</li>
+                  <li>• 60-minute comprehensive session</li>
+                  <li>• Detailed written feedback (PDF)</li>
+                  <li>• Personalized action plan</li>
+                  <li>• Follow-up support</li>
                 </ul>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-white mb-2">Premium</h3>
-                <div className="text-4xl font-bold text-blue-400 mb-4">₹3999</div>
-                <p className="text-slate-300 mb-6">Complete Package</p>
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2">Executive</h3>
+                <div className="text-4xl font-bold text-blue-400 mb-4">₹1299</div>
+                <p className="text-slate-300 mb-6">Premium career package</p>
                 <ul className="text-slate-300 text-left space-y-2">
-                  <li>• 3 mock interviews</li>
-                  <li>• Resume review</li>
-                  <li>• Feedback tracker</li>
+                  <li>• 60-minute comprehensive session</li>
+                  <li>• Professional resume review</li>
+                  <li>• Career development guidance</li>
+                  <li>• 1-month follow-up support</li>
                 </ul>
               </div>
             </div>

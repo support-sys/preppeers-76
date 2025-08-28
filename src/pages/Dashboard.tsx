@@ -474,14 +474,14 @@ const Dashboard = () => {
               ) : (
                 <>
                   <Link to="/book">
-                    <Card className="bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/20 transition-colors cursor-pointer">
+                    <Card className="bg-white/10 border-white/20 hover:bg-white/20 transition-colors cursor-pointer">
                       <CardContent className="p-6">
-                        <h3 className="text-xl font-semibent text-white mb-2">Book Interview</h3>
+                        <h3 className="text-xl font-semibold text-white mb-2">Book Interview</h3>
                         <p className="text-slate-300">Schedule a practice session with an expert</p>
                       </CardContent>
                     </Card>
                   </Link>
-                  <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                  <Card className="bg-white/10 border-white/20">
                     <CardContent className="p-6">
                       <h3 className="text-xl font-semibold text-white mb-2">View History</h3>
                       <p className="text-slate-300">Review your past interview sessions</p>

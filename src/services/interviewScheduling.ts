@@ -409,7 +409,7 @@ export const checkForConflictingTimeBlocks = async (interviewerId: string, sched
     
     const scheduledDateStr = scheduledDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     const startTime = scheduledDate.toTimeString().slice(0, 5); // HH:MM format
-    const endTime = new Date(scheduledDate.getTime() + 60 * 60 * 1000).toTimeString().slice(0, 5); // +1 hour
+    const endTime = new Date(scheduledDate.getTime() + 60 * 60 * 1000).toTimeString().slice(0, 5); // +1 hour (default)
     
     const { data: existingBlocks, error } = await supabase
       .from('interviewer_time_blocks')
@@ -440,15 +440,16 @@ export const checkForConflictingTimeBlocks = async (interviewerId: string, sched
 export const createInterviewTimeBlock = async (
   interviewerId: string,
   scheduledTime: string,
-  interviewId?: string
+  interviewId?: string,
+  durationMinutes: number = 60
 ): Promise<void> => {
   try {
-    console.log(`🔒 Creating time block for interviewer ${interviewerId} at ${scheduledTime}`);
+    console.log(`🔒 Creating time block for interviewer ${interviewerId} at ${scheduledTime} for ${durationMinutes} minutes`);
     
     const scheduledDate = new Date(scheduledTime);
     const scheduledDateStr = format(scheduledDate, 'yyyy-MM-dd');
     const startTime = format(scheduledDate, 'HH:mm');
-    const endTime = format(new Date(scheduledDate.getTime() + 60 * 60 * 1000), 'HH:mm');
+    const endTime = format(new Date(scheduledDate.getTime() + durationMinutes * 60 * 1000), 'HH:mm');
 
     const { error } = await supabase
       .from('interviewer_time_blocks')
@@ -466,14 +467,14 @@ export const createInterviewTimeBlock = async (
       throw error;
     }
 
-    console.log(`✅ Successfully created time block for ${scheduledDateStr} ${startTime}-${endTime}`);
+    console.log(`✅ Successfully created time block for ${scheduledDateStr} ${startTime}-${endTime} (${durationMinutes} min)`);
   } catch (error) {
     console.error('💥 Error in createInterviewTimeBlock:', error);
     throw error;
   }
 };
 
-export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string) => {
+export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string, planDuration: number = 60) => {
   try {
     console.log("Scheduling interview with:", { candidate: userFullName });
     console.log("Full interviewer object:", { interviewer: interviewer.company });
@@ -530,7 +531,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     // Create interview record data - let edge function handle profile lookup
     const interviewData = {
       interviewer_id: interviewer.id,
-      interviewer_user_id: interviewer.user_id, // Pass user_id so edge function can look up profile
+      interviewer_user_id: interviewer.user_id, // Pass user_id so edge function can handle profile lookup
       candidate_id: userEmail, // Use email as consistent identifier
       candidate_name: userFullName || userEmail.split('@')[0],
       candidate_email: userEmail,
@@ -539,7 +540,10 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       experience: candidate.experienceYears?.toString() || candidate.experience || 'Not specified',
       scheduled_time: scheduledDateTime,
       status: 'scheduled',
-      resume_url: latestResumeUrl
+      resume_url: latestResumeUrl,
+      selected_plan: candidate.selectedPlan || 'professional',
+      interview_duration: planDuration,
+      plan_details: candidate.selectedPlan || null
     };
 
     console.log("📝 Sending interview data to edge function:", interviewData);
@@ -562,7 +566,7 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
 
     // Create time block for the interviewer after successful booking
     if (scheduledDateTime) {
-      await createInterviewTimeBlock(interviewer.id, scheduledDateTime, data.interview?.id);
+      await createInterviewTimeBlock(interviewer.id, scheduledDateTime, data.interview?.id, planDuration);
       await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot); // Use original format for time slot blocking
     }
 

@@ -12,6 +12,7 @@ import PaymentButton from "./payment/PaymentButton";
 import PaymentMethodsInfo from "./payment/PaymentMethodsInfo";
 import PaymentContainer from "./payment/PaymentContainer";
 import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
+import { InterviewPlan } from "@/utils/planConfig";
 
 interface CashfreePaymentProps {
   amount: number;
@@ -20,6 +21,7 @@ interface CashfreePaymentProps {
   userName: string;
   onSuccess: (paymentData: any) => void;
   onError: (error: any) => void;
+  selectedPlan?: InterviewPlan;
 }
 
 // Cashfree SDK loading utility
@@ -67,7 +69,8 @@ const CashfreePayment = ({
   userEmail, 
   userName, 
   onSuccess, 
-  onError 
+  onError,
+  selectedPlan 
 }: CashfreePaymentProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,14 +130,25 @@ const CashfreePayment = ({
       }
 
       // Create payment session in database
+      console.log('selectedPlan object:', selectedPlan);
+      console.log('selectedPlan.id:', selectedPlan?.id);
+      console.log('selectedPlan.duration:', selectedPlan?.duration);
+      
+      const paymentSessionData = {
+        user_id: user.id,
+        candidate_data: candidateData,
+        amount: amount,
+        selected_plan: selectedPlan?.id || 'professional',
+        interview_duration: selectedPlan?.duration || 60,
+        plan_details: selectedPlan,
+        payment_status: 'pending'
+      };
+      
+      console.log('Creating payment session with data:', paymentSessionData);
+      
       const { data: sessionData, error: sessionError } = await supabase
         .from('payment_sessions')
-        .insert({
-          user_id: user.id,
-          candidate_data: candidateData,
-          amount: amount,
-          payment_status: 'pending'
-        })
+        .insert(paymentSessionData)
         .select()
         .single();
 
@@ -190,6 +204,8 @@ const CashfreePayment = ({
           order_id: `ORDER_${dbSession.id}`,
           return_url: `${window.location.origin}/book?payment=success&session_id=${dbSession.id}`,
           notify_url: `https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook`,
+          selected_plan: selectedPlan?.id || 'professional',
+          plan_details: selectedPlan,
           metadata: {
             payment_session_id: dbSession.id,
             candidate_data: {
@@ -245,7 +261,7 @@ const CashfreePayment = ({
 
       // Initialize Cashfree payment with embedded checkout
       const cashfree = new (window as any).Cashfree({
-        mode: "production"
+        mode: "sandbox"
       });
 
       // Show payment form container

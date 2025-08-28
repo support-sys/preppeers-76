@@ -137,7 +137,7 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
+            <div className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
               <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-green-400' : 'text-yellow-400'}`}>
                 {isSuccessful ? '✓ Payment Confirmed' : '⏳ Payment Processing'}
               </div>
@@ -145,7 +145,7 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
                 {isSuccessful ? 'Transaction completed' : 'Almost there...'}
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
+            <div className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
               <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-blue-400' : 'text-gray-500'}`}>
                 {isSuccessful ? '⚡ Instant Matching' : '⚡ Ready to Match'}
               </div>
@@ -153,7 +153,7 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
                 {isSuccessful ? 'Find your interviewer now' : 'Waiting for payment'}
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
+            <div className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
               <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-purple-400' : 'text-gray-500'}`}>
                 🎯 Perfect Match
               </div>

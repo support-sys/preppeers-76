@@ -21,6 +21,9 @@ interface InterviewData {
   scheduled_time: string;
   status: string;
   resume_url?: string;
+  selected_plan?: string;
+  interview_duration?: number;
+  plan_details?: any;
 }
 
 serve(async (req) => {
@@ -71,13 +74,14 @@ serve(async (req) => {
 
     // Create Google Meet link
     console.log("Creating Google Meet link...");
+    const durationMinutes = interviewData.interview_duration || 60; // Default to 60 minutes if not specified
     const meetResponse = await supabaseClient.functions.invoke('create-google-meet', {
       body: {
         interviewId: `interview-${Date.now()}`,
         summary: `Mock Interview: ${interviewData.target_role}`,
         description: `Mock interview session for ${interviewData.candidate_name} applying for ${interviewData.target_role}`,
         startTime: interviewData.scheduled_time,
-        endTime: new Date(new Date(interviewData.scheduled_time).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour later
+        endTime: new Date(new Date(interviewData.scheduled_time).getTime() + durationMinutes * 60 * 1000).toISOString(), // Use plan duration
         attendees: [interviewData.candidate_email, interviewerEmail],
       }
     });
@@ -109,6 +113,9 @@ serve(async (req) => {
         scheduled_time: interviewData.scheduled_time,
         status: interviewData.status,
         resume_url: interviewData.resume_url,
+        selected_plan: interviewData.selected_plan || 'professional',
+        interview_duration: durationMinutes,
+        plan_details: interviewData.plan_details || null,
         google_meet_link: meetLink,
         google_calendar_event_id: calendarEventId,
         email_confirmation_sent: false,

@@ -1,26 +1,31 @@
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
+import BookingHeader from "@/components/BookingHeader";
+import BookingStepsGuide from "@/components/BookingStepsGuide";
 import CandidateRegistrationForm from "@/components/CandidateRegistrationForm";
 import InstantMatchingButton from "@/components/InstantMatchingButton";
+import PaymentDetails from "@/components/PaymentDetails";
 import MatchingLoader from "@/components/MatchingLoader";
+import InterviewerPreview from "@/components/InterviewerPreview";
+import TimeSlotConfirmation from "@/components/TimeSlotConfirmation";
+import PaymentPage from "@/components/PaymentPage";
+import { findMatchingInterviewer } from "@/services/interviewScheduling";
+import { supabase } from "@/integrations/supabase/client";
 import InterviewScheduledSuccess from "@/components/InterviewScheduledSuccess";
 import NoMatchFound from "@/components/NoMatchFound";
-import ProcessOverview from "@/components/ProcessOverview";
-import BookingHeader from "@/components/BookingHeader";
-import PaymentDetails from "@/components/PaymentDetails";
-import PaymentPage from "@/components/PaymentPage";
-import TimeSlotConfirmation from "@/components/TimeSlotConfirmation";
-import InterviewerPreview from "@/components/InterviewerPreview";
-import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { useBookingFlow } from "@/hooks/useBookingFlow";
 
 const Book = () => {
   const { user } = useAuth();
   const { paymentSession, hasSuccessfulPayment, isInterviewAlreadyMatched, isLoading: paymentLoading } = usePaymentStatus();
+  const [currentFormStep, setCurrentFormStep] = useState<'form' | 'plan-selection'>('form');
   const {
     currentStep,
     formData,
@@ -117,13 +122,16 @@ const Book = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-20">
+      <div className="container mx-auto px-3 sm:px-4 py-16 sm:py-20">
         <div className="max-w-4xl mx-auto">
           <BookingHeader hasSuccessfulPayment={hasSuccessfulPayment} />
 
+          {/* Step-by-Step Guide - Only show on initial form step */}
+          {currentStep === 'form' && currentFormStep === 'form' && <BookingStepsGuide />}
+
           {/* Show Instant Matching Button if payment is successful but no interview scheduled yet */}
           {hasSuccessfulPayment && !paymentLoading && !isInterviewAlreadyMatched && (
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <InstantMatchingButton
                 onStartMatching={handleStartMatching}
                 isLoading={isLoading}
@@ -131,25 +139,21 @@ const Book = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              {/* Always show the registration form to allow multiple bookings */}
-              <CandidateRegistrationForm
-                onSubmit={handleFormSubmit}
-                isLoading={isLoading}
-              />
-              
-              {hasSuccessfulPayment && paymentSession && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-white mb-4">Previous Payment Session</h3>
-                  <PaymentDetails paymentSession={paymentSession} />
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <ProcessOverview />
+          {/* Main Content - Full Width */}
+          <div className="w-full">
+            {/* Always show the registration form to allow multiple bookings */}
+            <CandidateRegistrationForm
+              onSubmit={handleFormSubmit}
+              isLoading={isLoading}
+              onStepChange={setCurrentFormStep}
+            />
+            
+            {hasSuccessfulPayment && paymentSession && (
+              <div className="mt-6 sm:mt-8">
+                <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Previous Payment Session</h3>
+                <PaymentDetails paymentSession={paymentSession} />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -134,7 +134,7 @@ const InterviewerPayment = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Payment Form */}
-            <div className="lg:col-span-2">
+                            <div className="lg:col-span-2" style={{ gridColumn: 'span 2' }}>
               <Card className="bg-white/10 backdrop-blur-lg border-white/20">
                 <CardHeader>
                   <CardTitle className="text-white text-2xl">Payment Information</CardTitle>

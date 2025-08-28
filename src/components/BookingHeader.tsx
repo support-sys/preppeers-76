@@ -11,7 +11,7 @@ const BookingHeader = ({ hasSuccessfulPayment }: BookingHeaderProps) => {
       </h1>
       <p className="text-xl text-slate-300 max-w-3xl mx-auto">
         {hasSuccessfulPayment 
-          ? "Your payment is confirmed! Click below to find your perfect interviewer."
+          ? "You have a pending interview. Complete your profile and select a plan to continue."
           : "Fill out the form below and we'll match you with an experienced interviewer instantly."
         }
       </p>

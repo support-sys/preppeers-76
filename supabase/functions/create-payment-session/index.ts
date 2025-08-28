@@ -17,6 +17,8 @@ interface PaymentSessionRequest {
   return_url: string;
   notify_url: string;
   metadata?: any;
+  selected_plan?: string;
+  plan_details?: any;
 }
 
 // Function to sanitize customer_id for Cashfree requirements
@@ -32,6 +34,56 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log('=== Payment Session Creation Started ===');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.url);
+    
+    // Check authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      return new Response(
+        JSON.stringify({ 
+          error: 'authentication Failed',
+          message: 'Missing or invalid authorization header'
+        }),
+        {
+          status: 401,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
+    }
+
+    // Extract and validate JWT token
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) {
+      console.error('Empty JWT token');
+      return new Response(
+        JSON.stringify({ 
+          error: 'authentication Failed',
+          message: 'Empty JWT token'
+        }),
+        {
+          status: 401,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
+    }
+
+    console.log('JWT token received, length:', token.length);
+    console.log('JWT token starts with:', token.substring(0, 20) + '...');
+    
+    // Log all request headers for debugging
+    console.log('=== REQUEST HEADERS ===');
+    for (const [key, value] of req.headers.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+    console.log('=== END REQUEST HEADERS ===');
     
     const requestBody = await req.json();
     console.log('Request body received:', JSON.stringify(requestBody, null, 2));
@@ -46,7 +98,9 @@ const handler = async (req: Request): Promise<Response> => {
       order_id,
       return_url,
       notify_url,
-      metadata
+      metadata,
+      selected_plan,
+      plan_details
     }: PaymentSessionRequest = requestBody;
 
     // Validate required fields
@@ -99,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
     const webhookUrl = 'https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook';
     console.log('Webhook URL:', webhookUrl);
 
-    // Prepare order tags - flatten metadata to simple strings
+    // Prepare order tags with plan information
     const orderTags: Record<string, string> = {};
     if (metadata) {
       console.log('Processing metadata:', JSON.stringify(metadata, null, 2));
@@ -113,6 +167,13 @@ const handler = async (req: Request): Promise<Response> => {
         orderTags.experience = String(metadata.candidate_data.experience || '');
         orderTags.notice_period = String(metadata.candidate_data.noticePeriod || '');
       }
+    }
+
+    // Add plan information to order tags
+    if (selected_plan) {
+      orderTags.selected_plan = selected_plan;
+      orderTags.plan_name = plan_details?.name || 'Professional';
+      orderTags.interview_duration = String(plan_details?.duration || 60);
     }
 
     console.log('Order tags prepared:', JSON.stringify(orderTags, null, 2));
@@ -139,8 +200,19 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('=== Cashfree API Request ===');
     console.log('Request payload:', JSON.stringify(paymentSessionData, null, 2));
 
-    const cashfreeUrl = 'https://api.cashfree.com/pg/orders';
+    // Use test URL for development, production URL for production
+    // You can set CASHFREE_TEST_MODE=true in your Supabase Edge Function environment variables
+    // or hardcode isTestMode = true below for testing
+    const isTestMode = Deno.env.get('CASHFREE_TEST_MODE') === 'true' || Deno.env.get('NODE_ENV') === 'development';
+    // For immediate testing, you can uncomment the line below:
+    // const isTestMode = true;
+    
+    const cashfreeUrl = isTestMode 
+      ? 'https://sandbox.cashfree.com/pg/orders'  // Test/Sandbox URL
+      : 'https://api.cashfree.com/pg/orders';     // Production URL
+    
     console.log('API URL:', cashfreeUrl);
+    console.log('Mode:', isTestMode ? 'TEST/SANDBOX' : 'PRODUCTION');
 
     const requestHeaders = {
       'Content-Type': 'application/json',

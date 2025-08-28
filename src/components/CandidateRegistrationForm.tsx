@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,9 @@ import { Upload, ChevronDown, User, Settings, Clock, Link, Loader2 } from "lucid
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import PlanSelection from "./PlanSelection";
+import TimeSlotPicker from "./TimeSlotPicker";
+import { getDefaultPlan, getPlanById } from "@/utils/planConfig";
 
 /*
 const skillOptions = {
@@ -96,14 +99,20 @@ interface CandidateFormData {
   githubUrl: string;
   resume: File | null;
   resumeUrl?: string; // Added for storing uploaded resume URL
+  
+  // Plan Selection (NEW)
+  selectedPlan?: string;
+  interviewDuration?: number;
+  amount?: number;
 }
 
 interface CandidateRegistrationFormProps {
   onSubmit: (data: CandidateFormData) => void;
   isLoading?: boolean;
+  onStepChange?: (step: 'form' | 'plan-selection') => void;
 }
 
-const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateRegistrationFormProps) => {
+const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }: CandidateRegistrationFormProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -127,6 +136,11 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     githubUrl: "",
     resume: null,
     resumeUrl: "",
+    
+    // Plan Selection (NEW)
+    selectedPlan: getDefaultPlan().id,
+    interviewDuration: getDefaultPlan().duration,
+    amount: getDefaultPlan().price,
   });
 
   const [openSections, setOpenSections] = useState({
@@ -137,6 +151,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
   });
 
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -252,7 +267,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.skillCategories.length || !formData.noticePeriod || !formData.currentPosition || !formData.resume) {
@@ -279,6 +294,18 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
       }
     }
 
+    // Show plan selection after form validation
+    setShowPlanSelection(true);
+    
+    // Scroll to top immediately for better mobile UX
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    }, 100);
+  };
+
+  const handlePlanContinue = async () => {
     try {
       // Upload resume first
       let resumeUrl = formData.resumeUrl;
@@ -320,13 +347,16 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
         }
       }
 
-      // Pass the form data with resume URL to parent component
-      const formDataWithResumeUrl = {
+      // Pass the complete form data with plan details to parent component
+      const completeFormData = {
         ...formData,
-        resumeUrl: resumeUrl || ""
+        resumeUrl: resumeUrl || "",
+        selectedPlan: formData.selectedPlan,
+        interviewDuration: formData.interviewDuration,
+        amount: formData.amount
       };
 
-      onSubmit(formDataWithResumeUrl);
+      onSubmit(completeFormData);
     } catch (error: any) {
       console.error("Error in form submission:", error);
       toast({
@@ -341,6 +371,57 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
     skillOptions[category] || []
   );
 
+  // Scroll to top when plan selection is shown
+  useEffect(() => {
+    if (showPlanSelection) {
+      // Scroll to top with smooth behavior
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Also scroll the document body to top for mobile browsers
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+      
+      // Notify parent component about step change
+      onStepChange?.('plan-selection');
+    } else {
+      // Notify parent component about step change
+      onStepChange?.('form');
+    }
+  }, [showPlanSelection, onStepChange]);
+
+  // If showing plan selection, render that instead of the form
+  if (showPlanSelection) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => setShowPlanSelection(false)}
+            className="text-slate-400 hover:text-white"
+          >
+            ← Back to Form
+          </Button>
+        </div>
+        
+        <PlanSelection
+          selectedPlan={formData.selectedPlan || getDefaultPlan().id}
+          onPlanSelect={(planId) => {
+            const plan = getPlanById(planId);
+            if (plan) {
+              setFormData(prev => ({
+                ...prev,
+                selectedPlan: planId,
+                interviewDuration: plan.duration,
+                amount: plan.price
+              }));
+            }
+          }}
+          onContinue={handlePlanContinue}
+        />
+      </div>
+    );
+  }
+
   return (
     <Card className="bg-white/10 backdrop-blur-lg border-white/20">
       <CardHeader>
@@ -349,8 +430,9 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
           Complete your professional profile to get matched with the best interviewer for your needs.
         </CardDescription>
       </CardHeader>
+      
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleFormSubmit} className="space-y-6">
           {/* Professional Information Section */}
           <Collapsible 
             open={openSections.professional} 
@@ -491,22 +573,11 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
 
-              <div>
-                <Label htmlFor="timeSlot" className="text-white">Preferred Time Slot</Label>
-                <Input
-                  id="timeSlot"
-                  name="timeSlot"
-                  type="datetime-local"
-                  value={formData.timeSlot}
-                  onChange={handleInputChange}
-                  min={new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16)} // Minimum 1 hour from now
-                  className="bg-white/10 border-white/20 text-white"
-                  disabled={isLoading}
-                />
-                <p className="text-sm text-slate-400 mt-1">
-                  We'll try to match your preferred time, or suggest alternatives. Must be at least 1 hour in the future.
-                </p>
-              </div>
+              <TimeSlotPicker
+                value={formData.timeSlot}
+                onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
+                disabled={isLoading}
+              />
 
               <div>
                 <Label className="text-white">Notice Period *</Label>
@@ -618,13 +689,12 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false }: CandidateReg
             </CollapsibleContent>
           </Collapsible>
 
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-            disabled={isLoading || uploadingResume}
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
           >
-            {isLoading ? "Finding Interviewer..." : uploadingResume ? "Uploading Resume..." : "Find My Perfect Match"}
+            {isLoading ? "Processing..." : "Continue to Plan Selection"}
           </Button>
         </form>
       </CardContent>

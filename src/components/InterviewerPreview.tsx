@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { User, CheckCircle, Clock, Calendar, Star, Award, ArrowRight } from "lucide-react";
 import MatchQualityIndicator from "@/components/MatchQualityIndicator";
 import PoorMatchWarning from "@/components/PoorMatchWarning";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getPlanById } from "@/utils/planConfig";
 
 interface InterviewerPreviewProps {
   matchedInterviewer: any;
@@ -31,6 +32,177 @@ const InterviewerPreview = ({
   const isPoorMatch = matchedInterviewer?.skillQuality === 'poor';
   const isExcellentMatch = matchedInterviewer?.skillQuality === 'excellent';
   const isGoodMatch = matchedInterviewer?.skillQuality === 'good';
+
+  // Get plan details for dynamic display
+  const selectedPlan = getPlanById(formData?.selectedPlan || 'professional');
+  const sessionDuration = selectedPlan?.duration || 60;
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    // Scroll to top with smooth behavior
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Also scroll the document body to top for mobile browsers
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }, []);
+
+  // Function to slice time slots based on plan duration
+  const sliceTimeSlots = (timeSlots: string[], duration: number) => {
+    if (!timeSlots || timeSlots.length === 0) return [];
+    
+    const slicedSlots = [];
+    
+    timeSlots.forEach((slot, index) => {
+      // Handle format: "Tuesday, 26/08/2025 10:00-11:00" (Day, Date, Time)
+      let timeMatch = slot.match(/(\w+),\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+      
+      if (!timeMatch) {
+        // Try format: "Monday 10:00-11:00" (Day, Time)
+        timeMatch = slot.match(/(\w+)\s+(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+      }
+      
+      if (!timeMatch) {
+        // Try format without day: "10:00-11:00"
+        timeMatch = slot.match(/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+      }
+      
+      if (!timeMatch) {
+        // Try 12-hour format with AM/PM: "10:00 AM - 11:00 AM"
+        timeMatch = slot.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)/);
+      }
+      
+      if (!timeMatch) {
+        // Try format without spaces: "9:00AM-10:00AM"
+        timeMatch = slot.match(/(\d{1,2}):(\d{2})(AM|PM)-(\d{1,2}):(\d{2})(AM|PM)/);
+      }
+      
+      if (timeMatch) {
+        let startHour, startMinute, endHour, endMinute, dayName, dateStr;
+        
+        if (timeMatch.length === 9) {
+          // Format: "Tuesday, 26/08/2025 10:00-11:00" (Day, Date, Time)
+          // Regex groups: [0: full match, 1: day, 2: day_num, 3: month, 4: year, 5: start_hour, 6: start_min, 7: end_hour, 8: end_min]
+          dayName = timeMatch[1];
+          const day = timeMatch[2];
+          const month = timeMatch[3];
+          const year = timeMatch[4];
+          startHour = parseInt(timeMatch[5]);
+          startMinute = parseInt(timeMatch[6]);
+          endHour = parseInt(timeMatch[7]);
+          endMinute = parseInt(timeMatch[8]);
+          
+          // Format date as DD/MM/YYYY
+          dateStr = `${day}/${month}/${year}`;
+          
+          console.log('🔍 DEBUG: Parsed with day and date:', { dayName, dateStr, startHour, startMinute, endHour, endMinute });
+        } else if (timeMatch.length === 6) {
+          // Format: "Monday 10:00-11:00" (Day, Time)
+          dayName = timeMatch[1];
+          startHour = parseInt(timeMatch[2]);
+          startMinute = parseInt(timeMatch[3]);
+          endHour = parseInt(timeMatch[4]);
+          endMinute = parseInt(timeMatch[5]);
+          
+          console.log('🔍 DEBUG: Parsed with day:', { dayName, startHour, startMinute, endHour, endMinute });
+        } else if (timeMatch.length === 7) {
+          // 12-hour format with AM/PM: "10:00 AM - 11:00 AM"
+          startHour = parseInt(timeMatch[1]);
+          startMinute = parseInt(timeMatch[2]);
+          endHour = parseInt(timeMatch[4]);
+          endMinute = parseInt(timeMatch[5]);
+          
+          // Convert PM hours to 24-hour format
+          if (timeMatch[3] === 'PM' && startHour !== 12) startHour += 12;
+          if (timeMatch[6] === 'PM' && endHour !== 12) endHour += 12;
+          if (timeMatch[3] === 'AM' && startHour === 12) startHour = 0;
+          if (timeMatch[6] === 'AM' && endHour === 12) endHour = 0;
+          
+
+        } else if (timeMatch.length === 5) {
+          // 24-hour format: "09:00-10:00"
+          startHour = parseInt(timeMatch[1]);
+          startMinute = parseInt(timeMatch[2]);
+          endHour = parseInt(timeMatch[3]);
+          endMinute = parseInt(timeMatch[4]);
+          
+
+        }
+        
+        // Fallback: try to extract day name from original slot if not found
+        if (!dayName) {
+          const dayMatch = slot.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i);
+          if (dayMatch) {
+            dayName = dayMatch[1];
+
+          }
+        }
+        
+
+        
+        // Validate that we have valid time values
+        if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
+          return; // Skip this slot if time parsing failed
+        }
+        
+        // Calculate total minutes in the slot
+        const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+        
+        // If the slot is longer than needed duration, slice it
+        if (totalMinutes >= duration) {
+          const numSegments = Math.floor(totalMinutes / duration);
+          
+          for (let i = 0; i < numSegments; i++) {
+            const segmentStartHour = startHour + Math.floor((i * duration) / 60);
+            const segmentStartMinute = startMinute + ((i * duration) % 60);
+            const segmentEndHour = startHour + Math.floor(((i + 1) * duration) / 60);
+            const segmentEndMinute = startMinute + (((i + 1) * duration) % 60);
+            
+            // Format time in 24-hour format for display
+            const formatTime = (hour: number, minute: number) => {
+              return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            };
+            
+            const segmentStart = formatTime(segmentStartHour, segmentStartMinute);
+            const segmentEnd = formatTime(segmentEndHour, segmentEndMinute);
+            
+            // Construct display format: "Day, Date TimeStart-TimeEnd"
+            let displayFormat = '';
+            if (dayName && dateStr) {
+              displayFormat = `${dayName}, ${dateStr} ${segmentStart}-${segmentEnd}`;
+            } else if (dayName) {
+              displayFormat = `${dayName}, ${segmentStart}-${segmentEnd}`;
+            } else {
+              displayFormat = `${segmentStart}-${segmentEnd}`;
+            }
+            
+
+            
+            const slicedSlot = {
+              start: segmentStart,
+              end: segmentEnd,
+              display: displayFormat,
+              originalSlot: slot,
+              dayName: dayName,
+              dateStr: dateStr
+            };
+            
+
+            slicedSlots.push(slicedSlot);
+          }
+        }
+      }
+    });
+    
+    return slicedSlots;
+  };
+
+  // Get available time slots from interviewer and slice them based on plan duration
+  const availableTimeSlots = matchedInterviewer?.alternativeTimeSlots 
+    ? sliceTimeSlots(matchedInterviewer.alternativeTimeSlots, sessionDuration)
+    : [];
+
+
 
   const getMatchTitle = () => {
     if (isExcellentMatch) return "Excellent Match Found! 🎯";
@@ -186,31 +358,44 @@ const InterviewerPreview = ({
                     </div>
                     <div className="space-y-4">
                       <RadioGroup value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                        {/* Show alternative time slots */}
-                        {matchedInterviewer?.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0 ? (
-                          matchedInterviewer.alternativeTimeSlots.slice(0, 2).map((slot: string, index: number) => (
-                            <div key={index} className="flex items-center space-x-2 p-3 rounded-lg border border-green-400/30 bg-green-400/10">
-                              <RadioGroupItem value={slot} id={`alt-time-${index}`} />
-                              <Label htmlFor={`alt-time-${index}`} className="flex-1 cursor-pointer">
-                                <div className="text-green-200">
-                                  <strong>Available slot {index + 1}:</strong> {slot}
-                                  <div className="text-xs text-green-300 mt-1">
-                                    ✓ Confirmed available
+                        {/* Show available time slots - limit to next 2 */}
+                        {availableTimeSlots && availableTimeSlots.length > 0 ? (
+                          availableTimeSlots.slice(0, 2).map((slot, index) => {
+                            // Create unique value for radio button to prevent conflicts
+                            const uniqueValue = `${slot.start}-${slot.end}-${index}`;
+                            return (
+                              <div key={index} className="flex items-center space-x-2 p-3 rounded-lg border border-green-400/30 bg-green-400/10">
+                                <RadioGroupItem value={uniqueValue} id={`alt-time-${index}`} />
+                                <Label htmlFor={`alt-time-${index}`} className="flex-1 cursor-pointer">
+                                  <div className="text-green-200">
+                                    <strong>Available slot {index + 1}:</strong> {slot.display}
+                                    <div className="text-xs text-green-300 mt-1">
+                                      ✓ Confirmed available • {sessionDuration} min session
+                                    </div>
                                   </div>
-                                </div>
-                              </Label>
-                            </div>
-                          ))
+                                </Label>
+                              </div>
+                            );
+                          })
                         ) : (
                           <div className="text-blue-200 text-sm p-3 rounded-lg border border-blue-400/30 bg-blue-400/10">
-                            Best available match with flexible timing options. Final time will be confirmed after payment.
+                            {matchedInterviewer?.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0 
+                              ? `No ${sessionDuration}-minute slots available from the provided time slots. Please contact support.`
+                              : 'No time slots available. Please contact support.'
+                            }
                           </div>
                         )}
                       </RadioGroup>
                       
+                      {availableTimeSlots && availableTimeSlots.length > 2 && (
+                        <div className="text-xs text-blue-300 text-center mt-2">
+                          Showing next 2 available slots. {availableTimeSlots.length - 2} more slots available.
+                        </div>
+                      )}
+                      
                       {selectedTimeSlot && (
                         <div className="text-center text-sm text-green-300 bg-green-400/10 p-2 rounded-lg border border-green-400/30">
-                          Selected: <strong>{selectedTimeSlot}</strong>
+                          Selected: <strong>{selectedTimeSlot.split('-')[0]}</strong>
                         </div>
                       )}
                     </div>
@@ -240,31 +425,35 @@ const InterviewerPreview = ({
                         <div><strong>Specific Skills:</strong> {formData.specificSkills.join(', ')}</div>
                       )}
                       <div><strong>Experience Level:</strong> {formData?.experienceYears} years</div>
-                      <div><strong>Session Duration:</strong> 60 minutes</div>
+                      <div><strong>Session Duration:</strong> {sessionDuration} minutes</div>
                       <div><strong>Format:</strong> Video call with screen sharing</div>
+                      <div><strong>Selected Plan:</strong> {formData?.selectedPlan || 'Professional'}</div>
                     </div>
                   </div>
 
                   <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-400/30 p-4 rounded-xl">
                     <h4 className="font-semibold text-green-400 mb-2">What's Included:</h4>
                     <ul className="text-sm text-green-200 space-y-1">
-                      <li>• Live technical interview simulation</li>
-                      <li>• Detailed feedback and recommendations</li>
-                      <li>• Recording of the session (optional)</li>
-                      <li>• Follow-up resources and tips</li>
+                      {selectedPlan?.features && selectedPlan.features.length > 0 ? (
+                        selectedPlan.features.map((feature: string, index: number) => (
+                          <li key={index}>• {feature}</li>
+                        ))
+                      ) : (
+                        <li>• Live technical interview simulation</li>
+                      )}
                     </ul>
                   </div>
 
                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl text-center">
-                    <div className="text-3xl font-bold text-white">₹999</div>
+                    <div className="text-3xl font-bold text-white">₹{selectedPlan?.price || 999}</div>
                     <div className="text-sm text-slate-400">One-time payment</div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <Button 
-                    onClick={() => onProceedToPayment(selectedTimeSlot)}
-                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all duration-300 transform hover:scale-105"
+                    onClick={() => onProceedToPayment(selectedTimeSlot ? selectedTimeSlot.split('-')[0] : undefined)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl transition-all duration-300 transform hover:scale-105"
                     disabled={!selectedTimeSlot}
                   >
                     {selectedTimeSlot ? 'Proceed to Payment' : 'Select a Time Slot'}

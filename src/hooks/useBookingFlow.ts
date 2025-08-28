@@ -87,7 +87,8 @@ export const useBookingFlow = () => {
           matchedInterviewer, 
           scheduleData, 
           user?.email || '',
-          user?.user_metadata?.full_name || user?.email || ''
+          user?.user_metadata?.full_name || user?.email || '',
+          scheduleData.interviewDuration || 60
         );
         
         if (paymentData?.sessionId) {
@@ -178,7 +179,8 @@ export const useBookingFlow = () => {
           interviewer, 
           paymentSession.candidate_data, 
           user?.email || '',
-          user?.user_metadata?.full_name || user?.email || ''
+          user?.user_metadata?.full_name || user?.email || '',
+          paymentSession.candidate_data.interviewDuration || 60
         );
         
         await markInterviewMatched(paymentSession.id);
@@ -220,7 +222,8 @@ export const useBookingFlow = () => {
         matchedInterviewer, 
         paymentSession.candidate_data, 
         user?.email || '',
-        user?.user_metadata?.full_name || user?.email || ''
+        user?.user_metadata?.full_name || user?.email || '',
+        paymentSession.candidate_data.interviewDuration || 60
       );
       
       await markInterviewMatched(paymentSession.id);
