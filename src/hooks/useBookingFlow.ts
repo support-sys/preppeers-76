@@ -19,6 +19,16 @@ export const useBookingFlow = () => {
   const { paymentSession, markInterviewMatched, isInterviewAlreadyMatched } = usePaymentStatus();
 
   const handleFormSubmit = async (data: any) => {
+    // Validate required fields
+    if (!data.timeSlot) {
+      toast({
+        title: "Time Slot Required",
+        description: "Please select your preferred interview date and time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log('Enhanced form submitted with data:', {
       currentPosition: data.currentPosition,
       experienceYears: data.experienceYears,

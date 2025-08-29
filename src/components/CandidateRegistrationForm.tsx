@@ -241,14 +241,11 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
 
   const handleSkillCategoryChange = (category: string) => {
     setFormData(prev => {
-      const newCategories = prev.skillCategories.includes(category)
-        ? prev.skillCategories.filter(c => c !== category)
-        : [...prev.skillCategories, category];
+      // For radio button, always set to single selection
+      const newCategories = [category];
       
-      // Remove specific skills if category is unchecked
-      const newSpecificSkills = prev.skillCategories.includes(category)
-        ? prev.specificSkills.filter(skill => !skillOptions[category].includes(skill))
-        : prev.specificSkills;
+      // Clear specific skills when category changes
+      const newSpecificSkills: string[] = [];
       
       return {
         ...prev,
@@ -270,28 +267,46 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.skillCategories.length || !formData.noticePeriod || !formData.currentPosition || !formData.resume) {
+    if (!formData.skillCategories.length || !formData.currentPosition || !formData.resume) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields (Skill Categories, Notice Period, Current Position, Resume).",
+        description: "Please fill in all required fields (Skill Categories, Current Position, Resume, Specific Skills).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate specific skills are selected
+    if (!formData.specificSkills.length) {
+      toast({
+        title: "Specific Skills Required",
+        description: "Please select at least one specific skill from your chosen categories.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate time slot is mandatory
+    if (!formData.timeSlot) {
+      toast({
+        title: "Time Slot Required",
+        description: "Please select your preferred interview date and time.",
         variant: "destructive",
       });
       return;
     }
 
     // Validate time slot is in the future
-    if (formData.timeSlot) {
-      const selectedDate = new Date(formData.timeSlot);
-      const now = new Date();
-      
-      if (selectedDate <= now) {
-        toast({
-          title: "Invalid Time Selection",
-          description: "Please select a future date and time for your interview.",
-          variant: "destructive",
-        });
-        return;
-      }
+    const selectedDate = new Date(formData.timeSlot);
+    const now = new Date();
+    
+    if (selectedDate <= now) {
+      toast({
+        title: "Invalid Time Selection",
+        description: "Please select a future date and time for your interview.",
+        variant: "destructive",
+      });
+      return;
     }
 
     // Show plan selection after form validation
@@ -520,25 +535,28 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
             <CollapsibleContent className="mt-4 space-y-4">
               <div>
                 <Label className="text-white">Skill Categories *</Label>
-                <p className="text-sm text-slate-400 mb-2">Select at least your one primary role for matching with interviewers</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                <p className="text-sm text-slate-400 mb-2">Select your primary role for matching with interviewers</p>
+                <RadioGroup
+                  value={formData.skillCategories[0] || ''}
+                  onValueChange={(value) => handleSkillCategoryChange(value)}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2"
+                >
                   {Object.keys(skillOptions).map(category => (
                     <div key={category} className="flex items-center space-x-2">
-                      <Checkbox
+                      <RadioGroupItem
+                        value={category}
                         id={category}
-                        checked={formData.skillCategories.includes(category)}
-                        onCheckedChange={() => handleSkillCategoryChange(category)}
                         className="bg-white/10 border-white/20"
                       />
                       <Label htmlFor={category} className="text-white">{category}</Label>
                     </div>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
 
               {availableSpecificSkills.length > 0 && (
                 <div>
-                  <Label className="text-white">Specific Skills </Label>
+                  <Label className="text-white">Specific Skills *</Label>
                   <p className="text-sm text-slate-400 mb-2">Select all skill you want to be interviewed on</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                     {availableSpecificSkills.map(skill => (
@@ -573,14 +591,17 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
 
-              <TimeSlotPicker
-                value={formData.timeSlot}
-                onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
-                disabled={isLoading}
-              />
+              <div>
+                <Label className="text-white">Preferred Interview Time *</Label>
+                <TimeSlotPicker
+                  value={formData.timeSlot}
+                  onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
+                  disabled={isLoading}
+                />
+              </div>
 
               <div>
-                <Label className="text-white">Notice Period *</Label>
+                <Label className="text-white">Notice Period</Label>
                 <RadioGroup
                   value={formData.noticePeriod}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, noticePeriod: value }))}

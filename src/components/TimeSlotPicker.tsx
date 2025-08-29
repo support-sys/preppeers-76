@@ -95,7 +95,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
 
   // Format display value
   const formatDisplayValue = () => {
-    if (!value) return 'Select date and time';
+    if (!value) return 'Select date and time *';
     
     try {
       const date = new Date(value);
