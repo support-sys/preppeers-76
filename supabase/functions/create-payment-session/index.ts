@@ -123,15 +123,46 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Creating payment session for:', { order_id, amount, customer_email });
 
-    const cashfreeAppId = Deno.env.get('CASHFREE_APP_ID');
-    const cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY');
+    // Determine if we're in test mode
+    const isTestMode = Deno.env.get('CASHFREE_TEST_MODE') === 'true' || Deno.env.get('NODE_ENV') === 'development';
+    
+    // Use appropriate credentials based on test mode
+    let cashfreeAppId: string | undefined;
+    let cashfreeSecretKey: string | undefined;
+    
+    if (isTestMode) {
+      // Use test credentials
+      cashfreeAppId = Deno.env.get('CASHFREE_APP_ID_TEST');
+      cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY_TEST');
+      console.log('🔧 TEST MODE: Using test credentials');
+    } else {
+      // Use production credentials
+      cashfreeAppId = Deno.env.get('CASHFREE_APP_ID');
+      cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY');
+      console.log('🚀 PRODUCTION MODE: Using production credentials');
+    }
 
     if (!cashfreeAppId || !cashfreeSecretKey) {
-      console.error('Missing Cashfree credentials');
+      const missingCredentials = [];
+      if (!cashfreeAppId) missingCredentials.push('APP_ID');
+      if (!cashfreeSecretKey) missingCredentials.push('SECRET_KEY');
+      
+      console.error(`Missing Cashfree ${isTestMode ? 'TEST' : 'PRODUCTION'} credentials:`, missingCredentials.join(', '));
+      console.error('Environment variables checked:');
+      if (isTestMode) {
+        console.error('- CASHFREE_APP_ID_TEST:', !!Deno.env.get('CASHFREE_APP_ID_TEST'));
+        console.error('- CASHFREE_SECRET_KEY_TEST:', !!Deno.env.get('CASHFREE_SECRET_KEY_TEST'));
+      } else {
+        console.error('- CASHFREE_APP_ID:', !!Deno.env.get('CASHFREE_APP_ID'));
+        console.error('- CASHFREE_SECRET_KEY:', !!Deno.env.get('CASHFREE_SECRET_KEY'));
+      }
+      
       return new Response(
         JSON.stringify({ 
           error: 'Payment service configuration error',
-          message: 'Cashfree credentials not configured'
+          message: `Cashfree ${isTestMode ? 'test' : 'production'} credentials not configured`,
+          details: `Missing: ${missingCredentials.join(', ')}`,
+          mode: isTestMode ? 'test' : 'production'
         }),
         {
           status: 500,
@@ -143,7 +174,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Using Cashfree App ID:', cashfreeAppId);
+    console.log(`Using Cashfree ${isTestMode ? 'TEST' : 'PRODUCTION'} App ID:`, cashfreeAppId);
+    console.log(`Mode: ${isTestMode ? 'TEST/SANDBOX' : 'PRODUCTION'}`);
 
     // Sanitize customer_id to meet Cashfree requirements
     const sanitizedCustomerId = sanitizeCustomerId(customer_email);
@@ -201,18 +233,11 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Request payload:', JSON.stringify(paymentSessionData, null, 2));
 
     // Use test URL for development, production URL for production
-    // You can set CASHFREE_TEST_MODE=true in your Supabase Edge Function environment variables
-    // or hardcode isTestMode = true below for testing
-    const isTestMode = Deno.env.get('CASHFREE_TEST_MODE') === 'true' || Deno.env.get('NODE_ENV') === 'development';
-    // For immediate testing, you can uncomment the line below:
-    // const isTestMode = true;
-    
     const cashfreeUrl = isTestMode 
       ? 'https://sandbox.cashfree.com/pg/orders'  // Test/Sandbox URL
       : 'https://api.cashfree.com/pg/orders';     // Production URL
     
     console.log('API URL:', cashfreeUrl);
-    console.log('Mode:', isTestMode ? 'TEST/SANDBOX' : 'PRODUCTION');
 
     const requestHeaders = {
       'Content-Type': 'application/json',

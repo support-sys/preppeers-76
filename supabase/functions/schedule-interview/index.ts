@@ -73,7 +73,7 @@ serve(async (req) => {
     }
 
     // Create Google Meet link
-    console.log("Creating Google Meet link...");
+    console.log("🎯 Creating Google Meet link...");
     const durationMinutes = interviewData.interview_duration || 60; // Default to 60 minutes if not specified
     const meetResponse = await supabaseClient.functions.invoke('create-google-meet', {
       body: {
@@ -86,15 +86,22 @@ serve(async (req) => {
       }
     });
 
-    let meetLink = "https://meet.google.com/new"; // fallback
-    let calendarEventId = null;
+    let meetLink: string | null = null;
+    let calendarEventId: string | null = null;
 
     if (meetResponse.data && meetResponse.data.success) {
       meetLink = meetResponse.data.meetLink;
       calendarEventId = meetResponse.data.eventId;
-      console.log("Google Meet link created:", meetLink);
+      console.log("✅ Google Meet link created successfully:", meetLink);
+      console.log("📅 Calendar event ID:", calendarEventId);
     } else {
-      console.log("Using fallback Google Meet link");
+      console.error("❌ Failed to create Google Meet link:", meetResponse.error || meetResponse.data);
+      throw new Error("Failed to create Google Meet link for the interview");
+    }
+
+    // Ensure we have a valid GMeet link before proceeding
+    if (!meetLink || meetLink.includes('/new')) {
+      throw new Error("Invalid Google Meet link generated");
     }
 
     // Create interview record in database
