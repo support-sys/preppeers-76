@@ -44,23 +44,23 @@ const PaymentProcessing = () => {
     setIsMatching(true);
 
     try {
-      console.log('Starting matching process from payment processing page...');
+      console.log('Starting interview scheduling from payment processing page...');
       
-      // Get candidate data from payment session
+      // Get candidate data and matched interviewer from payment session
       const candidateData = paymentSession.candidate_data;
+      const matchedInterviewer = paymentSession.matched_interviewer;
       
-      // Find matching interviewer
-      const interviewer = await findMatchingInterviewer(candidateData);
-      
-      if (interviewer) {
-        console.log('Interviewer found, scheduling interview...');
+      if (matchedInterviewer) {
+        console.log('Using stored matched interviewer:', matchedInterviewer);
         
-        // Schedule the interview and send emails
+        // Schedule the interview with the already-matched interviewer
         await scheduleInterview(
-          interviewer, 
+          matchedInterviewer, 
           candidateData, 
           user?.email || '',
-          user?.user_metadata?.full_name || user?.email || ''
+          user?.user_metadata?.full_name || user?.email || '',
+          candidateData.interviewDuration || 60,
+          user?.id
         );
         
         toast({

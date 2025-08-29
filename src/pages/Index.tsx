@@ -50,12 +50,12 @@ const Index = () => {
       const candidateData = paymentSession.candidate_data;
 
       // Find matching interviewer
-      const interviewer = await findMatchingInterviewer(candidateData);
+      const interviewer = await findMatchingInterviewer(candidateData, user?.id);
       if (interviewer) {
         console.log('Interviewer found, scheduling interview...');
 
         // Schedule the interview and send emails
-        await scheduleInterview(interviewer, candidateData, user?.email || '', user?.user_metadata?.full_name || user?.email || '');
+        await scheduleInterview(interviewer, candidateData, user?.email || '', user?.user_metadata?.full_name || user?.email || '', candidateData.interviewDuration || 60);
         toast({
           title: "Interview Scheduled!",
           description: "Your interview has been scheduled successfully!"

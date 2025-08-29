@@ -57,7 +57,7 @@ export const useRescheduleFlow = (interview: Interview) => {
     
     try {
       console.log('Finding matching interviewer for reschedule...');
-      const interviewer = await findMatchingInterviewer(candidateData);
+      const interviewer = await findMatchingInterviewer(candidateData, user?.id);
       
       if (interviewer) {
         console.log('Reschedule interviewer found:', interviewer);
@@ -115,7 +115,8 @@ export const useRescheduleFlow = (interview: Interview) => {
         matchedInterviewer, 
         scheduleData, 
         interview.candidate_email,
-        interview.candidate_name
+        interview.candidate_name,
+        scheduleData.interviewDuration || 60
       );
       
       // Mark the old interview as rescheduled
@@ -162,7 +163,8 @@ export const useRescheduleFlow = (interview: Interview) => {
         matchedInterviewer, 
         scheduleData, 
         interview.candidate_email,
-        interview.candidate_name
+        interview.candidate_name,
+        scheduleData.interviewDuration || 60
       );
       
       // Mark the old interview as rescheduled

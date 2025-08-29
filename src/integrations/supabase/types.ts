@@ -323,6 +323,10 @@ export type Database = {
           payment_status: string
           updated_at: string
           user_id: string
+          selected_plan: string | null
+          interview_duration: number | null
+          plan_details: Json | null
+          matched_interviewer: Json | null
         }
         Insert: {
           amount: number
@@ -336,6 +340,10 @@ export type Database = {
           payment_status?: string
           updated_at?: string
           user_id: string
+          selected_plan?: string | null
+          interview_duration?: number | null
+          plan_details?: Json | null
+          matched_interviewer?: Json | null
         }
         Update: {
           amount?: number
@@ -349,6 +357,10 @@ export type Database = {
           payment_status?: string
           updated_at?: string
           user_id?: string
+          selected_plan?: string | null
+          interview_duration?: number | null
+          plan_details?: Json | null
+          matched_interviewer?: Json | null
         }
         Relationships: []
       }

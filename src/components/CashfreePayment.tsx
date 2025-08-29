@@ -140,8 +140,9 @@ const CashfreePayment = ({
         amount: amount,
         selected_plan: selectedPlan?.id || 'professional',
         interview_duration: selectedPlan?.duration || 60,
-        plan_details: selectedPlan,
-        payment_status: 'pending'
+        plan_details: selectedPlan as any,
+        payment_status: 'pending',
+        matched_interviewer: candidateData.matchedInterviewer || null
       };
       
       console.log('Creating payment session with data:', paymentSessionData);
@@ -173,6 +174,18 @@ const CashfreePayment = ({
       setIsLoading(true);
       setError(null);
       console.log('Starting payment process...');
+
+      // Check if we have a matched interviewer
+      if (!candidateData.matchedInterviewer) {
+        const errorMsg = "No interviewer selected. Please go back and select an interviewer first.";
+        setError(errorMsg);
+        toast({
+          title: "No Interviewer Selected",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Check if Cashfree SDK is loaded
       if (!sdkLoaded) {

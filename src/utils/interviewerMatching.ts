@@ -14,6 +14,7 @@ export interface MatchingCandidate {
   linkedinUrl?: string;
   githubUrl?: string;
   excludeInterviewerId?: string;
+  selectedPlan?: string; // Add selected plan for duration calculation
 }
 
 export interface MatchedInterviewer {
@@ -462,27 +463,46 @@ export const checkEnhancedExperienceMatch = (
   const expDifference = interviewerExperience - candidateExp;
   console.log(`📊 Experience difference: ${expDifference} years`);
 
-  // Scoring based on experience gap
-  if (expDifference >= 2 && expDifference <= 8) {
-    // Ideal mentorship gap: 2-8 years
+  // Intelligent scoring based on candidate vs interviewer experience levels
+  if (expDifference > 0) {
+    // Junior candidate interviewing with senior interviewer (mentorship scenario)
+    if (expDifference >= 2 && expDifference <= 8) {
+      // Ideal mentorship gap: 2-8 years
+      score = 25;
+      details.push(`Ideal mentorship gap: ${expDifference} years difference`);
+    } else if (expDifference >= 1 && expDifference < 2) {
+      // Good gap: 1-2 years
+      score = 20;
+      details.push(`Good experience gap: ${expDifference} years difference`);
+    } else if (expDifference > 8) {
+      // Large gap but still valuable
+      score = 15;
+      details.push(`Senior mentor: ${expDifference} years more experience`);
+    }
+  } else if (expDifference === 0) {
+    // Peer level: same experience
     score = 25;
-    details.push(`Ideal mentorship gap: ${expDifference} years difference`);
-  } else if (expDifference >= 1 && expDifference < 2) {
-    // Good gap: 1-2 years
-    score = 20;
-    details.push(`Good experience gap: ${expDifference} years difference`);
-  } else if (expDifference > 8) {
-    // Large gap but still valuable
-    score = 15;
-    details.push(`Senior mentor: ${expDifference} years more experience`);
-  } else if (expDifference >= 0) {
-    // Peer level
-    score = 10;
-    details.push(`Peer level: similar experience levels`);
-  } else {
-    // Candidate has more experience
-    score = 5;
-    details.push(`Reverse mentorship opportunity`);
+    details.push(`Peer level: same experience level - optimal for mutual learning`);
+  } else if (expDifference < 0) {
+    // Senior candidate interviewing with junior interviewer (peer collaboration scenario)
+    const absExpDifference = Math.abs(expDifference);
+    if (absExpDifference === 1) {
+      // Minimal gap: excellent for peer collaboration
+      score = 25;
+      details.push(`Excellent peer collaboration: minimal 1 year difference (senior candidate)`);
+    } else if (absExpDifference === 2) {
+      // Small gap: good for peer collaboration
+      score = 20;
+      details.push(`Good peer collaboration: small 2 year difference (senior candidate)`);
+    } else if (absExpDifference === 3) {
+      // Medium gap: acceptable for peer collaboration
+      score = 15;
+      details.push(`Acceptable peer collaboration: medium 3 year difference (senior candidate)`);
+    } else if (absExpDifference >= 4) {
+      // Large gap: not ideal for senior candidates
+      score = 10;
+      details.push(`Limited peer collaboration: large ${absExpDifference} year difference (senior candidate)`);
+    }
   }
 
   const match = score >= 10;

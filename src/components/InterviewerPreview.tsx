@@ -47,13 +47,13 @@ const InterviewerPreview = ({
     document.documentElement.scrollTop = 0;
   }, []);
 
-  // Function to slice time slots based on plan duration
+  // Simple function to slice time slots based on plan duration
   const sliceTimeSlots = (timeSlots: string[], duration: number) => {
     if (!timeSlots || timeSlots.length === 0) return [];
     
     const slicedSlots = [];
     
-    timeSlots.forEach((slot, index) => {
+    for (const slot of timeSlots) {
       // Handle format: "Tuesday, 26/08/2025 10:00-11:00" (Day, Date, Time)
       let timeMatch = slot.match(/(\w+),\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
       
@@ -82,7 +82,6 @@ const InterviewerPreview = ({
         
         if (timeMatch.length === 9) {
           // Format: "Tuesday, 26/08/2025 10:00-11:00" (Day, Date, Time)
-          // Regex groups: [0: full match, 1: day, 2: day_num, 3: month, 4: year, 5: start_hour, 6: start_min, 7: end_hour, 8: end_min]
           dayName = timeMatch[1];
           const day = timeMatch[2];
           const month = timeMatch[3];
@@ -94,8 +93,6 @@ const InterviewerPreview = ({
           
           // Format date as DD/MM/YYYY
           dateStr = `${day}/${month}/${year}`;
-          
-          console.log('🔍 DEBUG: Parsed with day and date:', { dayName, dateStr, startHour, startMinute, endHour, endMinute });
         } else if (timeMatch.length === 6) {
           // Format: "Monday 10:00-11:00" (Day, Time)
           dayName = timeMatch[1];
@@ -103,8 +100,6 @@ const InterviewerPreview = ({
           startMinute = parseInt(timeMatch[3]);
           endHour = parseInt(timeMatch[4]);
           endMinute = parseInt(timeMatch[5]);
-          
-          console.log('🔍 DEBUG: Parsed with day:', { dayName, startHour, startMinute, endHour, endMinute });
         } else if (timeMatch.length === 7) {
           // 12-hour format with AM/PM: "10:00 AM - 11:00 AM"
           startHour = parseInt(timeMatch[1]);
@@ -117,16 +112,12 @@ const InterviewerPreview = ({
           if (timeMatch[6] === 'PM' && endHour !== 12) endHour += 12;
           if (timeMatch[3] === 'AM' && startHour === 12) startHour = 0;
           if (timeMatch[6] === 'AM' && endHour === 12) endHour = 0;
-          
-
         } else if (timeMatch.length === 5) {
           // 24-hour format: "09:00-10:00"
           startHour = parseInt(timeMatch[1]);
           startMinute = parseInt(timeMatch[2]);
           endHour = parseInt(timeMatch[3]);
           endMinute = parseInt(timeMatch[4]);
-          
-
         }
         
         // Fallback: try to extract day name from original slot if not found
@@ -134,15 +125,12 @@ const InterviewerPreview = ({
           const dayMatch = slot.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i);
           if (dayMatch) {
             dayName = dayMatch[1];
-
           }
         }
         
-
-        
         // Validate that we have valid time values
         if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
-          return; // Skip this slot if time parsing failed
+          continue; // Skip this slot if time parsing failed
         }
         
         // Calculate total minutes in the slot
@@ -153,10 +141,15 @@ const InterviewerPreview = ({
           const numSegments = Math.floor(totalMinutes / duration);
           
           for (let i = 0; i < numSegments; i++) {
-            const segmentStartHour = startHour + Math.floor((i * duration) / 60);
-            const segmentStartMinute = startMinute + ((i * duration) % 60);
-            const segmentEndHour = startHour + Math.floor(((i + 1) * duration) / 60);
-            const segmentEndMinute = startMinute + (((i + 1) * duration) % 60);
+            // Calculate start time for this segment
+            const segmentStartMinutes = startHour * 60 + startMinute + (i * duration);
+            const segmentStartHour = Math.floor(segmentStartMinutes / 60);
+            const segmentStartMinute = segmentStartMinutes % 60;
+            
+            // Calculate end time for this segment
+            const segmentEndMinutes = segmentStartMinutes + duration;
+            const segmentEndHour = Math.floor(segmentEndMinutes / 60);
+            const segmentEndMinute = segmentEndMinutes % 60;
             
             // Format time in 24-hour format for display
             const formatTime = (hour: number, minute: number) => {
@@ -176,8 +169,6 @@ const InterviewerPreview = ({
               displayFormat = `${segmentStart}-${segmentEnd}`;
             }
             
-
-            
             const slicedSlot = {
               start: segmentStart,
               end: segmentEnd,
@@ -187,12 +178,11 @@ const InterviewerPreview = ({
               dateStr: dateStr
             };
             
-
             slicedSlots.push(slicedSlot);
           }
         }
       }
-    });
+    }
     
     return slicedSlots;
   };
@@ -361,8 +351,8 @@ const InterviewerPreview = ({
                         {/* Show available time slots - limit to next 2 */}
                         {availableTimeSlots && availableTimeSlots.length > 0 ? (
                           availableTimeSlots.slice(0, 2).map((slot, index) => {
-                            // Create unique value for radio button to prevent conflicts
-                            const uniqueValue = `${slot.start}-${slot.end}-${index}`;
+                            // Use the display format as the value, which is properly formatted
+                            const uniqueValue = slot.display;
                             return (
                               <div key={index} className="flex items-center space-x-2 p-3 rounded-lg border border-green-400/30 bg-green-400/10">
                                 <RadioGroupItem value={uniqueValue} id={`alt-time-${index}`} />
@@ -395,7 +385,7 @@ const InterviewerPreview = ({
                       
                       {selectedTimeSlot && (
                         <div className="text-center text-sm text-green-300 bg-green-400/10 p-2 rounded-lg border border-green-400/30">
-                          Selected: <strong>{selectedTimeSlot.split('-')[0]}</strong>
+                          Selected: <strong>{selectedTimeSlot}</strong>
                         </div>
                       )}
                     </div>
@@ -452,7 +442,7 @@ const InterviewerPreview = ({
 
                 <div className="space-y-3">
                   <Button 
-                    onClick={() => onProceedToPayment(selectedTimeSlot ? selectedTimeSlot.split('-')[0] : undefined)}
+                    onClick={() => onProceedToPayment(selectedTimeSlot)}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl transition-all duration-300 transform hover:scale-105"
                     disabled={!selectedTimeSlot}
                   >

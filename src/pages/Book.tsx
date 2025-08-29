@@ -39,7 +39,8 @@ const Book = () => {
     handleStartMatching,
     handleAcceptAlternativeTime,
     handleWaitForBetterMatch,
-    handleTryAgain
+    handleTryAgain,
+    handleGoBackToForm
   } = useBookingFlow();
 
   // Check if we should show the form or payment based on existing data
@@ -114,6 +115,7 @@ const Book = () => {
         userName={user?.user_metadata?.full_name || user?.email || ''}
         onSuccess={handlePaymentSuccess}
         onError={handlePaymentError}
+        onGoBack={handleGoBackToForm}
       />
     );
   }

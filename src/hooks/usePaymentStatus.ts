@@ -15,6 +15,10 @@ interface PaymentSession {
   currency: string;
   cashfree_order_id: string | null;
   cashfree_payment_id: string | null;
+  selected_plan?: string | null;
+  interview_duration?: number | null;
+  plan_details?: any | null;
+  matched_interviewer?: any | null;
 }
 
 export const usePaymentStatus = () => {

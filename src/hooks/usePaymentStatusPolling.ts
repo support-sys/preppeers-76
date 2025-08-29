@@ -13,6 +13,10 @@ interface PaymentSession {
   interview_matched: boolean;
   created_at: string;
   cashfree_order_id?: string;
+  selected_plan?: string | null;
+  interview_duration?: number | null;
+  plan_details?: any | null;
+  matched_interviewer?: any | null;
 }
 
 export const usePaymentStatusPolling = (sessionId: string | null) => {

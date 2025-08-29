@@ -13,6 +13,8 @@ import {
 } from "@/utils/interviewerMatching";
 import { getAvailableTimeSlotsForInterviewer } from "@/utils/availableTimeSlots";
 
+
+
 // Helper function to convert time slot format to ISO datetime
 const convertTimeSlotToISODate = (timeSlot: string): string => {
   console.log('🔄 Converting time slot to ISO date:', timeSlot);
@@ -168,7 +170,7 @@ const convertTimeSlotToISODate = (timeSlot: string): string => {
   }
 };
 
-export const findMatchingInterviewer = async (candidateData: MatchingCandidate): Promise<MatchedInterviewer | null> => {
+export const findMatchingInterviewer = async (candidateData: MatchingCandidate, userId?: string): Promise<MatchedInterviewer | null> => {
   try {
     console.log('\n🚀 === STARTING INTERVIEWER MATCHING PROCESS ===');
     console.log('👤 Candidate Data:', {
@@ -281,10 +283,22 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate):
       }
 
       // Get enhanced alternative time slots with specific dates
+      console.log('🔍 DEBUG: Candidate data for plan duration:', {
+        selectedPlan: candidateData.selectedPlan,
+        hasSelectedPlan: !!candidateData.selectedPlan
+      });
+      // Default to Essential plan (30 minutes) if no plan selected, since candidate wants 30-min slot
+      const planDuration = candidateData.selectedPlan === 'essential' ? 30 : 
+                          candidateData.selectedPlan === 'professional' ? 60 :
+                          candidateData.selectedPlan === 'executive' ? 60 : 30; // Default to 30
+      console.log('🔍 DEBUG: Using plan duration:', planDuration, 'minutes');
       const availableTimeSlots = await getAvailableTimeSlotsForInterviewer(
         interviewer.id,
         interviewer.current_time_slots,
-        candidateData.timeSlot // Pass candidate's preferred date
+        candidateData.timeSlot, // Pass candidate's preferred date
+        14, // daysToCheck - check next 14 days
+        planDuration, // Pass the plan duration
+        userId // Pass user ID for RLS authentication
       );
       const alternativeTimeSlots = availableTimeSlots.map(slot => slot.displayText);
       

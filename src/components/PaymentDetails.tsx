@@ -3,6 +3,10 @@ interface PaymentSession {
   id: string;
   candidate_data: any;
   amount: number;
+  selected_plan?: string | null;
+  interview_duration?: number | null;
+  plan_details?: any | null;
+  matched_interviewer?: any | null;
 }
 
 interface PaymentDetailsProps {
@@ -30,6 +34,18 @@ const PaymentDetails = ({ paymentSession }: PaymentDetailsProps) => {
           <span>Amount Paid:</span>
           <span className="text-green-400">₹{paymentSession.amount}</span>
         </div>
+        {paymentSession.selected_plan && (
+          <div className="flex justify-between">
+            <span>Selected Plan:</span>
+            <span className="text-white capitalize">{paymentSession.selected_plan}</span>
+          </div>
+        )}
+        {paymentSession.interview_duration && (
+          <div className="flex justify-between">
+            <span>Session Duration:</span>
+            <span className="text-white">{paymentSession.interview_duration} minutes</span>
+          </div>
+        )}
       </div>
     </div>
   );

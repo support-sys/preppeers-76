@@ -23,7 +23,10 @@ export const useBookingFlow = () => {
       skillCategories: data.skillCategories,
       specificSkills: data.specificSkills,
       skillsToPractice: data.skillsToPractice,
-      timeSlot: data.timeSlot
+      timeSlot: data.timeSlot,
+      selectedPlan: data.selectedPlan,
+      interviewDuration: data.interviewDuration,
+      amount: data.amount
     });
     setFormData(data);
     setIsLoading(true);
@@ -34,7 +37,7 @@ export const useBookingFlow = () => {
     
     try {
       console.log('Finding matching interviewer preview...');
-      const interviewer = await findMatchingInterviewer(data);
+      const interviewer = await findMatchingInterviewer(data, user?.id);
       
       if (interviewer) {
         console.log('Preview interviewer found:', interviewer);
@@ -154,7 +157,7 @@ export const useBookingFlow = () => {
     try {
       console.log('Finding matching interviewer...');
       
-      const interviewer = await findMatchingInterviewer(paymentSession.candidate_data);
+              const interviewer = await findMatchingInterviewer(paymentSession.candidate_data, user?.id);
       
       if (interviewer) {
         console.log('Interviewer found:', interviewer);

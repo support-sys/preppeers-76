@@ -25,6 +25,9 @@ interface AvailableTimeSlot {
 }
 
 serve(async (req) => {
+  console.log('🚀 === EDGE FUNCTION CALLED - VERSION 2.0 ===');
+  console.log('🔧 Time:', new Date().toISOString());
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -229,38 +232,90 @@ async function generateAlternativeTimeSlots(
       .select('blocked_date, start_time, end_time')
       .eq('interviewer_id', interviewer.id);
 
+    console.log('🚫 Edge function: Blocked slots found:', blockedSlots);
+
     const alternatives: string[] = [];
     const availableDays = interviewer.availability_days || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     
-    // Generate next 7 days of alternatives
+    // Parse interviewer's actual time slots from the database
+    let interviewerTimeSlots = {};
+    try {
+      if (interviewer.time_slots) {
+        interviewerTimeSlots = JSON.parse(interviewer.time_slots);
+      }
+    } catch (e) {
+      console.error('Error parsing interviewer time slots:', e);
+    }
+    
+    console.log('📅 Edge function: Interviewer time slots:', interviewerTimeSlots);
+    
+    // Generate alternatives for the next 7 days (including today)
     const today = new Date();
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 0; i <= 7; i++) {
       const checkDate = new Date(today);
       checkDate.setDate(today.getDate() + i);
       
       const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
       
-      if (availableDays.includes(dayName)) {
-        // Check common interview times
-        const timeSlots = ['10:00-11:00', '11:00-12:00', '14:00-15:00', '15:00-16:00'];
+      if (availableDays.includes(dayName) && interviewerTimeSlots[dayName]) {
+        const daySlots = interviewerTimeSlots[dayName];
         
-        for (const timeSlot of timeSlots) {
+        for (const slot of daySlots) {
           const dateStr = checkDate.toLocaleDateString('en-GB'); // dd/mm/yyyy format
-          const alternativeSlot = `${dayName}, ${dateStr} ${timeSlot}`;
           
-          // Check if this slot is not blocked
+          console.log(`🔍 Edge function: Checking ${dayName} ${dateStr} slot ${slot.start}-${slot.end}`);
+          
+          // Check if this specific time slot overlaps with any blocked slots
           const isBlocked = blockedSlots?.some((block: any) => {
             const blockDate = new Date(block.blocked_date);
-            return blockDate.toDateString() === checkDate.toDateString();
+            if (blockDate.toDateString() === checkDate.toDateString()) {
+              // Same date, now check time overlap
+              const blockStart = block.start_time.substring(0, 5); // Extract HH:MM from HH:MM:SS
+              const blockEnd = block.end_time.substring(0, 5);     // Extract HH:MM from HH:MM:SS
+              
+              console.log(`  🚫 Edge function: Found blocked slot on same date: ${block.blocked_date} ${blockStart}-${blockEnd}`);
+              
+              // Check if the slot overlaps with the blocked time
+              const slotStart = slot.start;
+              const slotEnd = slot.end;
+              
+              // Time overlap logic: start1 < end2 && end1 > start2
+              const start1 = parseInt(slotStart.split(':')[0]) * 60 + parseInt(slotStart.split(':')[1]);
+              const end1 = parseInt(slotEnd.split(':')[0]) * 60 + parseInt(slotEnd.split(':')[1]);
+              const start2 = parseInt(blockStart.split(':')[0]) * 60 + parseInt(blockStart.split(':')[1]);
+              const end2 = parseInt(blockEnd.split(':')[0]) * 60 + parseInt(blockEnd.split(':')[1]);
+              
+              const overlaps = start1 < end2 && end1 > start2;
+              console.log(`  ⏱️ Edge function: Time overlap check: ${slotStart}-${slotEnd} vs ${blockStart}-${blockEnd}`);
+              console.log(`     Minutes: ${start1}-${end1} vs ${start2}-${end2}, Overlaps: ${overlaps}`);
+              
+              return overlaps;
+            }
+            return false;
           });
           
-          if (!isBlocked && alternatives.length < 3) {
+          if (!isBlocked) {
+            const alternativeSlot = `${dayName}, ${dateStr} ${slot.start}-${slot.end}`;
             alternatives.push(alternativeSlot);
+            console.log(`  ✅ Edge function: Added alternative slot: ${alternativeSlot}`);
+            
+            // Limit to 3 alternatives
+            if (alternatives.length >= 3) {
+              break;
+            }
+          } else {
+            console.log(`  ❌ Edge function: Slot blocked: ${dayName}, ${dateStr} ${slot.start}-${slot.end}`);
           }
         }
       }
+      
+      // Stop if we have enough alternatives
+      if (alternatives.length >= 3) {
+        break;
+      }
     }
     
+    console.log('🎯 Edge function: Final alternatives:', alternatives);
     return alternatives;
   } catch (error) {
     console.error('Error generating alternative time slots:', error);
