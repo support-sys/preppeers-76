@@ -116,7 +116,8 @@ export const useRescheduleFlow = (interview: Interview) => {
         scheduleData, 
         interview.candidate_email,
         interview.candidate_name,
-        scheduleData.interviewDuration || 60
+        scheduleData.interviewDuration || 60,
+        user?.id
       );
       
       // Mark the old interview as rescheduled
@@ -164,7 +165,8 @@ export const useRescheduleFlow = (interview: Interview) => {
         scheduleData, 
         interview.candidate_email,
         interview.candidate_name,
-        scheduleData.interviewDuration || 60
+        scheduleData.interviewDuration || 60,
+        user?.id
       );
       
       // Mark the old interview as rescheduled

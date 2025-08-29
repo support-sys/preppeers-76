@@ -55,7 +55,7 @@ const Index = () => {
         console.log('Interviewer found, scheduling interview...');
 
         // Schedule the interview and send emails
-        await scheduleInterview(interviewer, candidateData, user?.email || '', user?.user_metadata?.full_name || user?.email || '', candidateData.interviewDuration || 60);
+        await scheduleInterview(interviewer, candidateData, user?.email || '', user?.user_metadata?.full_name || user?.email || '', candidateData.interviewDuration || 60, user?.id);
         toast({
           title: "Interview Scheduled!",
           description: "Your interview has been scheduled successfully!"

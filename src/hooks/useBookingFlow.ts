@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
+import { createTemporaryReservation, releaseTemporaryReservation } from "@/utils/temporaryBlocking";
 
 export const useBookingFlow = () => {
   const [currentStep, setCurrentStep] = useState<'form' | 'preview-match' | 'payment' | 'matching' | 'success' | 'no-match' | 'time-confirmation'>('form');
@@ -12,6 +13,7 @@ export const useBookingFlow = () => {
   const [alternativeTimeSlot, setAlternativeTimeSlot] = useState<any>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [temporaryReservationId, setTemporaryReservationId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { paymentSession, markInterviewMatched, isInterviewAlreadyMatched } = usePaymentStatus();
@@ -65,13 +67,63 @@ export const useBookingFlow = () => {
     }
   };
 
-  const handleProceedToPayment = (timeSlot?: string) => {
+  const handleProceedToPayment = async (timeSlot?: string) => {
     if (timeSlot) {
       setSelectedTimeSlot(timeSlot);
       // Update formData with selected time slot
       setFormData(prev => ({ ...prev, selectedTimeSlot: timeSlot }));
     }
-    setCurrentStep('payment');
+    
+    if (!matchedInterviewer?.id || !user?.id) {
+      toast({
+        title: "Error",
+        description: "Missing interviewer or user information",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Create temporary reservation to secure the time slot
+      const reservationId = await createTemporaryReservation(
+        matchedInterviewer.id,
+        timeSlot || selectedTimeSlot,
+        user.id,
+        formData.interviewDuration || 60
+      );
+      
+      setTemporaryReservationId(reservationId);
+      console.log('🔒 Created temporary reservation:', reservationId);
+      
+      // Update formData with matched interviewer data
+      setFormData(prev => ({ 
+        ...prev, 
+        matchedInterviewer: matchedInterviewer,
+        selectedTimeSlot: timeSlot || prev.selectedTimeSlot,
+        interviewer_id: matchedInterviewer?.id,
+        interviewer_user_id: matchedInterviewer?.user_id,
+        selected_time_slot: timeSlot || prev.selectedTimeSlot || prev.timeSlot,
+        selected_date: timeSlot ? new Date(timeSlot).toISOString().split('T')[0] : null,
+        plan_duration: prev.interviewDuration || 60,
+        match_score: matchedInterviewer?.matchScore || 0,
+        selected_plan: prev.selectedPlan || 'professional',
+        interview_duration: prev.interviewDuration || 60
+      }));
+      
+      setCurrentStep('payment');
+      
+    } catch (error) {
+      console.error('❌ Failed to create temporary reservation:', error);
+      toast({
+        title: "Time Slot Unavailable",
+        description: error instanceof Error ? error.message : "This time slot is no longer available. Please select a different time.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
@@ -91,7 +143,8 @@ export const useBookingFlow = () => {
           scheduleData, 
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || '',
-          scheduleData.interviewDuration || 60
+          scheduleData.interviewDuration || 60,
+          user?.id
         );
         
         if (paymentData?.sessionId) {
@@ -121,8 +174,20 @@ export const useBookingFlow = () => {
     }
   };
 
-  const handlePaymentError = (error: any) => {
+  const handlePaymentError = async (error: any) => {
     console.error("Payment failed:", error);
+    
+    // Release temporary reservation if payment fails
+    if (temporaryReservationId) {
+      try {
+        await releaseTemporaryReservation(temporaryReservationId);
+        setTemporaryReservationId(null);
+        console.log('🔓 Released temporary reservation due to payment failure');
+      } catch (releaseError) {
+        console.error('❌ Failed to release temporary reservation:', releaseError);
+      }
+    }
+    
     toast({
       title: "Payment Failed",
       description: "Please try again or contact support if the issue persists.",
@@ -183,7 +248,8 @@ export const useBookingFlow = () => {
           paymentSession.candidate_data, 
           user?.email || '',
           user?.user_metadata?.full_name || user?.email || '',
-          paymentSession.candidate_data.interviewDuration || 60
+          paymentSession.candidate_data.interviewDuration || 60,
+          user?.id
         );
         
         await markInterviewMatched(paymentSession.id);
@@ -226,7 +292,8 @@ export const useBookingFlow = () => {
         paymentSession.candidate_data, 
         user?.email || '',
         user?.user_metadata?.full_name || user?.email || '',
-        paymentSession.candidate_data.interviewDuration || 60
+        paymentSession.candidate_data.interviewDuration || 60,
+        user?.id
       );
       
       await markInterviewMatched(paymentSession.id);

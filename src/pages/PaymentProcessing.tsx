@@ -29,7 +29,13 @@ const PaymentProcessing = () => {
       navigate('/');
       return;
     }
-  }, [user, paymentSession, isLoading, navigate]);
+
+    // Auto-start matching when payment is successful
+    if (hasSuccessfulPayment && paymentSession && !paymentSession.interview_matched && !isMatching) {
+      console.log('Payment successful, auto-starting interview scheduling...');
+      handleStartMatching();
+    }
+  }, [user, paymentSession, isLoading, navigate, hasSuccessfulPayment, isMatching]);
 
   const handleStartMatching = async () => {
     if (!paymentSession || !user) {
@@ -92,7 +98,32 @@ const PaymentProcessing = () => {
   };
 
   if (isMatching) {
-    return <MatchingLoader />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        {/* Tech Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent">
+            <div 
+              className="w-full h-full"
+              style={{
+                background: 'radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 2px, transparent 2px)',
+                backgroundSize: '60px 60px'
+              }}
+            />
+          </div>
+        </div>
+        
+        <Navigation />
+        <div className="relative z-10 flex items-center justify-center min-h-[80vh]">
+          <div className="text-center bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-400 mx-auto mb-4" />
+            <p className="text-slate-300 text-lg">Scheduling your interview...</p>
+            <p className="text-slate-400 text-sm mt-2">Please wait while we confirm your time slot</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   if (isLoading) {

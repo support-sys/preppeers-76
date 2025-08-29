@@ -12,6 +12,12 @@ import {
   MINIMUM_SKILL_THRESHOLD
 } from "@/utils/interviewerMatching";
 import { getAvailableTimeSlotsForInterviewer } from "@/utils/availableTimeSlots";
+import { 
+  createTemporaryReservation, 
+  updateTemporaryToPermanent, 
+  releaseTemporaryReservation,
+  isTimeSlotAvailable 
+} from "@/utils/temporaryBlocking";
 
 
 
@@ -488,7 +494,7 @@ export const createInterviewTimeBlock = async (
   }
 };
 
-export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string, planDuration: number = 60) => {
+export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string, planDuration: number = 60, userId?: string) => {
   try {
     console.log("Scheduling interview with:", { candidate: userFullName });
     console.log("Full interviewer object:", { interviewer: interviewer.company });
@@ -562,10 +568,31 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
 
     console.log("📝 Sending interview data to edge function:", interviewData);
 
-    // Check for conflicting time blocks before booking
-    const hasConflict = await checkForConflictingTimeBlocks(interviewer.id, scheduledDateTime);
-    if (hasConflict) {
+    // Check if the time slot is still available (considering temporary blocks)
+    const isAvailable = await isTimeSlotAvailable(interviewer.id, scheduledDateTime, planDuration);
+    if (!isAvailable) {
+      console.log('❌ Time slot is no longer available, cannot schedule interview');
       throw new Error('This time slot is no longer available. Please select a different time.');
+    }
+
+    // Create temporary reservation to secure the slot during payment
+    let temporaryReservationId: string;
+    try {
+      // Get the current user ID from parameter or throw error
+      if (!userId) {
+        throw new Error('User ID is required to create temporary reservation. Please log in again.');
+      }
+      
+      temporaryReservationId = await createTemporaryReservation(
+        interviewer.id, 
+        scheduledDateTime, 
+        userId, // Use passed user ID
+        planDuration
+      );
+      console.log(`🔒 Created temporary reservation: ${temporaryReservationId}`);
+    } catch (reservationError) {
+      console.error('❌ Failed to create temporary reservation:', reservationError);
+      throw new Error('Unable to secure this time slot. Please try again or select a different time.');
     }
 
     // Call the edge function to handle interview scheduling
@@ -573,15 +600,95 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       body: interviewData
     });
 
+    console.log('🔍 Debug: Edge function response:', {
+      hasData: !!data,
+      dataKeys: data ? Object.keys(data) : 'no data',
+      fullData: data,
+      hasError: !!error,
+      errorMessage: error?.message
+    });
+
     if (error) {
       console.error('❌ Error calling schedule-interview function:', error);
-      throw error;
+      
+      // Release the temporary reservation if interview scheduling fails
+      if (temporaryReservationId) {
+        try {
+          await releaseTemporaryReservation(temporaryReservationId);
+          console.log('🔓 Released temporary reservation due to scheduling failure');
+        } catch (releaseError) {
+          console.error('❌ Failed to release temporary reservation:', releaseError);
+        }
+      }
+      
+      // Provide more specific error messages
+      if (error.message?.includes('400')) {
+        throw new Error('Invalid interview data. Please try again or contact support.');
+      } else if (error.message?.includes('409')) {
+        throw new Error('Time slot conflict detected. Please select a different time.');
+      } else {
+        throw new Error(`Interview scheduling failed: ${error.message || 'Unknown error'}`);
+      }
     }
 
-    // Create time block for the interviewer after successful booking
-    if (scheduledDateTime) {
-      await createInterviewTimeBlock(interviewer.id, scheduledDateTime, data.interview?.id, planDuration);
-      await blockInterviewerTimeSlot(interviewer.id, selectedTimeSlot); // Use original format for time slot blocking
+    // Convert temporary reservation to permanent block after successful booking
+    console.log('🔍 Debug: Checking data structure:', {
+      temporaryReservationId,
+      hasData: !!data,
+      dataKeys: data ? Object.keys(data) : 'no data',
+      interviewData: data?.interview,
+      interviewId: data?.interview?.id
+    });
+    
+    if (temporaryReservationId && data?.interview?.id) {
+      try {
+        await updateTemporaryToPermanent(temporaryReservationId, data.interview.id);
+        console.log('✅ Successfully updated temporary reservation to permanent block');
+      } catch (conversionError) {
+        // This is expected if the temporary reservation was already cleaned up
+        if (conversionError.message?.includes('not found or already converted') || 
+            conversionError.message?.includes('not found or already updated')) {
+          console.log('ℹ️ Temporary reservation already cleaned up - this is normal');
+        } else {
+          console.error('❌ Failed to update temporary reservation:', conversionError);
+        }
+        // Don't throw error here as the interview was scheduled successfully
+        // The temporary reservation cleanup is handled automatically
+      }
+    } else if (temporaryReservationId) {
+      // Fallback: Try to find the interview by candidate email and scheduled time
+      console.log('⚠️ Interview ID missing from response, trying fallback lookup...');
+      try {
+        const { data: fallbackInterview, error: fallbackError } = await supabase
+          .from('interviews')
+          .select('id')
+          .eq('candidate_email', userEmail)
+          .eq('scheduled_time', scheduledDateTime)
+          .eq('interviewer_id', interviewer.id)
+          .eq('status', 'scheduled')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (fallbackInterview?.id) {
+          console.log('✅ Found interview via fallback lookup:', fallbackInterview.id);
+          await updateTemporaryToPermanent(temporaryReservationId, fallbackInterview.id);
+          console.log('✅ Successfully updated temporary reservation to permanent block via fallback');
+        } else {
+          console.error('❌ Fallback lookup failed:', fallbackError);
+          console.log('⚠️ Temporary reservation will expire and be cleaned up automatically');
+        }
+      } catch (fallbackError) {
+        console.error('❌ Error in fallback lookup:', fallbackError);
+        console.log('⚠️ Temporary reservation will expire and be cleaned up automatically');
+      }
+    } else {
+      console.log('ℹ️ No temporary reservation to convert - interview scheduled directly');
+      console.log('🔍 Debug: Missing data:', {
+        hasTemporaryReservation: !!temporaryReservationId,
+        hasInterviewData: !!data?.interview,
+        hasInterviewId: !!data?.interview?.id
+      });
     }
 
     console.log("✅ Interview scheduled successfully:", data);

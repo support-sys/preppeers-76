@@ -114,20 +114,20 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
           <div className={`border-2 rounded-xl p-8 text-center backdrop-blur-sm ${isSuccessful ? 'bg-white/5 border-blue-400/30' : 'bg-white/5 border-orange-400/30'}`}>
             <Users className={`w-16 h-16 mx-auto mb-6 ${isSuccessful ? 'text-blue-400' : 'text-orange-400'}`} />
             <h3 className={`text-2xl font-bold mb-3 ${isSuccessful ? 'text-blue-400' : 'text-orange-400'}`}>
-              {isSuccessful ? 'Ready for Instant Matching!' : 'Almost Ready!'}
+              {isSuccessful ? 'Scheduling Your Interview!' : 'Almost Ready!'}
             </h3>
             <p className={`mb-6 text-lg ${isSuccessful ? 'text-blue-200' : 'text-orange-200'}`}>
               {isSuccessful 
-                ? "We'll instantly match you with the perfect interviewer based on your skills and requirements."
-                : "Your payment is being processed. Once confirmed, we'll start matching you with the perfect interviewer!"
+                ? "We're automatically scheduling your interview with the selected interviewer and time slot."
+                : "Your payment is being processed. Once confirmed, we'll automatically schedule your interview!"
               }
             </p>
             
             {isSuccessful ? (
-              <InstantMatchingButton 
-                onStartMatching={handleStartMatching}
-                isLoading={isMatching}
-              />
+              <div className="flex items-center justify-center space-x-3 text-blue-300">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-base font-medium">Scheduling your interview...</span>
+              </div>
             ) : (
               <div className="flex items-center justify-center space-x-3 text-orange-300">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -147,10 +147,10 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
             </div>
             <div className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">
               <div className={`font-bold text-lg mb-2 ${isSuccessful ? 'text-blue-400' : 'text-gray-500'}`}>
-                {isSuccessful ? '⚡ Instant Matching' : '⚡ Ready to Match'}
+                {isSuccessful ? '⚡ Auto-Scheduling' : '⚡ Ready to Schedule'}
               </div>
               <div className="text-sm text-slate-300">
-                {isSuccessful ? 'Find your interviewer now' : 'Waiting for payment'}
+                {isSuccessful ? 'Automatically scheduling now' : 'Waiting for payment'}
               </div>
             </div>
             <div className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-all duration-300">

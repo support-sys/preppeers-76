@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import AdminAuth from "./pages/admin/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import "@/services/cleanupService"; // Start cleanup service
 
 const queryClient = new QueryClient();
 

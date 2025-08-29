@@ -129,6 +129,9 @@ export type Database = {
           interviewer_id: string
           start_time: string
           updated_at: string
+          is_temporary: boolean
+          expires_at: string | null
+          reserved_by_user_id: string | null
         }
         Insert: {
           block_reason?: string
@@ -140,6 +143,9 @@ export type Database = {
           interviewer_id: string
           start_time: string
           updated_at?: string
+          is_temporary?: boolean
+          expires_at?: string | null
+          reserved_by_user_id?: string | null
         }
         Update: {
           block_reason?: string
@@ -151,6 +157,9 @@ export type Database = {
           interviewer_id?: string
           start_time?: string
           updated_at?: string
+          is_temporary?: boolean
+          expires_at?: string | null
+          reserved_by_user_id?: string | null
         }
         Relationships: [
           {
@@ -165,6 +174,13 @@ export type Database = {
             columns: ["interviewer_id"]
             isOneToOne: false
             referencedRelation: "interviewers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_interviewer_time_blocks_reserved_by_user_id"
+            columns: ["reserved_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
