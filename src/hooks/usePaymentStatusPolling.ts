@@ -16,6 +16,11 @@ interface PaymentSession {
   selected_plan?: string | null;
   interview_duration?: number | null;
   plan_details?: any | null;
+  interviewer_id?: string | null;
+  selected_time_slot?: string | null;
+  selected_date?: string | null;
+  plan_duration?: number | null;
+  match_score?: number | null;
   matched_interviewer?: any | null;
 }
 

@@ -326,7 +326,12 @@ export type Database = {
           selected_plan: string | null
           interview_duration: number | null
           plan_details: Json | null
-          matched_interviewer: Json | null
+          matched_interviewer: Json | null,
+      interviewer_id: string | null,
+      selected_time_slot: string | null,
+      selected_date: string | null,
+      plan_duration: number | null,
+      match_score: number | null
         }
         Insert: {
           amount: number
@@ -361,6 +366,11 @@ export type Database = {
           interview_duration?: number | null
           plan_details?: Json | null
           matched_interviewer?: Json | null
+          interviewer_id?: string | null
+          selected_time_slot?: string | null
+          selected_date?: string | null
+          plan_duration?: number | null
+          match_score?: number | null
         }
         Relationships: []
       }

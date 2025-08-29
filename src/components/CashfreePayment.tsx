@@ -142,7 +142,12 @@ const CashfreePayment = ({
         interview_duration: selectedPlan?.duration || 60,
         plan_details: selectedPlan as any,
         payment_status: 'pending',
-        matched_interviewer: candidateData.matchedInterviewer || null
+        matched_interviewer: candidateData.matchedInterviewer || null,
+        interviewer_id: candidateData.matchedInterviewer?.id || null,
+        selected_time_slot: candidateData.timeSlot || null,
+        selected_date: candidateData.timeSlot ? new Date(candidateData.timeSlot).toISOString().split('T')[0] : null,
+        plan_duration: candidateData.interviewDuration || 60,
+        match_score: candidateData.matchedInterviewer?.matchScore || null
       };
       
       console.log('Creating payment session with data:', paymentSessionData);
