@@ -198,7 +198,11 @@ serve(async (req) => {
         experience: candidateData.experienceYears?.toString() || 'Not specified',
         scheduled_time: scheduledTimeISO,
         status: 'scheduled',
-        resume_url: candidateData.resumeUrl
+        resume_url: candidateData.resumeUrl,
+        // FIX: Add missing plan data to ensure interview record matches payment session
+        selected_plan: candidateData.selectedPlan || candidateData.selected_plan,
+        interview_duration: candidateData.interviewDuration || candidateData.interview_duration || candidateData.plan_duration,
+        plan_details: candidateData.plan_details
       }
     });
 
