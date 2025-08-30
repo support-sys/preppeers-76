@@ -101,15 +101,14 @@ const handler = async (req: Request): Promise<Response> => {
       metadata,
       selected_plan,
       plan_details
-    }: PaymentSessionRequest = requestBody;
+    } = requestBody;
 
     // Validate required fields
     if (!amount || !customer_email || !order_id) {
-      console.error('Missing required fields:', { amount, customer_email, order_id });
       return new Response(
         JSON.stringify({ 
-          error: 'Missing required fields: amount, customer_email, or order_id',
-          message: 'Validation failed'
+          error: 'Missing required fields',
+          message: 'Amount, customer_email, and order_id are required'
         }),
         {
           status: 400,
@@ -121,48 +120,53 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Creating payment session for:', { order_id, amount, customer_email });
-
-    // Determine if we're in test mode
-    const isTestMode = Deno.env.get('CASHFREE_TEST_MODE') === 'true' || Deno.env.get('NODE_ENV') === 'development';
-    
-    // Use appropriate credentials based on test mode
-    let cashfreeAppId: string | undefined;
-    let cashfreeSecretKey: string | undefined;
-    
-    if (isTestMode) {
-      // Use test credentials
-      cashfreeAppId = Deno.env.get('CASHFREE_APP_ID_TEST');
-      cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY_TEST');
-      console.log('🔧 TEST MODE: Using test credentials');
-    } else {
-      // Use production credentials
-      cashfreeAppId = Deno.env.get('CASHFREE_APP_ID');
-      cashfreeSecretKey = Deno.env.get('CASHFREE_SECRET_KEY');
-      console.log('🚀 PRODUCTION MODE: Using production credentials');
-    }
-
-    if (!cashfreeAppId || !cashfreeSecretKey) {
-      const missingCredentials = [];
-      if (!cashfreeAppId) missingCredentials.push('APP_ID');
-      if (!cashfreeSecretKey) missingCredentials.push('SECRET_KEY');
-      
-      console.error(`Missing Cashfree ${isTestMode ? 'TEST' : 'PRODUCTION'} credentials:`, missingCredentials.join(', '));
-      console.error('Environment variables checked:');
-      if (isTestMode) {
-        console.error('- CASHFREE_APP_ID_TEST:', !!Deno.env.get('CASHFREE_APP_ID_TEST'));
-        console.error('- CASHFREE_SECRET_KEY_TEST:', !!Deno.env.get('CASHFREE_SECRET_KEY_TEST'));
-      } else {
-        console.error('- CASHFREE_APP_ID:', !!Deno.env.get('CASHFREE_APP_ID'));
-        console.error('- CASHFREE_SECRET_KEY:', !!Deno.env.get('CASHFREE_SECRET_KEY'));
+    // Extract user_id from JWT token (this is the authenticated user)
+    let user_id: string;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      user_id = payload.sub;
+      if (!user_id) {
+        throw new Error('No user_id in token');
       }
-      
+    } catch (error) {
+      console.error('Error extracting user_id from token:', error);
       return new Response(
         JSON.stringify({ 
-          error: 'Payment service configuration error',
-          message: `Cashfree ${isTestMode ? 'test' : 'production'} credentials not configured`,
-          details: `Missing: ${missingCredentials.join(', ')}`,
-          mode: isTestMode ? 'test' : 'production'
+          error: 'Invalid token',
+          message: 'Could not extract user_id from token'
+        }),
+        {
+          status: 401,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          },
+        }
+      );
+    }
+
+    console.log('Extracted user_id from token:', user_id);
+
+    // Determine if we're in test mode based on environment
+    const isTestMode = Deno.env.get('CASHFREE_MODE') === 'test' || 
+                      Deno.env.get('NODE_ENV') === 'development' ||
+                      Deno.env.get('NODE_ENV') === 'test';
+
+    // Get Cashfree credentials based on mode
+    const cashfreeAppId = isTestMode 
+      ? Deno.env.get('CASHFREE_TEST_APP_ID')
+      : Deno.env.get('CASHFREE_PROD_APP_ID');
+    
+    const cashfreeSecretKey = isTestMode 
+      ? Deno.env.get('CASHFREE_TEST_SECRET_KEY')
+      : Deno.env.get('CASHFREE_PROD_SECRET_KEY');
+
+    if (!cashfreeAppId || !cashfreeSecretKey) {
+      console.error('Missing Cashfree credentials');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Configuration error',
+          message: 'Missing Cashfree credentials'
         }),
         {
           status: 500,
@@ -174,8 +178,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Using Cashfree ${isTestMode ? 'TEST' : 'PRODUCTION'} App ID:`, cashfreeAppId);
-    console.log(`Mode: ${isTestMode ? 'TEST/SANDBOX' : 'PRODUCTION'}`);
+    console.log('Using Cashfree mode:', isTestMode ? 'TEST' : 'PRODUCTION');
 
     // Sanitize customer_id to meet Cashfree requirements
     const sanitizedCustomerId = sanitizeCustomerId(customer_email);
@@ -222,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
         customer_phone: customer_phone || '+919999999999' // Fallback to test number with country code if not provided
       },
       order_meta: {
-        return_url: return_url || `${new URL(req.url).origin}/book?payment=success`,
+        return_url: return_url || 'https://example.com/book?payment=success', // Use HTTPS for Cashfree requirement
         notify_url: webhookUrl, // Use the correct webhook URL
       },
       order_note: 'Mock Interview Payment',

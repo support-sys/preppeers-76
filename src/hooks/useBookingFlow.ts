@@ -18,6 +18,23 @@ export const useBookingFlow = () => {
   const { user } = useAuth();
   const { paymentSession, markInterviewMatched, isInterviewAlreadyMatched } = usePaymentStatus();
 
+  // Helper function to parse human-readable time slot to date
+  const parseTimeSlotToDate = (timeSlot: string): string | null => {
+    try {
+      // Handle format: "Monday, 08/09/2025 17:00-17:30"
+      const match = timeSlot.match(/(\w+), (\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      if (match) {
+        const [, day, date, month, year, hour, minute] = match;
+        const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(date), parseInt(hour), parseInt(minute));
+        return dateObj.toISOString().split('T')[0];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing time slot:', error);
+      return null;
+    }
+  };
+
   const handleFormSubmit = async (data: any) => {
     // Validate required fields
     if (!data.timeSlot) {
@@ -115,7 +132,7 @@ export const useBookingFlow = () => {
         interviewer_id: matchedInterviewer?.id,
         interviewer_user_id: matchedInterviewer?.user_id,
         selected_time_slot: timeSlot || prev.selectedTimeSlot || prev.timeSlot,
-        selected_date: timeSlot ? new Date(timeSlot).toISOString().split('T')[0] : null,
+        selected_date: timeSlot ? parseTimeSlotToDate(timeSlot) : null,
         plan_duration: prev.interviewDuration || 60,
         match_score: matchedInterviewer?.matchScore || 0,
         selected_plan: prev.selectedPlan || 'professional',

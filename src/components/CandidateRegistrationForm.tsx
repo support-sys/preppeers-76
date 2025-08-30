@@ -129,7 +129,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
     
     // Interview Preferences
     timeSlot: "",
-    noticePeriod: "",
+    noticePeriod: "not_on_notice", // Default to "not on notice period"
     
     // Professional Links
     linkedinUrl: "",
@@ -270,31 +270,13 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
     if (!formData.skillCategories.length || !formData.currentPosition || !formData.resume) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields (Skill Categories, Current Position, Resume, Specific Skills).",
+        description: "Please fill in all required fields (Skill Categories, Current Position, Resume).",
         variant: "destructive",
       });
       return;
     }
 
-    // Validate specific skills are selected
-    if (!formData.specificSkills.length) {
-      toast({
-        title: "Specific Skills Required",
-        description: "Please select at least one specific skill from your chosen categories.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    // Validate time slot is mandatory
-    if (!formData.timeSlot) {
-      toast({
-        title: "Time Slot Required",
-        description: "Please select your preferred interview date and time.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     // Validate time slot is in the future
     const selectedDate = new Date(formData.timeSlot);
@@ -340,8 +322,8 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
             user_id: user.id,
             current_position: formData.currentPosition,
             experience: formData.experienceYears.toString() + " years",
-            notice_period: formData.noticePeriod,
-            target_role: formData.skillCategories.join(', ') || 'Not specified',
+            notice_period: formData.noticePeriod || 'not_on_notice',
+            target_role: formData.skillCategories.length > 0 ? formData.skillCategories.join(', ') : 'Not specified',
             linkedin_url: formData.linkedinUrl || null,
             github_url: formData.githubUrl || null,
             bio: formData.bio || null,
@@ -353,9 +335,27 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
 
         if (error) {
           console.error("Error saving candidate data:", error);
+          console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
+          console.error("Data being sent:", {
+            user_id: user.id,
+            current_position: formData.currentPosition,
+            experience: formData.experienceYears.toString() + " years",
+            notice_period: formData.noticePeriod || 'not_on_notice',
+            target_role: formData.skillCategories.length > 0 ? formData.skillCategories.join(', ') : 'Not specified',
+            linkedin_url: formData.linkedinUrl || null,
+            github_url: formData.githubUrl || null,
+            bio: formData.bio || null,
+            resume_url: resumeUrl || null,
+            updated_at: new Date().toISOString()
+          });
           toast({
             title: "Error",
-            description: "Failed to save your information. Please try again.",
+            description: `Failed to save your information: ${error.message}`,
             variant: "destructive",
           });
           return;
@@ -556,8 +556,8 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
 
               {availableSpecificSkills.length > 0 && (
                 <div>
-                  <Label className="text-white">Specific Skills *</Label>
-                  <p className="text-sm text-slate-400 mb-2">Select all skill you want to be interviewed on</p>
+                  <Label className="text-white">Specific Skills</Label>
+                  <p className="text-sm text-slate-400 mb-2">Select only 3-5 core skills for the best interview experience.</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                     {availableSpecificSkills.map(skill => (
                       <div key={skill} className="flex items-center space-x-2">
@@ -571,6 +571,11 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
                       </div>
                     ))}
                   </div>
+                  {formData.specificSkills.length > 5 && (
+                    <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-300">
+                      ⚠️ You've selected {formData.specificSkills.length} skills. Consider focusing on fewer skills for a more in-depth interview experience.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -591,17 +596,17 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
 
-              <div>
-                <Label className="text-white">Preferred Interview Time *</Label>
-                <TimeSlotPicker
-                  value={formData.timeSlot}
-                  onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
-                  disabled={isLoading}
-                />
-              </div>
+                      <div>
+          <Label className="text-white">Preferred Interview Time</Label>
+          <TimeSlotPicker
+            value={formData.timeSlot}
+            onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
+            disabled={isLoading}
+          />
+        </div>
 
               <div>
-                <Label className="text-white">Notice Period</Label>
+                                  <Label className="text-white">Notice Period</Label>
                 <RadioGroup
                   value={formData.noticePeriod}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, noticePeriod: value }))}

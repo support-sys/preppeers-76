@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -25,6 +24,35 @@ interface InterviewData {
   interview_duration?: number;
   plan_details?: any;
 }
+
+// Helper function to parse human-readable time slot to ISO timestamp
+const parseTimeSlotToISO = (timeSlot: string): string => {
+  try {
+    // Handle format: "Monday, 08/09/2025 17:00-17:30"
+    const match = timeSlot.match(/(\w+), (\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (match) {
+      const [, day, date, month, year, hour, minute] = match;
+      
+      // The input time is intended to be 17:30 IST
+      // We need to store it as a simple date string without timezone conversion
+      // This ensures that when frontend reads it, it displays correctly
+      const dateString = `${year}-${month.padStart(2, '0')}-${date.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+      
+      console.log('🕐 Parsing time:', { 
+        original: timeSlot, 
+        parsed: dateString,
+        intended: `${year}-${month}-${date} ${hour}:${minute} IST`
+      });
+      
+      return dateString;
+    }
+    // If no match, try to parse as ISO string directly
+    return new Date(timeSlot).toISOString();
+  } catch (error) {
+    console.error('Error parsing time slot:', error);
+    throw new Error(`Invalid time slot format: ${timeSlot}`);
+  }
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -75,13 +103,18 @@ serve(async (req) => {
     // Create Google Meet link
     console.log("🎯 Creating Google Meet link...");
     const durationMinutes = interviewData.interview_duration || 60; // Default to 60 minutes if not specified
+    
+    // Parse the scheduled_time to ISO format
+    const parsedScheduledTime = parseTimeSlotToISO(interviewData.scheduled_time);
+    console.log("🕐 Parsed scheduled time:", { original: interviewData.scheduled_time, parsed: parsedScheduledTime });
+    
     const meetResponse = await supabaseClient.functions.invoke('create-google-meet', {
       body: {
         interviewId: `interview-${Date.now()}`,
         summary: `Mock Interview: ${interviewData.target_role}`,
         description: `Mock interview session for ${interviewData.candidate_name} applying for ${interviewData.target_role}`,
-        startTime: interviewData.scheduled_time,
-        endTime: new Date(new Date(interviewData.scheduled_time).getTime() + durationMinutes * 60 * 1000).toISOString(), // Use plan duration
+        startTime: parsedScheduledTime,
+        endTime: new Date(new Date(parsedScheduledTime).getTime() + durationMinutes * 60 * 1000).toISOString(), // Use plan duration
         attendees: [interviewData.candidate_email, interviewerEmail],
       }
     });
@@ -105,6 +138,7 @@ serve(async (req) => {
     }
 
     // Create interview record in database
+    console.log("📝 Creating interview record in database...");
     const { data: interview, error: interviewError } = await supabaseClient
       .from("interviews")
       .insert({
@@ -117,7 +151,7 @@ serve(async (req) => {
         target_role: interviewData.target_role,
         specific_skills: interviewData.specific_skills || [],
         experience: interviewData.experience,
-        scheduled_time: interviewData.scheduled_time,
+        scheduled_time: parsedScheduledTime, // Use parsed time instead of original
         status: interviewData.status,
         resume_url: interviewData.resume_url,
         selected_plan: interviewData.selected_plan || 'professional',
@@ -155,7 +189,7 @@ serve(async (req) => {
         interviewerEmail: interviewerEmail,
         interviewerName: finalInterviewerName,
         targetRole: interviewData.target_role,
-        scheduledTime: interviewData.scheduled_time,
+        scheduledTime: parsedScheduledTime, // Use parsed time instead of original
         meetLink: meetLink,
         type: 'confirmation',
       }

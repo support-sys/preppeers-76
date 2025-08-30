@@ -72,6 +72,23 @@ const CashfreePayment = ({
   onError,
   selectedPlan 
 }: CashfreePaymentProps) => {
+  // Helper function to parse human-readable time slot to date
+  const parseTimeSlotToDate = (timeSlot: string): string | null => {
+    try {
+      // Handle format: "Monday, 08/09/2025 17:00-17:30"
+      const match = timeSlot.match(/(\w+), (\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      if (match) {
+        const [, day, date, month, year, hour, minute] = match;
+        const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(date), parseInt(hour), parseInt(minute));
+        return dateObj.toISOString().split('T')[0];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing time slot:', error);
+      return null;
+    }
+  };
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -145,7 +162,7 @@ const CashfreePayment = ({
         matched_interviewer: candidateData.matchedInterviewer || null,
         interviewer_id: candidateData.matchedInterviewer?.id || null,
         selected_time_slot: candidateData.timeSlot || null,
-        selected_date: candidateData.timeSlot ? new Date(candidateData.timeSlot).toISOString().split('T')[0] : null,
+        selected_date: candidateData.timeSlot ? parseTimeSlotToDate(candidateData.timeSlot) : null,
         plan_duration: candidateData.interviewDuration || 60,
         match_score: candidateData.matchedInterviewer?.matchScore || null
       };

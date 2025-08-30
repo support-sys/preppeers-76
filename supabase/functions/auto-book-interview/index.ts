@@ -159,6 +159,33 @@ serve(async (req) => {
 
     // Book the interview
     console.log('📅 Booking interview automatically...');
+    
+    // Convert human-readable time slot to ISO timestamp for database
+    let scheduledTimeISO = selectedTimeSlot;
+    if (selectedTimeSlot && !selectedTimeSlot.includes('T')) {
+      try {
+        // Parse format: "Monday, 08/09/2025 17:00-17:30"
+        const match = selectedTimeSlot.match(/(\w+), (\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+        if (match) {
+          const [, day, date, month, year, hour, minute] = match;
+          
+          // The input time is intended to be 17:30 IST
+          // We need to store it as a simple date string without timezone conversion
+          const dateString = `${year}-${month.padStart(2, '0')}-${date.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+          
+          scheduledTimeISO = dateString;
+          console.log('🕐 Converted time slot:', { 
+            original: selectedTimeSlot, 
+            intended: `${year}-${month}-${date} ${hour}:${minute} IST`,
+            iso: scheduledTimeISO 
+          });
+        }
+      } catch (error) {
+        console.error('Error converting time slot:', error);
+        // Fallback to original
+      }
+    }
+
     const scheduleResponse = await supabaseClient.functions.invoke('schedule-interview', {
       body: {
         interviewer_id: matchedInterviewer.id,
@@ -169,7 +196,7 @@ serve(async (req) => {
         interviewer_name: matchedInterviewer.interviewer_name,
         target_role: candidateData.skillCategories?.join(', ') || 'Not specified',
         experience: candidateData.experienceYears?.toString() || 'Not specified',
-        scheduled_time: selectedTimeSlot,
+        scheduled_time: scheduledTimeISO,
         status: 'scheduled',
         resume_url: candidateData.resumeUrl
       }
@@ -178,6 +205,63 @@ serve(async (req) => {
     if (scheduleResponse.error) {
       console.error('Error scheduling interview:', scheduleResponse.error);
       throw new Error('Failed to schedule interview');
+    }
+
+    // Debug: Check what's in the schedule response
+    console.log('🔄 Schedule response data:', scheduleResponse.data);
+    console.log('🔄 Interview ID from response:', scheduleResponse.data?.interview?.id);
+
+    // Update temporary reservation to interview_scheduled after successful interview scheduling
+    // Force deployment - added comprehensive debugging for temporary reservation cleanup
+    console.log('🔄 Updating temporary reservation to interview_scheduled...');
+    try {
+      // Parse the time slot to get the date for update
+      if (selectedTimeSlot && !selectedTimeSlot.includes('T')) {
+        console.log('🔄 Parsing time slot:', selectedTimeSlot);
+        
+        // Handle formats: "Monday, 08/09/2025 17:00-17:30" and "Tuesday, 02/09/2025 17:30-18:00"
+        // The system generates different date formats, so we need a more flexible regex
+        // Also handle potential variations in spacing and formatting
+        const match = selectedTimeSlot.match(/(\w+),\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+        if (match) {
+          const [, day, date, month, year, hour, minute] = match;
+          const blockDate = `${year}-${month.padStart(2, '0')}-${date.padStart(2, '0')}`;
+          const startTime = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+          
+          console.log('🔄 Extracted components:', { day, date, month, year, hour, minute });
+          console.log('🔄 Looking for:', { blockDate, startTime });
+          
+          // Update the temporary reservation to interview_scheduled
+          const { error: updateBlockError } = await supabaseClient
+            .from('interviewer_time_blocks')
+            .update({
+              block_reason: 'interview_scheduled',
+              is_temporary: false,
+              interview_id: scheduleResponse.data?.interview?.id || null,
+              updated_at: new Date().toISOString(),
+              expires_at: null // Remove expiration since it's now a permanent block
+            })
+            .eq('interviewer_id', matchedInterviewer.id)
+            .eq('blocked_date', blockDate)
+            .eq('start_time', startTime)
+            .eq('block_reason', 'temporary_reservation')
+            .eq('is_temporary', true);
+
+          if (updateBlockError) {
+            console.error('Warning: Failed to update temporary reservation:', updateBlockError);
+            console.error('Update query details:', { blockDate, startTime, interviewerId: matchedInterviewer.id });
+          } else {
+            console.log('✅ Temporary reservation updated to interview_scheduled successfully');
+          }
+        } else {
+          console.error('❌ Failed to parse time slot format:', selectedTimeSlot);
+        }
+      } else {
+        console.log('🔄 Skipping cleanup - time slot format not supported:', selectedTimeSlot);
+      }
+    } catch (updateBlockError) {
+      console.error('Warning: Error during temporary reservation update:', updateBlockError);
+      // Don't fail the interview booking if update fails
     }
 
     // Update payment session to mark interview as matched

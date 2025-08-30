@@ -25,10 +25,28 @@ export const createTemporaryReservation = async (
     console.log(`🔒 Creating temporary reservation for ${timeSlot} (${durationMinutes} min)`);
     
     // Parse the time slot to get date and time components
-    const scheduledDate = new Date(timeSlot);
+    // Handle format: "Tuesday, 02/09/2025 17:30-18:00"
+    const dateTimeMatch = timeSlot.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    
+    if (!dateTimeMatch) {
+      throw new Error(`Invalid time slot format: ${timeSlot}. Expected format: "DD/MM/YYYY HH:MM"`);
+    }
+    
+    const [, day, month, year, hour, minute] = dateTimeMatch;
+    
+    // Create date in DD/MM/YYYY format (European format)
+    const scheduledDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
     const scheduledDateStr = format(scheduledDate, 'yyyy-MM-dd');
     const startTime = format(scheduledDate, 'HH:mm');
     const endTime = format(addMinutes(scheduledDate, durationMinutes), 'HH:mm');
+    
+    // Debug logging for date parsing
+    console.log(`🔍 Date parsing debug:`);
+    console.log(`  Original timeSlot: ${timeSlot}`);
+    console.log(`  Parsed components: day=${day}, month=${month}, year=${year}, hour=${hour}, minute=${minute}`);
+    console.log(`  Created Date object: ${scheduledDate.toISOString()}`);
+    console.log(`  Formatted date: ${scheduledDateStr}`);
+    console.log(`  Start time: ${startTime}, End time: ${endTime}`);
     
     // Calculate expiration time (10 minutes from now)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
