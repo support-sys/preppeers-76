@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Star, User, Calendar, Clock, Building, FileText, Code, Award } from 'lucide-react';
+import { Star, User, Calendar, Clock, Building, FileText, Code } from 'lucide-react';
 import { formatDateTimeIST } from '@/utils/dateUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,8 +25,6 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
   const [candidateDetails, setCandidateDetails] = useState({
     name: "Loading...",
     experience: "Loading...",
-    skills: [] as string[],
-    technologies: [] as string[],
     resumeUrl: ""
   });
 
@@ -100,8 +98,6 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
     try {
       console.log('Fetching candidate details for interview:', interview);
       
-      let skills: string[] = [];
-      let technologies: string[] = [];
       let candidateName = interview?.candidate_name || "N/A";
       let experience = interview?.experience || "N/A";
       let resumeUrl = interview?.resume_url || "";
@@ -120,15 +116,6 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
           const candidateData = paymentSessions[0].candidate_data as any;
           console.log('Found candidate data from payment session:', candidateData);
 
-          // Extract skill categories and specific skills
-          if (candidateData?.skillCategories && Array.isArray(candidateData.skillCategories)) {
-            skills = candidateData.skillCategories;
-          }
-          
-          if (candidateData?.specificSkills && Array.isArray(candidateData.specificSkills)) {
-            technologies = candidateData.specificSkills;
-          }
-
           // Update other details if available
           if (candidateData?.targetRole) {
             // candidateName is already set from interview data
@@ -139,40 +126,9 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
         }
       }
 
-      // If no skills found, try to get from interviewee profile
-      if (skills.length === 0 && technologies.length === 0 && interview?.candidate_email) {
-        const { data: intervieweeData, error: intervieweeError } = await supabase
-          .from('interviewees')
-          .select('target_role, experience')
-          .eq('user_id', interview.candidate_id)
-          .maybeSingle();
-
-        if (!intervieweeError && intervieweeData) {
-          console.log('Found interviewee data:', intervieweeData);
-          
-          if (intervieweeData.target_role) {
-            // Use target role as a skill
-            skills = [intervieweeData.target_role];
-          }
-          
-          // Note: interviewees table doesn't have skills_to_practice column
-          // Skills are typically stored in the interviewers table
-        }
-      }
-
-      // If still no data, use fallback
-      if (skills.length === 0) {
-        skills = ["Skills not specified"];
-      }
-      if (technologies.length === 0) {
-        technologies = ["Technologies not specified"];
-      }
-
       setCandidateDetails({
         name: candidateName,
         experience: experience,
-        skills: skills,
-        technologies: technologies,
         resumeUrl: resumeUrl
       });
 
@@ -182,8 +138,6 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
       setCandidateDetails({
         name: interview?.candidate_name || "N/A",
         experience: interview?.experience || "N/A",
-        skills: ["Skills not specified"],
-        technologies: ["Technologies not specified"],
         resumeUrl: interview?.resume_url || ""
       });
     }
@@ -283,34 +237,6 @@ const InterviewDetailsDialog = ({ interview, userRole, open, onClose }: Intervie
                   <div>
                     <label className="text-slate-400 text-sm">Experience</label>
                     <p className="text-white">{candidateDetails.experience} years</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-slate-400 text-sm flex items-center gap-1">
-                      <Code className="w-3 h-3" />
-                      Skills
-                    </label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {candidateDetails.skills.map((skill, index) => (
-                        <span key={index} className="bg-blue-600/20 text-blue-300 px-2 py-1 rounded-md text-xs">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-slate-400 text-sm flex items-center gap-1">
-                      <Award className="w-3 h-3" />
-                      Technologies
-                    </label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {candidateDetails.technologies.map((tech, index) => (
-                        <span key={index} className="bg-green-600/20 text-green-300 px-2 py-1 rounded-md text-xs">
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                   
                   {candidateDetails.resumeUrl && (

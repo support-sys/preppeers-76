@@ -64,6 +64,7 @@ interface Interview {
   selected_plan?: string;
   interview_duration?: number;
   plan_details?: any;
+  specific_skills?: string[]; // ← ADD THIS FIELD
 }
 
 const InterviewerDashboard = () => {
@@ -366,6 +367,11 @@ const InterviewerDashboard = () => {
                     <p className="text-slate-400 text-sm">
                       {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                     </p>
+                    {interview.specific_skills && interview.specific_skills.length > 0 && (
+                      <p className="text-blue-400 text-sm">
+                        Skills: {interview.specific_skills.join(', ')}
+                      </p>
+                    )}
                     {interview.google_meet_link && (
                       <p className="text-green-400 text-sm flex items-center mt-1">
                         <Video className="w-3 h-3 mr-1" />
@@ -461,6 +467,11 @@ const InterviewerDashboard = () => {
                     <p className="text-slate-400 text-sm">
                       {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                     </p>
+                    {interview.specific_skills && interview.specific_skills.length > 0 && (
+                      <p className="text-blue-400 text-sm">
+                        Skills: {interview.specific_skills.join(', ')}
+                      </p>
+                    )}
                     <p className="text-slate-400 text-sm capitalize">
                       Status: {interview.status}
                     </p>

@@ -202,7 +202,9 @@ serve(async (req) => {
         // FIX: Add missing plan data to ensure interview record matches payment session
         selected_plan: candidateData.selectedPlan || candidateData.selected_plan,
         interview_duration: candidateData.interviewDuration || candidateData.interview_duration || candidateData.plan_duration,
-        plan_details: candidateData.plan_details
+        plan_details: candidateData.plan_details,
+        // FIX: Add missing specific skills to ensure interview record includes candidate skills
+        specific_skills: candidateData.specificSkills || []
       }
     });
 
