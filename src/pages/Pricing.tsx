@@ -14,10 +14,7 @@ const Pricing = () => {
       description: "Perfect for quick interview practice and basic feedback",
       features: [
         "30-minute focused mock interview session",
-        "Real-time verbal feedback during the interview",
-        "Basic interview performance assessment",
-        "Quick tips and improvement suggestions",
-        "Interview recording (optional)"
+        "Basic verbal feedback during the interview"
       ],
       popular: false,
       buttonText: "Get Started"
@@ -28,7 +25,7 @@ const Pricing = () => {
       description: "Most popular choice for comprehensive interview preparation",
       features: [
         "60-minute comprehensive mock interview",
-        "Detailed written feedback report (PDF)",
+        "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
         "Personalized action plan for improvement",
         "Interview performance analysis",
         "Follow-up support and guidance",
@@ -44,12 +41,13 @@ const Pricing = () => {
       description: "Premium career development package with complete support",
       features: [
         "60-minute comprehensive mock interview",
-        "Detailed written feedback report (PDF)",
+        "Professional Resume Feedback (not during mock interview)",
+        "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
         "Personalized action plan for improvement",
-        "Professional resume review and optimization",
-        "Career development guidance session",
-        "Priority support and follow-up",
-        "1-month follow-up support"
+        "Interview performance analysis",
+        "Follow-up support and guidance",
+        "Interview recording (optional)",
+        "Priority customer support"
       ],
       popular: false,
       buttonText: "Go Executive"

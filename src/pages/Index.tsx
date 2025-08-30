@@ -355,9 +355,7 @@ const Index = () => {
                 <p className="text-slate-300 mb-6">Quick practice session</p>
                 <ul className="text-slate-300 text-left space-y-2">
                   <li>• 30-minute focused session</li>
-                  <li>• Real-time verbal feedback</li>
-                  <li>• Basic performance assessment</li>
-                  <li>• Quick improvement tips</li>
+                  <li>• Basic verbal feedback</li>
                 </ul>
               </div>
 
@@ -370,7 +368,7 @@ const Index = () => {
                 <p className="text-slate-300 mb-6">Complete interview prep</p>
                 <ul className="text-slate-300 text-left space-y-2">
                   <li>• 60-minute comprehensive session</li>
-                  <li>• Detailed written feedback (PDF)</li>
+                  <li>• Comprehensive feedback report covering technical skills, communication, behavior & presentation</li>
                   <li>• Personalized action plan</li>
                   <li>• Follow-up support</li>
                 </ul>
@@ -382,9 +380,9 @@ const Index = () => {
                 <p className="text-slate-300 mb-6">Premium career package</p>
                 <ul className="text-slate-300 text-left space-y-2">
                   <li>• 60-minute comprehensive session</li>
-                  <li>• Professional resume review</li>
-                  <li>• Career development guidance</li>
-                  <li>• 1-month follow-up support</li>
+                  <li>• Professional resume feedback</li>
+                  <li>• Comprehensive feedback report covering technical skills, communication, behavior & presentation</li>
+                  <li>• Priority customer support</li>
                 </ul>
               </div>
             </div>

@@ -21,10 +21,7 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
     shortDescription: "Quick practice session with basic feedback",
     features: [
       "30-minute focused mock interview session",
-      "Real-time verbal feedback during the interview",
-      "Basic interview performance assessment",
-      "Quick tips and improvement suggestions",
-      "Interview recording (optional)"
+      "Basic verbal feedback during the interview"
     ],
     limitations: [
       "No detailed written feedback report",
@@ -44,7 +41,7 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
     isRecommended: true,
     features: [
       "60-minute comprehensive mock interview",
-      "Detailed written feedback report (PDF)",
+      "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
       "Personalized action plan for improvement",
       "Interview performance analysis",
       "Follow-up support and guidance",
@@ -66,14 +63,13 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
     shortDescription: "Premium package with resume review & career coaching",
     features: [
       "60-minute comprehensive mock interview",
-      "Detailed written feedback report (PDF)",
+      "Professional Resume Feedback (not during mock interview)",
+      "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
       "Personalized action plan for improvement",
-      "Professional resume review and optimization",
-      "Career development guidance session",
-      "Priority support and follow-up",
+      "Interview performance analysis",
+      "Follow-up support and guidance",
       "Interview recording (optional)",
-      "Complete career booster package",
-      "1-month follow-up support"
+      "Priority customer support"
     ],
     limitations: [
       "Premium pricing for comprehensive service"
