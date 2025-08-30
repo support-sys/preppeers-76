@@ -220,7 +220,7 @@ serve(async (req) => {
     console.log('🔄 Updating temporary reservation to interview_scheduled...');
     try {
       // Parse the time slot to get the date for update
-      if (selectedTimeSlot && !selectedTimeSlot.includes('T')) {
+      if (selectedTimeSlot) {
         console.log('🔄 Parsing time slot:', selectedTimeSlot);
         
         // Handle formats: "Monday, 08/09/2025 17:00-17:30" and "Tuesday, 02/09/2025 17:30-18:00"

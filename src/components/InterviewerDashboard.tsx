@@ -13,6 +13,43 @@ import TimeSlotManager from './TimeSlotManager';
 import InterviewDetailsDialog from './InterviewDetailsDialog';
 import { formatDateTimeIST } from '@/utils/dateUtils';
 
+// Helper function to format plan name
+const formatPlanName = (plan: string): string => {
+  if (!plan) return 'Standard';
+  return plan.charAt(0).toUpperCase() + plan.slice(1);
+};
+
+// Helper function to format duration
+const formatDuration = (duration: number): string => {
+  if (!duration) return '60 Minutes';
+  return `${duration} Minutes`;
+};
+
+// Helper function to format experience
+const formatExperience = (experience: string): string => {
+  if (experience === '0' || experience === '0 years' || experience === '0 year') {
+    return 'Fresher';
+  }
+  return `${experience} experience`;
+};
+
+// Helper function to format time range
+const formatTimeRange = (scheduledTime: string, duration: number = 60): string => {
+  try {
+    const startTime = new Date(scheduledTime);
+    const endTime = new Date(startTime.getTime() + duration * 60000); // Add duration in milliseconds
+    
+    const startTimeStr = formatDateTimeIST(scheduledTime);
+    const endTimeFormatted = formatDateTimeIST(endTime.toISOString());
+    const endTimeStr = endTimeFormatted.split(', ').pop() || '6:30 pm'; // Extract just the time part
+    
+    return `${startTimeStr} • ${endTimeStr}`;
+  } catch (error) {
+    console.error('Error formatting time range:', error);
+    return formatDateTimeIST(scheduledTime);
+  }
+};
+
 interface Interview {
   id: string;
   candidate_name: string;
@@ -24,6 +61,9 @@ interface Interview {
   resume_url?: string;
   google_meet_link?: string;
   google_calendar_event_id?: string;
+  selected_plan?: string;
+  interview_duration?: number;
+  plan_details?: any;
 }
 
 const InterviewerDashboard = () => {
@@ -319,13 +359,12 @@ const InterviewerDashboard = () => {
               {upcomingInterviews.map((interview) => (
                 <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                   <div className="flex-1">
-                    <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
+                    <h3 className="text-white font-semibold">{interview.target_role}</h3>
                     <p className="text-slate-300">
-                      {formatDateTimeIST(interview.scheduled_time)} • {interview.target_role}
-                      
+                      {formatTimeRange(interview.scheduled_time, interview.interview_duration || 60)}
                     </p>
                     <p className="text-slate-400 text-sm">
-                      Experience: {interview.experience} • {interview.candidate_email}
+                      {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                     </p>
                     {interview.google_meet_link && (
                       <p className="text-green-400 text-sm flex items-center mt-1">
@@ -415,12 +454,12 @@ const InterviewerDashboard = () => {
               {pastInterviews.map((interview) => (
                 <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                   <div>
-                    <h3 className="text-white font-semibold">{interview.candidate_name}</h3>
+                    <h3 className="text-white font-semibold">{interview.target_role}</h3>
                     <p className="text-slate-300">
-                      {formatDateTimeIST(interview.scheduled_time)} • {interview.target_role}
+                      {formatTimeRange(interview.scheduled_time, interview.interview_duration || 60)}
                     </p>
                     <p className="text-slate-400 text-sm">
-                      Experience: {interview.experience} • {interview.candidate_email}
+                      {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                     </p>
                     <p className="text-slate-400 text-sm capitalize">
                       Status: {interview.status}

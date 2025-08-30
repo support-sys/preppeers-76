@@ -26,7 +26,85 @@ interface Interview {
   resume_url?: string;
   google_meet_link?: string;
   google_calendar_event_id?: string;
+  selected_plan?: string;
+  interview_duration?: number;
+  plan_details?: any;
 }
+
+// Helper function to format time range (e.g., "5:30 PM - 6:30 PM")
+const formatTimeRange = (scheduledTime: string, duration: number = 60): string => {
+  try {
+    const startTime = new Date(scheduledTime);
+    const endTime = new Date(startTime.getTime() + duration * 60000); // Add duration in milliseconds
+    
+    const startTimeStr = startTime.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    const endTimeStr = endTime.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    return `${startTimeStr} - ${endTimeStr}`;
+  } catch (error) {
+    console.error('Error formatting time range:', error);
+    return formatDateTimeIST(scheduledTime);
+  }
+};
+
+// Helper function to format plan name
+const formatPlanName = (plan: string): string => {
+  if (!plan) return 'Standard';
+  
+  const planMap: { [key: string]: string } = {
+    'essential': 'Essential',
+    'professional': 'Professional', 
+    'executive': 'Executive'
+  };
+  
+  return planMap[plan] || plan.charAt(0).toUpperCase() + plan.slice(1);
+};
+
+// Helper function to format duration
+const formatDuration = (duration: number = 60): string => {
+  if (duration === 30) return '30 Minutes';
+  if (duration === 60) return '60 Minutes';
+  if (duration === 90) return '90 Minutes';
+  return `${duration} Minutes`;
+};
+
+// Helper function to format time range in IST (same format as formatDateTimeIST)
+const formatTimeRangeIST = (scheduledTime: string, duration: number = 60): string => {
+  try {
+    const startTime = new Date(scheduledTime);
+    const endTime = new Date(startTime.getTime() + duration * 60000); // Add duration in milliseconds
+    
+    // Use the same formatDateTimeIST function for start time
+    const startTimeStr = formatDateTimeIST(scheduledTime);
+    
+    // Format end time using the same approach as formatDateTimeIST
+    // Extract just the time part from the formatted end time
+    const endTimeFormatted = formatDateTimeIST(endTime.toISOString());
+    const endTimeStr = endTimeFormatted.split(', ').pop() || '6:30 pm'; // Get just the time part
+    
+    return `${startTimeStr} • ${endTimeStr}`;
+  } catch (error) {
+    console.error('Error formatting time range IST:', error);
+    return formatDateTimeIST(scheduledTime);
+  }
+};
+
+// Helper function to format experience
+const formatExperience = (experience: string): string => {
+  if (experience === '0' || experience === '0 years' || experience === '0 year') {
+    return 'Fresher';
+  }
+  return `${experience} experience`;
+};
 
 const Dashboard = () => {
   const { user, userRole } = useAuth();
@@ -239,7 +317,10 @@ const Dashboard = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold truncate">{interview.target_role}</h3>
                         <p className="text-slate-300 text-sm sm:text-base">
-                          {formatDateTimeIST(interview.scheduled_time)} • {interview.experience} experience
+                          {formatTimeRangeIST(interview.scheduled_time, interview.interview_duration || 60)}
+                        </p>
+                        <p className="text-slate-300 text-sm">
+                          {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                         </p>
                         <p className="text-slate-400 text-sm truncate">
                           {userRole === 'interviewer' 
@@ -421,7 +502,10 @@ const Dashboard = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold truncate">{interview.target_role}</h3>
                         <p className="text-slate-300 text-sm sm:text-base">
-                          {formatDateTimeIST(interview.scheduled_time)} • {interview.experience} experience
+                          {formatTimeRangeIST(interview.scheduled_time, interview.interview_duration || 60)}
+                        </p>
+                        <p className="text-slate-300 text-sm">
+                          {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                         </p>
                         <p className="text-slate-400 text-sm truncate">
                           {userRole === 'interviewer' 
