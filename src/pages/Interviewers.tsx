@@ -98,6 +98,17 @@ const Interviewers = () => {
   const [syncingToSheets, setSyncingToSheets] = useState(false);
   const [isProfileLocked, setIsProfileLocked] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string | undefined}>({});
+  
+  // Schedule management state
+  const [availability, setAvailability] = useState<Record<string, { available: boolean; timeSlots: Array<{ id: string; start: string; end: string }> }>>({
+    Monday: { available: false, timeSlots: [] },
+    Tuesday: { available: false, timeSlots: [] },
+    Wednesday: { available: false, timeSlots: [] },
+    Thursday: { available: false, timeSlots: [] },
+    Friday: { available: false, timeSlots: [] },
+    Saturday: { available: false, timeSlots: [] },
+    Sunday: { available: false, timeSlots: [] }
+  });
 
   useEffect(() => {
     if (!user) {
@@ -218,6 +229,94 @@ const Interviewers = () => {
     });
   };
 
+  // Schedule management functions
+  const handleDayToggle = (day: string) => {
+    setAvailability(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        available: !prev[day].available
+      }
+    }));
+  };
+
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 9; hour <= 22; hour++) {
+      options.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+    return options;
+  };
+
+  const formatTimeForDisplay = (time: string) => {
+    const [hour, minute] = time.split(':');
+    const hourNum = parseInt(hour);
+    const ampm = hourNum >= 12 ? 'PM' : 'AM';
+    const displayHour = hourNum === 0 ? 12 : hourNum > 12 ? hourNum - 12 : hourNum;
+    return `${displayHour}:${minute} ${ampm}`;
+  };
+
+  const addTimeSlot = (day: string) => {
+    setAvailability(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        timeSlots: [
+          ...(prev[day]?.timeSlots || []),
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            start: "09:00",
+            end: "10:00" // Automatically 1 hour later
+          }
+        ]
+      }
+    }));
+  };
+
+  const updateTimeSlot = (day: string, slotId: string, field: 'start' | 'end', value: string) => {
+    setAvailability(prev => {
+      const updatedSlot = { ...prev[day]?.timeSlots.find(slot => slot.id === slotId) };
+      if (!updatedSlot) return prev;
+      
+      updatedSlot[field] = value;
+      
+      // If updating start time, automatically set end time to 1 hour later
+      if (field === 'start') {
+        const startHour = parseInt(value.split(':')[0]);
+        const endHour = Math.min(startHour + 1, 22); // Cap at 10 PM
+        updatedSlot.end = `${endHour.toString().padStart(2, '0')}:00`;
+      }
+      
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          timeSlots: prev[day]?.timeSlots.map(slot =>
+            slot.id === slotId ? updatedSlot : slot
+          ) || []
+        }
+      };
+    });
+  };
+
+  const removeTimeSlot = (day: string, slotId: string) => {
+    setAvailability(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        timeSlots: prev[day]?.timeSlots.filter(slot => slot.id !== slotId) || []
+      }
+    }));
+  };
+
+  // Validate that time slot is exactly 1 hour (60 minutes)
+  const validateTimeSlot = (start: string, end: string): boolean => {
+    const startMinutes = parseInt(start.split(':')[0]) * 60 + parseInt(start.split(':')[1]);
+    const endMinutes = parseInt(end.split(':')[0]) * 60 + parseInt(end.split(':')[1]);
+    const duration = endMinutes - startMinutes;
+    return duration === 60; // Exactly 1 hour
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -257,14 +356,40 @@ const Interviewers = () => {
         }
       }
 
+      // Validate schedule if any days are selected
+      const selectedDays = Object.keys(availability).filter(day => availability[day]?.available);
+      if (selectedDays.length > 0) {
+        for (const day of selectedDays) {
+          if (availability[day]?.timeSlots.length === 0) {
+            throw new Error(`${day} is selected but has no time slots. Please add time slots or uncheck ${day}.`);
+          }
+          
+          // Validate that all time slots are exactly 1 hour
+          for (const slot of availability[day].timeSlots) {
+            if (!validateTimeSlot(slot.start, slot.end)) {
+              throw new Error(`Time slot on ${day} must be exactly 1 hour (60 minutes). Current: ${slot.start} to ${slot.end}`);
+            }
+          }
+        }
+      }
+
+      // Prepare availability data
+      const availableDays = Object.keys(availability).filter(day => availability[day]?.available);
+      const timeSlots: Record<string, Array<{ id: string; start: string; end: string }>> = {};
+      
+      // Add time slots for selected days
+      for (const day of availableDays) {
+        timeSlots[day] = availability[day].timeSlots;
+      }
+
       const profileData = {
         experience_years: parseInt(interviewerData.experienceYears),
         company: interviewerData.company,
         position: interviewerData.position,
         skills: [interviewerData.selectedCategory], // Store single category in array format for backward compatibility
         technologies: interviewerData.skills, // Store individual skills in technologies for backward compatibility
-        availability_days: [],
-        time_slots: {},
+        availability_days: availableDays,
+        time_slots: timeSlots,
         bio: interviewerData.bio,
         linkedin_url: interviewerData.linkedinUrl,
         github_url: interviewerData.githubUrl,
@@ -694,6 +819,102 @@ const Interviewers = () => {
                   )}
                 </div>
 
+                {/* Schedule Management Section */}
+                <div className="space-y-4">
+                  <div className="border-t border-white/20 pt-6">
+                    <h3 className="text-xl font-semibold text-white mb-4">📅 Availability Schedule</h3>
+                    <p className="text-slate-300 text-sm mb-4">
+                      Set your availability for interviews. Each time slot must be exactly 1 hour (60 minutes). 
+                      You can always update this later from your dashboard.
+                    </p>
+                    <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg mb-4">
+                      <p className="text-blue-100 text-sm">
+                        💡 <strong>Tip:</strong> Select a start time and the end time will automatically be set to 1 hour later.
+                      </p>
+                    </div>
+                    
+                    {/* Days Selection */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                        <div key={day} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={day}
+                            checked={availability[day]?.available || false}
+                            onCheckedChange={() => handleDayToggle(day)}
+                            className="bg-white/10 border-white/20 text-blue-500"
+                          />
+                          <Label htmlFor={day} className="text-white text-sm">{day}</Label>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Time Slots for Selected Days */}
+                    {Object.keys(availability).filter(day => availability[day]?.available).map((day) => (
+                      <div key={day} className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+                        <h4 className="text-white font-medium mb-3">{day} Time Slots</h4>
+                        
+                        {/* Existing Time Slots */}
+                        {availability[day]?.timeSlots.map((slot) => (
+                          <div key={slot.id} className="flex items-center space-x-2 mb-2">
+                            <Select 
+                              value={slot.start} 
+                              onValueChange={(value) => updateTimeSlot(day, slot.id, 'start', value)}
+                            >
+                              <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {generateTimeOptions().map(time => (
+                                  <SelectItem key={time} value={time}>
+                                    {formatTimeForDisplay(time)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-white">to</span>
+                            <Select 
+                              value={slot.end} 
+                              onValueChange={(value) => updateTimeSlot(day, slot.id, 'end', value)}
+                            >
+                              <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {generateTimeOptions().map(time => (
+                                  <SelectItem key={time} value={time}>
+                                    {formatTimeForDisplay(time)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-green-400 text-sm font-medium">Duration: 1 hour</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeTimeSlot(day, slot.id)}
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        {/* Add New Time Slot Button */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addTimeSlot(day)}
+                          className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                        >
+                          + Add Time Slot
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
@@ -715,14 +936,22 @@ const Interviewers = () => {
                       </svg>
                       Syncing to Google Sheets...
                     </>
-                  ) : (
-                    <>
-                      Submit Profile
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                                      ) : (
+                      <>
+                        Submit Profile & Schedule
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Schedule Update Note */}
+                  <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-300 mb-2">📅 Schedule Management</h4>
+                    <p className="text-blue-100 text-sm">
+                      You can always update your availability schedule later by going to <strong>Dashboard → Manage Schedule</strong>.
+                    </p>
+                  </div>
+                </form>
             </CardContent>
           </Card>
         </div>
