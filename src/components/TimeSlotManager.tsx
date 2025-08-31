@@ -5,12 +5,51 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// Generate time options from 9 AM to 10 PM in 1-hour intervals
+const generateTimeOptions = () => {
+  const options = [];
+  for (let hour = 9; hour <= 22; hour++) {
+    const time24 = `${hour.toString().padStart(2, '0')}:00`;
+    const time12 = hour === 12 ? '12:00 PM' : 
+                   hour > 12 ? `${hour - 12}:00 PM` : 
+                   `${hour}:00 AM`;
+    options.push({ value: time24, label: time12 });
+  }
+  return options;
+};
+
+const timeOptions = generateTimeOptions();
+
+  // Helper function to convert 24-hour time to 12-hour display format
+  const formatTimeForDisplay = (time24: string): string => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    if (hours === 12) return '12:00 PM';
+    if (hours > 12) return `${hours - 12}:00 PM`;
+    return `${hours}:00 AM`;
+  };
+
+  // Helper function to get valid end time options for a given start time
+  const getValidEndTimeOptions = (startTime: string): string[] => {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const validEndTimes: string[] = [];
+    
+    // Add 60-minute option only
+    let endHour = startHour + 1;
+    let endMinute = startMinute;
+    if (endHour <= 22) {
+      validEndTimes.push(`${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`);
+    }
+    
+    return validEndTimes;
+  };
 
 interface TimeSlot {
   id: string;
@@ -102,6 +141,8 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
     }));
   };
 
+
+
   const addTimeSlot = (day: string) => {
     setAvailability(prev => ({
       ...prev,
@@ -112,11 +153,33 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
           {
             id: Math.random().toString(36).substr(2, 9),
             start: "09:00",
-            end: "10:00"
+            end: "10:00" // Automatically 1 hour later
           }
         ]
       }
     }));
+  };
+
+  // Validate time slot (end time should be after start time and slot should be exactly 60 minutes)
+  const validateTimeSlot = (start: string, end: string): boolean => {
+    const [startHour, startMinute] = start.split(':').map(Number);
+    const [endHour, endMinute] = end.split(':').map(Number);
+    
+    // Calculate duration in minutes
+    let durationMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    
+    // Handle case where end time is on the next day
+    if (durationMinutes <= 0) {
+      durationMinutes += 24 * 60;
+    }
+    
+    // Check if duration is exactly 60 minutes
+    const isValidDuration = durationMinutes === 60;
+    
+    // Check if end time is after start time
+    const isValidOrder = durationMinutes > 0;
+    
+    return isValidOrder && isValidDuration;
   };
 
   const removeTimeSlot = (day: string, slotId: string) => {
@@ -130,15 +193,47 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
   };
 
   const updateTimeSlot = (day: string, slotId: string, field: 'start' | 'end', value: string) => {
-    setAvailability(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        timeSlots: prev[day]?.timeSlots.map(slot =>
-          slot.id === slotId ? { ...slot, [field]: value } : slot
-        ) || []
+    setAvailability(prev => {
+      const currentSlot = prev[day]?.timeSlots.find(slot => slot.id === slotId);
+      if (!currentSlot) return prev;
+      
+      let updatedSlot = { ...currentSlot, [field]: value };
+      
+      // If start time is changed, automatically update end time to be 1 hour later
+      if (field === 'start') {
+        const [startHour, startMinute] = value.split(':').map(Number);
+        let endHour = startHour + 1;
+        let endMinute = startMinute;
+        
+        // Handle hour overflow (e.g., 23:00 -> 00:00)
+        if (endHour > 22) {
+          endHour = 22; // Cap at 10 PM
+        }
+        
+        updatedSlot.end = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
       }
-    }));
+      
+      // Validate the updated time slot
+      if (!validateTimeSlot(updatedSlot.start, updatedSlot.end)) {
+        // If invalid, show toast and don't update
+        toast({
+          title: "Invalid Time Slot",
+          description: "Time slots must be exactly 1 hour (60 minutes)",
+          variant: "destructive"
+        });
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          timeSlots: prev[day]?.timeSlots.map(slot =>
+            slot.id === slotId ? updatedSlot : slot
+          ) || []
+        }
+      };
+    });
   };
 
   const calculateCurrentAvailableDate = () => {
@@ -171,11 +266,22 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
       const availableDays = Object.keys(availability).filter(day => availability[day]?.available);
       const timeSlots: Record<string, TimeSlot[]> = {};
       
-      availableDays.forEach(day => {
-        if (availability[day]?.timeSlots.length > 0) {
-          timeSlots[day] = availability[day].timeSlots;
+      // Validate that checked days have time slots
+      for (const day of availableDays) {
+        if (availability[day]?.timeSlots.length === 0) {
+          throw new Error(`${day} is selected but has no time slots. Please add time slots or uncheck ${day}.`);
         }
-      });
+      }
+      
+      // Validate all time slots before saving
+      for (const day of availableDays) {
+        for (const slot of availability[day].timeSlots) {
+          if (!validateTimeSlot(slot.start, slot.end)) {
+            throw new Error(`Invalid time slot on ${day}: Time slots must be exactly 1 hour (60 minutes)`);
+          }
+        }
+        timeSlots[day] = availability[day].timeSlots;
+      }
 
       // Calculate current available date and current time slots for today/next available day
       const currentAvailableDate = calculateCurrentAvailableDate();
@@ -245,7 +351,7 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
           <div className="flex-1">
             <CardTitle className="text-white text-xl sm:text-2xl">Manage Schedule</CardTitle>
             <CardDescription className="text-slate-300 text-sm sm:text-base">
-              Set your availability and time slots for interviews. Each time slot should be exactly 1 hour.
+              Set your availability and time slots for interviews. Select a start time and the end time will automatically be set to 1 hour later.
             </CardDescription>
           </div>
           <Button variant="outline" onClick={onClose} className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto">
@@ -269,26 +375,45 @@ const TimeSlotManager = ({ onClose }: TimeSlotManagerProps) => {
 
             {availability[day]?.available && (
               <div className="ml-4 sm:ml-6 space-y-3">
+                <div className="text-xs text-slate-400 mb-2">
+                  💡 Tip: Select a start time and the end time will automatically be calculated as 1 hour later
+                </div>
                 {availability[day]?.timeSlots.map((slot) => (
                   <div key={slot.id} className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-3 bg-white/5 rounded-lg">
                     <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 flex-1">
+                      <div className="text-xs text-slate-400 mb-2 sm:mb-0">
+                        Duration: 1 hour
+                      </div>
                       <div className="flex items-center space-x-2 flex-1">
                         <Label className="text-slate-300 text-sm w-12">From:</Label>
-                        <Input
-                          type="time"
+                        <Select
                           value={slot.start}
-                          onChange={(e) => updateTimeSlot(day, slot.id, 'start', e.target.value)}
-                          className="bg-white/10 border-white/20 text-white flex-1 min-w-0"
-                        />
+                          onValueChange={(value) => updateTimeSlot(day, slot.id, 'start', value)}
+                        >
+                          <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1 min-w-0">
+                            <SelectValue placeholder="Select time">
+                              {slot.start ? formatTimeForDisplay(slot.start) : "Select time"}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                            {timeOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="flex items-center space-x-2 flex-1">
                         <Label className="text-slate-300 text-sm w-12">To:</Label>
-                        <Input
-                          type="time"
-                          value={slot.end}
-                          onChange={(e) => updateTimeSlot(day, slot.id, 'end', e.target.value)}
-                          className="bg-white/10 border-white/20 text-white flex-1 min-w-0"
-                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="bg-white/10 border border-white/20 text-white px-3 py-2 rounded-md text-sm">
+                            {slot.end ? formatTimeForDisplay(slot.end) : "Auto-calculated"}
+                          </div>
+                          <p className="text-xs text-slate-400 mt-1">
+                            Automatically set to 1 hour after start time
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <Button

@@ -81,7 +81,7 @@ const Interviewers = () => {
     experienceYears: "",
     company: "",
     position: "",
-    selectedCategories: [] as string[],
+    selectedCategory: "", // Changed from array to single string
     skills: [] as string[],
     bio: "",
     linkedinUrl: "",
@@ -139,7 +139,7 @@ const Interviewers = () => {
         experienceYears: data.experience_years?.toString() || "",
         company: data.company || "",
         position: data.position || "",
-        selectedCategories: [],
+        selectedCategory: "",
         skills: data.technologies || [],
         bio: data.bio || "",
         linkedinUrl: data.linkedin_url || "",
@@ -193,24 +193,13 @@ const Interviewers = () => {
 
   const handleCategoryChange = (category: string) => {
     setInterviewerData(prev => {
-      let newCategories = [...prev.selectedCategories];
-      if (newCategories.includes(category)) {
-        newCategories = newCategories.filter(c => c !== category);
-        // Remove all skills from this category
-        const categorySkills = skillOptions[category];
-        const filteredSkills = prev.skills.filter(skill => !categorySkills.includes(skill));
-        return {
-          ...prev,
-          selectedCategories: newCategories,
-          skills: filteredSkills
-        };
-      } else {
-        newCategories.push(category);
-        return {
-          ...prev,
-          selectedCategories: newCategories
-        };
-      }
+      // Clear previous skills when category changes
+      const categorySkills = skillOptions[category] || [];
+      return {
+        ...prev,
+        selectedCategory: category,
+        skills: [] // Reset skills when category changes
+      };
     });
   };
 
@@ -245,7 +234,15 @@ const Interviewers = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Validate payout details
+      // Validate required fields
+      if (!interviewerData.selectedCategory) {
+        throw new Error("Please select a skill category");
+      }
+      
+      if (interviewerData.skills.length === 0) {
+        throw new Error("Please select at least one skill from the chosen category");
+      }
+      
       if (!interviewerData.payoutMethod) {
         throw new Error("Please select a payout method");
       }
@@ -264,7 +261,7 @@ const Interviewers = () => {
         experience_years: parseInt(interviewerData.experienceYears),
         company: interviewerData.company,
         position: interviewerData.position,
-        skills: interviewerData.selectedCategories, // Store skill categories in the skills field
+        skills: [interviewerData.selectedCategory], // Store single category in array format for backward compatibility
         technologies: interviewerData.skills, // Store individual skills in technologies for backward compatibility
         availability_days: [],
         time_slots: {},
@@ -326,7 +323,7 @@ const Interviewers = () => {
               company: interviewerData.company,
               position: interviewerData.position,
               experience_years: parseInt(interviewerData.experienceYears),
-              skills: interviewerData.selectedCategories,
+              skills: [interviewerData.selectedCategory],
               technologies: interviewerData.skills,
               payout_method: interviewerData.payoutMethod
             }
@@ -419,9 +416,8 @@ const Interviewers = () => {
     );
   }
 
-  const availableSkills = interviewerData.selectedCategories.flatMap(category => 
-    skillOptions[category] || []
-  );
+    const availableSkills = interviewerData.selectedCategory ? 
+    skillOptions[interviewerData.selectedCategory] || [] : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -502,15 +498,18 @@ const Interviewers = () => {
 
                 {/* Skill Categories */}
                 <div>
-                  <Label className="text-white">Skill Categories *</Label>
+                  <Label className="text-white">Skill Category *</Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {Object.keys(skillOptions).map(category => (
                       <div key={category} className="flex items-center space-x-2">
-                        <Checkbox
+                        <input
+                          type="radio"
                           id={category}
-                          checked={interviewerData.selectedCategories.includes(category)}
-                          onCheckedChange={() => handleCategoryChange(category)}
-                          className="bg-white/10 border-white/20 text-blue-500 focus:ring-0 focus:ring-offset-0"
+                          name="skillCategory"
+                          value={category}
+                          checked={interviewerData.selectedCategory === category}
+                          onChange={() => handleCategoryChange(category)}
+                          className="w-4 h-4 text-blue-500 bg-white/10 border-white/20 focus:ring-blue-500 focus:ring-2"
                         />
                         <Label htmlFor={category} className="text-white">{category}</Label>
                       </div>
@@ -519,9 +518,18 @@ const Interviewers = () => {
                 </div>
 
                 {/* Skills */}
-                {availableSkills.length > 0 && (
+                {!interviewerData.selectedCategory ? (
+                  <div className="text-center py-6">
+                    <p className="text-slate-400 text-sm">
+                      Please select a skill category above to see available skills
+                    </p>
+                  </div>
+                ) : availableSkills.length > 0 ? (
                   <div>
                     <Label className="text-white">Skills *</Label>
+                    <p className="text-slate-300 text-sm mb-3">
+                      Select the skills you're proficient in from the {interviewerData.selectedCategory} category
+                    </p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {availableSkills.map(skill => (
                         <div key={skill} className="flex items-center space-x-2">
@@ -536,7 +544,7 @@ const Interviewers = () => {
                       ))}
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Bio */}
                 <div>
