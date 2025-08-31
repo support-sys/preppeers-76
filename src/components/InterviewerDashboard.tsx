@@ -76,10 +76,13 @@ const InterviewerDashboard = () => {
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [blockedDatesCount, setBlockedDatesCount] = useState(0);
+  const [isEligible, setIsEligible] = useState<boolean | null>(null);
+  const [isProfileComplete, setIsProfileComplete] = useState<boolean>(false);
 
   useEffect(() => {
     fetchInterviews();
     fetchBlockedDatesCount();
+    fetchInterviewerStatus();
   }, []);
 
   const fetchInterviews = async () => {
@@ -120,6 +123,29 @@ const InterviewerDashboard = () => {
       console.error('Error in fetchInterviews:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInterviewerStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data: interviewerData, error: interviewerError } = await supabase
+        .from('interviewers')
+        .select('id, is_eligible, payout_details_submitted_at')
+        .eq('user_id', user.id)
+        .single();
+
+      if (interviewerError) {
+        console.error('Error fetching interviewer status:', interviewerError);
+        return;
+      }
+
+      setIsEligible(interviewerData.is_eligible);
+      setIsProfileComplete(!!interviewerData.payout_details_submitted_at);
+
+    } catch (error) {
+      console.error('Error fetching interviewer status:', error);
     }
   };
 
@@ -288,6 +314,82 @@ const InterviewerDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {/* Assessment Phase Message */}
+      {isProfileComplete && isEligible === false && (
+        <Card className="bg-amber-500/20 backdrop-blur-lg border-amber-500/30">
+          <CardHeader>
+            <CardTitle className="text-amber-300 flex items-center">
+              <Clock className="w-5 h-5 mr-2" />
+              Profile Under Assessment
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-amber-100">
+                🎯 <strong>Your profile is currently under assessment!</strong>
+              </p>
+              <p className="text-amber-200 text-sm">
+                We've received your profile and are currently reviewing your qualifications and experience. 
+                This process typically takes 24-48 hours.
+              </p>
+              <div className="bg-amber-600/20 border border-amber-500/30 p-3 rounded-lg">
+                <p className="text-amber-100 text-sm">
+                  📧 <strong>Next Step:</strong> Check your email for assessment details. You'll receive:
+                </p>
+                <ul className="text-amber-200 text-sm mt-2 ml-4 space-y-1">
+                  <li>• Assessment questionnaire or technical test</li>
+                  <li>• Instructions to complete the evaluation</li>
+                  <li>• Timeline for profile review</li>
+                </ul>
+              </div>
+              <p className="text-amber-200 text-sm">
+                <strong>What happens next?</strong> Once you complete the assessment and we review your profile, 
+                you'll be eligible to take interviews and start earning!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+
+      {/* Profile Approved - Ready for Interviews */}
+      {isProfileComplete && isEligible === true && (
+        <Card className="bg-green-500/20 backdrop-blur-lg border-green-500/30">
+          <CardHeader>
+            <CardTitle className="text-green-300 flex items-center">
+              <Users className="w-5 h-5 mr-2" />
+              Profile Approved - Ready for Interviews!
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-green-100">
+                🎉 <strong>Congratulations! Your profile has been approved!</strong>
+              </p>
+              <p className="text-green-200 text-sm">
+                You're now eligible to take interviews and start earning. Candidates can book interview slots 
+                with you based on your availability schedule.
+              </p>
+              <div className="bg-green-600/20 border border-green-500/30 p-3 rounded-lg">
+                <p className="text-green-100 text-sm">
+                  🚀 <strong>What you can do now:</strong>
+                </p>
+                <ul className="text-green-200 text-sm mt-2 ml-4 space-y-1">
+                  <li>• Receive interview bookings from candidates</li>
+                  <li>• Conduct interviews and provide feedback</li>
+                  <li>• Earn money for each completed interview</li>
+                  <li>• Update your schedule anytime</li>
+                </ul>
+              </div>
+              <p className="text-green-200 text-sm">
+                <strong>Next:</strong> Make sure your availability schedule is up to date so candidates can book interviews with you!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

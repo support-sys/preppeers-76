@@ -394,7 +394,8 @@ const Interviewers = () => {
         linkedin_url: interviewerData.linkedinUrl,
         github_url: interviewerData.githubUrl,
         payout_details_submitted_at: new Date().toISOString(),
-        payout_details_locked: true
+        payout_details_locked: true,
+        is_eligible: false // Set to false when profile is submitted for assessment
       };
 
       if (existingData) {
@@ -463,8 +464,8 @@ const Interviewers = () => {
 
       // Database save successful
       toast({
-        title: "Profile Saved!",
-        description: "Your interviewer profile has been saved to the database."
+        title: "Profile Submitted Successfully!",
+        description: "Your profile has been submitted and is now under assessment. You'll receive an email with assessment details shortly."
       });
 
       setIsSubmitted(true);
