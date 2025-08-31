@@ -296,8 +296,8 @@ const CashfreePayment = ({
 
       // Initialize Cashfree payment with embedded checkout
       const cashfree = new (window as any).Cashfree({
-        // mode: "production"
-          mode: "sandbox"
+         mode: "production"
+        //  mode: "sandbox"
       });
 
       // Show payment form container
