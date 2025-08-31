@@ -243,7 +243,7 @@ const Index = () => {
                   <DollarSign className="w-8 h-8 text-green-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Flexible Income</h3>
-                <p className="text-slate-300">Earn ₹300-₹700 per session based on type of interviews condducted</p>
+                <p className="text-slate-300">Earn ₹300-₹700 per session based on type of interviews conducted</p>
               </div>
 
               <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
