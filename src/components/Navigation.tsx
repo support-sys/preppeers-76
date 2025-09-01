@@ -14,20 +14,17 @@ const Navigation = () => {
   // Different nav items based on authentication status
   const getNavItems = () => {
     if (user) {
-      const baseItems = [
-        { name: "Home", path: "/" },
-        { name: "Dashboard", path: "/dashboard" },
-      ];
-
       if (userRole === 'interviewer') {
         return [
-          ...baseItems,
+          { name: "Home", path: "/become-interviewer" },
+          { name: "Dashboard", path: "/dashboard" },
           { name: "Profile", path: "/interviewers" },
           { name: "Contact", path: "/contact" },
         ];
       } else {
         return [
-          ...baseItems,
+          { name: "Home", path: "/" },
+          { name: "Dashboard", path: "/dashboard" },
           { name: "Book", path: "/book" },
           { name: "Contact", path: "/contact" },
         ];
@@ -36,8 +33,7 @@ const Navigation = () => {
 
     return [
       { name: "Home", path: "/" },
-      { name: "Book", path: "/book" },
-      { name: "Interviewers", path: "/interviewers" },
+      { name: "For Interviewers", path: "/become-interviewer" },
       { name: "Pricing", path: "/pricing" },
       { name: "FAQ", path: "/faq" },
       { name: "Contact", path: "/contact" },
@@ -52,7 +48,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-white">
+          <Link to={user && userRole === 'interviewer' ? '/become-interviewer' : '/'} className="text-2xl font-bold text-white">
             IntervieWise
           </Link>
 

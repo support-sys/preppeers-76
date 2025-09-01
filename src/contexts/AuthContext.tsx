@@ -11,7 +11,9 @@ interface AuthContextType {
   hasScheduledInterview: boolean;
   justLoggedIn: boolean;
   shouldRedirectToBook: boolean;
+  shouldRedirectToMain: boolean;
   clearRedirectFlag: () => void;
+  clearMainRedirectFlag: () => void;
   signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => Promise<{ error: any, data?: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -37,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hasScheduledInterview, setHasScheduledInterview] = useState(false);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [shouldRedirectToBook, setShouldRedirectToBook] = useState(false);
+  const [shouldRedirectToMain, setShouldRedirectToMain] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,9 +69,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setUserRole(profile?.role || null);
             
-            // Set redirect flag immediately if user is interviewee (don't wait for profile completion check)
-            if (event === 'SIGNED_IN' && profile?.role === 'interviewee') {
-              setShouldRedirectToBook(true);
+            // Set redirect flags immediately based on user role (don't wait for profile completion check)
+            if (event === 'SIGNED_IN') {
+              if (profile?.role === 'interviewee') {
+                setShouldRedirectToBook(true);
+              } else if (profile?.role === 'interviewer') {
+                setShouldRedirectToMain(true);
+              }
             }
             
             // Check profile completion and interview status (this can happen after redirect is set)
@@ -197,6 +204,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setShouldRedirectToBook(false);
   };
 
+  const clearMainRedirectFlag = () => {
+    setShouldRedirectToMain(false);
+  };
+
   const value = {
     user,
     session,
@@ -205,7 +216,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasScheduledInterview,
     justLoggedIn,
     shouldRedirectToBook,
+    shouldRedirectToMain,
     clearRedirectFlag,
+    clearMainRedirectFlag,
     signUp,
     signIn,
     signOut,

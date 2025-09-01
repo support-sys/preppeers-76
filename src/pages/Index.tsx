@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, DollarSign, Clock, Network } from "lucide-react";
+import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -10,7 +10,7 @@ import { findMatchingInterviewer, scheduleInterview } from "@/services/interview
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
 import { supabase } from "@/integrations/supabase/client";
-import { SmartCTAButtons, IntervieweeButton, InterviewerButton } from "@/components/SmartCTAButtons";
+import { IntervieweeButton } from "@/components/SmartCTAButtons";
 import WelcomeMessage from "@/components/WelcomeMessage";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
@@ -106,19 +106,20 @@ const Index = () => {
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Crack Your IT Interviews with{" "}
+            Get Interview Ready with{" "}
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Real Engineers
+              Real Tech Interviewers
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Practice with professionals, receive feedback, and become job-ready.
+          Practice with Tech Engineers who take Real Interviews in Top Companies. <br /> 
+          Real feedback. Real results.
           </p>
 
           {/* CTA Buttons */}
-          <SmartCTAButtons className="mb-16" />
+          <IntervieweeButton className="mb-16 px-8 py-4 text-lg font-semibold rounded-xl" />
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
@@ -127,7 +128,7 @@ const Index = () => {
                 <Users className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Real Engineers</h3>
-              <p className="text-zinc-200">Practice with experienced professionals from top tech companies</p>
+              <p className="text-zinc-200">Practice with experienced Interviewers from top tech companies</p>
             </div>
 
             <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
@@ -154,125 +155,75 @@ const Index = () => {
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto">
             {/* Section Header */}
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <div className="text-center mb-8 md:mb-16">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">
                 For <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Interviewees</span>
               </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              <p className="text-base md:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto px-4">
                 Get ready for your next tech interview with personalized mock sessions and expert feedback
               </p>
             </div>
 
             {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 mb-12">
               {/* Register and Upload Resume */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Upload className="w-8 h-8 text-purple-400" />
+              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-purple-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <Upload className="w-6 h-6 md:w-8 md:h-8 text-purple-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Register & Upload Resume</h3>
-                <p className="text-slate-300">Create your profile and upload your resume to get personalized interview experiences</p>
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Register & Upload Resume</h3>
+                <p className="text-sm md:text-base text-slate-300">Create your profile and upload your resume to get personalized interview experiences</p>
               </div>
 
               {/* Select Target Role */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <User className="w-8 h-8 text-blue-400" />
+              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-blue-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <User className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Select Target Role & Tech Stack</h3>
-                <p className="text-slate-300">Choose from Java, Python, React, Node.js, and more to match your career goals</p>
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Select Target Role & Tech Stack</h3>
+                <p className="text-sm md:text-base text-slate-300">Choose from Java, Python, React, Node.js, and more to match your career goals</p>
               </div>
 
               {/* Book Interview Slot */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Calendar className="w-8 h-8 text-green-400" />
+              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-green-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <Calendar className="w-6 h-6 md:w-8 md:h-8 text-green-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Book an Interview Slot</h3>
-                <p className="text-slate-300">Schedule your mock interview at a convenient time that works for you</p>
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Book an Interview Slot</h3>
+                <p className="text-sm md:text-base text-slate-300">Schedule your mock interview at a convenient time that works for you</p>
               </div>
 
               {/* Join via GMeet */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-red-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Video className="w-8 h-8 text-red-400" />
+              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                <div className="bg-red-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <Video className="w-6 h-6 md:w-8 md:h-8 text-red-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Join via Google Meet</h3>
-                <p className="text-slate-300">Connect seamlessly with your interviewer through integrated video calls</p>
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Join via Google Meet</h3>
+                <p className="text-sm md:text-base text-slate-300">Connect seamlessly with your interviewer through integrated video calls</p>
               </div>
 
-              {/* Get Detailed Feedback - Safari Compatible Grid Spanning */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group md:col-span-2 lg:col-span-2" style={{ gridColumn: 'span 2' }}>
-                <div className="bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <FileText className="w-8 h-8 text-yellow-400" />
+              {/* Get Detailed Feedback - Full Width on Mobile, Spans 2 on Larger Screens */}
+              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group col-span-1 md:col-span-2 lg:col-span-2">
+                <div className="bg-yellow-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <FileText className="w-6 h-6 md:w-8 md:h-8 text-yellow-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Get Detailed Feedback & Improvement Plan</h3>
-                <p className="text-slate-300">Receive comprehensive feedback on your performance with actionable steps to improve your interview skills and technical knowledge</p>
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Get Detailed Feedback & Improvement Plan</h3>
+                <p className="text-sm md:text-base text-slate-300">Receive comprehensive feedback on your performance with actionable steps to improve your interview skills and technical knowledge</p>
               </div>
             </div>
 
             {/* CTA Button */}
-            <div className="text-center">
+            <div className="text-center px-4">
               <IntervieweeButton 
                 size="lg" 
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-12 py-4 text-xl font-semibold rounded-xl" 
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6 md:px-12 py-3 md:py-4 text-base md:text-xl font-semibold rounded-xl w-full md:w-auto" 
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* For Interviewers Section */}
-      <div className="relative z-10 bg-slate-800/50 border-t border-white/10">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-6xl mx-auto">
-            {/* Section Header */}
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                For <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Interviewers</span>
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Share your expertise, earn flexible income, and help shape the next generation of IT professionals
-              </p>
-            </div>
 
-            {/* Benefits Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <DollarSign className="w-8 h-8 text-green-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Flexible Income</h3>
-                <p className="text-slate-300">Earn ₹300-₹700 per session based on type of interviews conducted</p>
-              </div>
-
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Clock className="w-8 h-8 text-blue-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Work Flexibly</h3>
-                <p className="text-slate-300">Set your own availability and work from anywhere. Perfect for full-time professionals looking for side income</p>
-              </div>
-
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Network className="w-8 h-8 text-purple-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">Build Your Network</h3>
-                <p className="text-slate-300">Connect with aspiring professionals and expand your professional network while giving back to the community</p>
-              </div>
-            </div>
-
-            {/* CTA Button */}
-            <div className="text-center">
-              <InterviewerButton 
-                size="lg" 
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-12 py-4 text-xl font-semibold rounded-xl shadow-green-500/25" 
-              />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Testimonials Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">

@@ -16,6 +16,7 @@ import Interviewers from "./pages/Interviewers";
 import InterviewerPayment from "./pages/InterviewerPayment";
 import PaymentProcessing from "./pages/PaymentProcessing";
 import Pricing from "./pages/Pricing";
+import BecomeInterviewer from "./pages/BecomeInterviewer";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -78,6 +79,7 @@ const App = () => (
               } 
             />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/become-interviewer" element={<BecomeInterviewer />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             
