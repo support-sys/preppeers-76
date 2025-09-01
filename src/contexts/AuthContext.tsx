@@ -10,6 +10,8 @@ interface AuthContextType {
   profileComplete: boolean;
   hasScheduledInterview: boolean;
   justLoggedIn: boolean;
+  shouldRedirectToBook: boolean;
+  clearRedirectFlag: () => void;
   signUp: (email: string, password: string, role: 'interviewer' | 'interviewee', fullName?: string, mobileNumber?: string) => Promise<{ error: any, data?: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -34,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profileComplete, setProfileComplete] = useState(false);
   const [hasScheduledInterview, setHasScheduledInterview] = useState(false);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const [shouldRedirectToBook, setShouldRedirectToBook] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,8 +49,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user && session.user.email_confirmed_at) {
+          // Set just logged in flag for new sessions immediately
+          if (event === 'SIGNED_IN') {
+            setJustLoggedIn(true);
+            // Clear the flag after 3 seconds
+            setTimeout(() => setJustLoggedIn(false), 3000);
+          }
+          
           // Only fetch user role for confirmed users
-          setTimeout(async () => {
+          (async () => {
             const { data: profile } = await supabase
               .from('profiles')
               .select('role')
@@ -56,18 +66,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setUserRole(profile?.role || null);
             
-            // Check profile completion and interview status
-            if (profile?.role) {
-              await checkUserStatus(session.user.id, profile.role);
+            // Set redirect flag immediately if user is interviewee (don't wait for profile completion check)
+            if (event === 'SIGNED_IN' && profile?.role === 'interviewee') {
+              setShouldRedirectToBook(true);
             }
             
-            // Set just logged in flag for new sessions
-            if (event === 'SIGNED_IN') {
-              setJustLoggedIn(true);
-              // Clear the flag after 3 seconds
-              setTimeout(() => setJustLoggedIn(false), 3000);
+            // Check profile completion and interview status (this can happen after redirect is set)
+            if (profile?.role) {
+              checkUserStatus(session.user.id, profile.role); // Remove await to not block redirect
             }
-          }, 0);
+          })();
         } else {
           setUserRole(null);
           setProfileComplete(false);
@@ -185,6 +193,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const clearRedirectFlag = () => {
+    setShouldRedirectToBook(false);
+  };
+
   const value = {
     user,
     session,
@@ -192,6 +204,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     profileComplete,
     hasScheduledInterview,
     justLoggedIn,
+    shouldRedirectToBook,
+    clearRedirectFlag,
     signUp,
     signIn,
     signOut,
