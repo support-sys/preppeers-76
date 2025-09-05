@@ -57,7 +57,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
               key={plan.id}
               className={`relative cursor-pointer transition-all duration-300 hover:scale-105 h-full ${
                 selectedPlan === plan.id 
-                  ? 'ring-2 ring-blue-500 bg-blue-50/10 border-blue-500 shadow-xl shadow-blue-500/25' 
+                  ? 'ring-2 ring-green-500 bg-green-50/10 border-green-500 shadow-xl shadow-green-500/25' 
                   : 'bg-slate-800/70 border-slate-600 hover:border-slate-500 hover:shadow-lg'
               }`}
               onClick={() => onPlanSelect(plan.id)}

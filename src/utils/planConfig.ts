@@ -82,7 +82,7 @@ export const getPlanById = (planId: string): InterviewPlan | null => {
 };
 
 export const getDefaultPlan = (): InterviewPlan => {
-  return INTERVIEW_PLANS.professional;
+  return INTERVIEW_PLANS.essential;
 };
 
 export const getPlanFeatures = (planId: string): string[] => {
