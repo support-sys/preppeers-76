@@ -249,7 +249,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
             disabled={!selectedPlan}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-12 py-3 sm:py-4 text-lg sm:text-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Continue to Interviewer Matching
+            Continue to Interviewer Match
             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
           </Button>
         </div>
