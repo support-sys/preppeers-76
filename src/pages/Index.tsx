@@ -27,12 +27,15 @@ const Index = () => {
     hasSuccessfulPayment
   } = usePaymentStatus();
 
-  // Redirect to payment processing page if there's an active payment session
+  // Redirect to payment processing page only for successful payments that haven't been matched
   useEffect(() => {
-    if (paymentSession && !paymentSession.interview_matched) {
+    if (paymentSession && 
+        (paymentSession.payment_status === 'successful' || paymentSession.payment_status === 'completed') && 
+        !paymentSession.interview_matched) {
       navigate('/payment-processing');
     }
   }, [paymentSession, navigate]);
+
   const handleStartMatching = async () => {
     if (!paymentSession || !user) {
       toast({
@@ -88,6 +91,8 @@ const Index = () => {
   }
   return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
+      
+      
       <WelcomeMessage />
       
       {/* Tech Background Pattern */}

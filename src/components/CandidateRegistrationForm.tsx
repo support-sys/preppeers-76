@@ -11,9 +11,7 @@ import { Upload, ChevronDown, User, Settings, Clock, Link, Loader2 } from "lucid
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import PlanSelection from "./PlanSelection";
 import TimeSlotPicker from "./TimeSlotPicker";
-import { getDefaultPlan, getPlanById } from "@/utils/planConfig";
 
 /*
 const skillOptions = {
@@ -99,17 +97,12 @@ interface CandidateFormData {
   githubUrl: string;
   resume: File | null;
   resumeUrl?: string; // Added for storing uploaded resume URL
-  
-  // Plan Selection (NEW)
-  selectedPlan?: string;
-  interviewDuration?: number;
-  amount?: number;
 }
 
 interface CandidateRegistrationFormProps {
   onSubmit: (data: CandidateFormData) => void;
   isLoading?: boolean;
-  onStepChange?: (step: 'form' | 'plan-selection') => void;
+  onStepChange?: (step: 'form' | 'interviewer-matching') => void;
 }
 
 const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }: CandidateRegistrationFormProps) => {
@@ -136,11 +129,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
     githubUrl: "",
     resume: null,
     resumeUrl: "",
-    
-    // Plan Selection (NEW)
-    selectedPlan: getDefaultPlan().id,
-    interviewDuration: getDefaultPlan().duration,
-    amount: getDefaultPlan().price,
   });
 
   const [openSections, setOpenSections] = useState({
@@ -151,7 +139,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
   });
 
   const [uploadingResume, setUploadingResume] = useState(false);
-  const [showPlanSelection, setShowPlanSelection] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -276,8 +263,6 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
       return;
     }
 
-
-
     // Validate time slot is in the future
     const selectedDate = new Date(formData.timeSlot);
     const now = new Date();
@@ -291,8 +276,67 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
       return;
     }
 
-    // Show plan selection after form validation
-    setShowPlanSelection(true);
+    // Go directly to interviewer matching after form validation
+    // Upload resume first
+    let resumeUrl = formData.resumeUrl;
+    if (formData.resume && !resumeUrl) {
+      try {
+        console.log('Uploading resume...');
+        resumeUrl = await uploadResume(formData.resume);
+        if (!resumeUrl) {
+          throw new Error('Failed to upload resume');
+        }
+      } catch (error: any) {
+        console.error("Error uploading resume:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to upload resume. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Create or update interviewee profile using upsert
+    if (user) {
+      const { error } = await supabase
+        .from('interviewees')
+        .upsert({
+          user_id: user.id,
+          current_position: formData.currentPosition,
+          experience: formData.experienceYears.toString() + " years",
+          notice_period: formData.noticePeriod || 'not_on_notice',
+          target_role: formData.skillCategories.length > 0 ? formData.skillCategories.join(', ') : 'Not specified',
+          linkedin_url: formData.linkedinUrl || null,
+          github_url: formData.githubUrl || null,
+          bio: formData.bio || null,
+          resume_url: resumeUrl || null,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        console.error("Error saving candidate data:", error);
+        toast({
+          title: "Error",
+          description: `Failed to save your information: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Pass the complete form data to parent component for interviewer matching
+    const completeFormData = {
+      ...formData,
+      resumeUrl: resumeUrl || "",
+    };
+
+    onSubmit(completeFormData);
+    
+    // Notify parent component about step change
+    onStepChange?.('interviewer-matching');
     
     // Scroll to top immediately for better mobile UX
     setTimeout(() => {
@@ -302,140 +346,11 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
     }, 100);
   };
 
-  const handlePlanContinue = async () => {
-    try {
-      // Upload resume first
-      let resumeUrl = formData.resumeUrl;
-      if (formData.resume && !resumeUrl) {
-        console.log('Uploading resume...');
-        resumeUrl = await uploadResume(formData.resume);
-        if (!resumeUrl) {
-          throw new Error('Failed to upload resume');
-        }
-      }
-
-      // Create or update interviewee profile using upsert
-      if (user) {
-        const { error } = await supabase
-          .from('interviewees')
-          .upsert({
-            user_id: user.id,
-            current_position: formData.currentPosition,
-            experience: formData.experienceYears.toString() + " years",
-            notice_period: formData.noticePeriod || 'not_on_notice',
-            target_role: formData.skillCategories.length > 0 ? formData.skillCategories.join(', ') : 'Not specified',
-            linkedin_url: formData.linkedinUrl || null,
-            github_url: formData.githubUrl || null,
-            bio: formData.bio || null,
-            resume_url: resumeUrl || null, // Add resume URL to profile
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (error) {
-          console.error("Error saving candidate data:", error);
-          console.error("Error details:", {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-            hint: error.hint
-          });
-          console.error("Data being sent:", {
-            user_id: user.id,
-            current_position: formData.currentPosition,
-            experience: formData.experienceYears.toString() + " years",
-            notice_period: formData.noticePeriod || 'not_on_notice',
-            target_role: formData.skillCategories.length > 0 ? formData.skillCategories.join(', ') : 'Not specified',
-            linkedin_url: formData.linkedinUrl || null,
-            github_url: formData.githubUrl || null,
-            bio: formData.bio || null,
-            resume_url: resumeUrl || null,
-            updated_at: new Date().toISOString()
-          });
-          toast({
-            title: "Error",
-            description: `Failed to save your information: ${error.message}`,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Pass the complete form data with plan details to parent component
-      const completeFormData = {
-        ...formData,
-        resumeUrl: resumeUrl || "",
-        selectedPlan: formData.selectedPlan,
-        interviewDuration: formData.interviewDuration,
-        amount: formData.amount
-      };
-
-      onSubmit(completeFormData);
-    } catch (error: any) {
-      console.error("Error in form submission:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const availableSpecificSkills = formData.skillCategories.flatMap(category => 
     skillOptions[category] || []
   );
 
-  // Scroll to top when plan selection is shown
-  useEffect(() => {
-    if (showPlanSelection) {
-      // Scroll to top with smooth behavior
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Also scroll the document body to top for mobile browsers
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-      
-      // Notify parent component about step change
-      onStepChange?.('plan-selection');
-    } else {
-      // Notify parent component about step change
-      onStepChange?.('form');
-    }
-  }, [showPlanSelection, onStepChange]);
-
-  // If showing plan selection, render that instead of the form
-  if (showPlanSelection) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => setShowPlanSelection(false)}
-            className="text-slate-400 hover:text-white"
-          >
-            ← Back to Form
-          </Button>
-        </div>
-        
-        <PlanSelection
-          selectedPlan={formData.selectedPlan || getDefaultPlan().id}
-          onPlanSelect={(planId) => {
-            const plan = getPlanById(planId);
-            if (plan) {
-              setFormData(prev => ({
-                ...prev,
-                selectedPlan: planId,
-                interviewDuration: plan.duration,
-                amount: plan.price
-              }));
-            }
-          }}
-          onContinue={handlePlanContinue}
-        />
-      </div>
-    );
-  }
 
   return (
     <Card className="bg-white/10 backdrop-blur-lg border-white/20">
@@ -595,18 +510,17 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
               <ChevronDown className={`w-5 h-5 transition-transform ${openSections.preferences ? 'rotate-180' : ''}`} />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
-
-                      <div>
-          <Label className="text-white">Preferred Interview Time</Label>
-          <TimeSlotPicker
-            value={formData.timeSlot}
-            onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
-            disabled={isLoading}
-          />
-        </div>
+              <div>
+                <Label className="text-white">Preferred Interview Time</Label>
+                <TimeSlotPicker
+                  value={formData.timeSlot}
+                  onChange={(value) => setFormData(prev => ({ ...prev, timeSlot: value }))}
+                  disabled={isLoading}
+                />
+              </div>
 
               <div>
-                                  <Label className="text-white">Notice Period</Label>
+                <Label className="text-white">Notice Period</Label>
                 <RadioGroup
                   value={formData.noticePeriod}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, noticePeriod: value }))}
@@ -720,7 +634,7 @@ const CandidateRegistrationForm = ({ onSubmit, isLoading = false, onStepChange }
             disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
           >
-            {isLoading ? "Processing..." : "Continue to Plan Selection"}
+            {isLoading ? "Processing..." : "Find My Interviewer"}
           </Button>
         </form>
       </CardContent>

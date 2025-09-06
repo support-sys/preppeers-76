@@ -39,11 +39,12 @@ export const usePaymentStatus = () => {
     }
 
     try {
-      // First, get the most recent payment session regardless of status
+      // Get the most recent ACTIVE payment session (exclude failed/cancelled)
       const { data: recentSession, error: recentError } = await supabase
         .from('payment_sessions')
         .select('*')
         .eq('user_id', user.id)
+        .not('payment_status', 'in', '(failed,cancelled,declined)')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();

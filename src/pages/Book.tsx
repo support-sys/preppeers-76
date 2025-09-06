@@ -9,6 +9,8 @@ import WhatsAppChat from "@/components/WhatsAppChat";
 import BookingHeader from "@/components/BookingHeader";
 import BookingStepsGuide from "@/components/BookingStepsGuide";
 import CandidateRegistrationForm from "@/components/CandidateRegistrationForm";
+import InterviewerMatchingPage from "@/components/InterviewerMatchingPage";
+import PlanSelection from "@/components/PlanSelection";
 import InstantMatchingButton from "@/components/InstantMatchingButton";
 import PaymentDetails from "@/components/PaymentDetails";
 import MatchingLoader from "@/components/MatchingLoader";
@@ -25,7 +27,10 @@ import { useBookingFlow } from "@/hooks/useBookingFlow";
 const Book = () => {
   const { user } = useAuth();
   const { paymentSession, hasSuccessfulPayment, isInterviewAlreadyMatched, isLoading: paymentLoading } = usePaymentStatus();
-  const [currentFormStep, setCurrentFormStep] = useState<'form' | 'plan-selection'>('form');
+  const [currentFormStep, setCurrentFormStep] = useState<'form' | 'interviewer-matching' | 'plan-selection'>('form');
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [selectedPlan, setSelectedPlan] = useState<string>('essential');
+  const [candidateFormData, setCandidateFormData] = useState<any>(null);
   const {
     currentStep,
     formData,
@@ -42,6 +47,42 @@ const Book = () => {
     handleTryAgain
   } = useBookingFlow();
 
+  // New flow handlers
+  const handleFormSubmitNew = (data: any) => {
+    // Store candidate data for the new flow
+    setCandidateFormData(data);
+    // Call the original form submit to save data
+    handleFormSubmit(data);
+    setCurrentFormStep('interviewer-matching');
+  };
+
+  const handleInterviewerFound = (interviewer: any) => {
+    setCurrentFormStep('plan-selection');
+  };
+
+  const handleNoMatch = () => {
+    setCurrentFormStep('form');
+  };
+
+  const handlePlanContinue = (slot?: string, planId?: string) => {
+    if (slot) {
+      setSelectedSlot(slot);
+    }
+    if (planId) {
+      setSelectedPlan(planId);
+    }
+    // Proceed to payment with the selected plan and slot
+    handleProceedToPayment(slot, planId);
+  };
+
+  const handleGoBack = () => {
+    if (currentFormStep === 'interviewer-matching') {
+      setCurrentFormStep('form');
+    } else if (currentFormStep === 'plan-selection') {
+      setCurrentFormStep('interviewer-matching');
+    }
+  };
+
   // Check if we should show the form or payment based on existing data
   useEffect(() => {
     // Only auto-trigger matching if user explicitly clicks the instant matching button
@@ -52,7 +93,7 @@ const Book = () => {
     }
   }, [isInterviewAlreadyMatched, currentStep]);
 
-  // Render different states
+  // Render different states - Only use new flow
   if (currentStep === 'success') {
     return (
       <InterviewScheduledSuccess
@@ -60,49 +101,6 @@ const Book = () => {
         formData={formData}
         userEmail={user?.email}
       />
-    );
-  }
-
-  if (currentStep === 'no-match') {
-    return (
-      <NoMatchFound
-        formData={formData}
-        onTryAgain={handleTryAgain}
-      />
-    );
-  }
-
-  if (currentStep === 'matching') {
-    return <MatchingLoader />;
-  }
-
-  if (currentStep === 'preview-match') {
-    return (
-      <InterviewerPreview
-        matchedInterviewer={matchedInterviewer}
-        alternativeTimeSlot={alternativeTimeSlot}
-        onProceedToPayment={handleProceedToPayment}
-        onGoBack={handleTryAgain}
-        formData={formData}
-      />
-    );
-  }
-
-  if (currentStep === 'time-confirmation') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        <Navigation />
-        <div className="container mx-auto px-4 py-20">
-          <TimeSlotConfirmation
-            matchedInterviewer={matchedInterviewer}
-            alternativeTimeSlot={alternativeTimeSlot}
-            onAccept={handleAcceptAlternativeTime}
-            onWaitForBetter={handleWaitForBetterMatch}
-            isLoading={isLoading}
-          />
-        </div>
-        <Footer />
-      </div>
     );
   }
 
@@ -114,7 +112,6 @@ const Book = () => {
         userName={user?.user_metadata?.full_name || user?.email || ''}
         onSuccess={handlePaymentSuccess}
         onError={handlePaymentError}
-        onGoBack={handleTryAgain}
       />
     );
   }
@@ -142,12 +139,34 @@ const Book = () => {
 
           {/* Main Content - Full Width */}
           <div className="w-full">
-            {/* Always show the registration form to allow multiple bookings */}
-            <CandidateRegistrationForm
-              onSubmit={handleFormSubmit}
-              isLoading={isLoading}
-              onStepChange={setCurrentFormStep}
-            />
+            {/* New Flow: Form → Interviewer → Plan+Slot → Payment */}
+            {currentFormStep === 'form' && (
+              <CandidateRegistrationForm
+                onSubmit={handleFormSubmitNew}
+                isLoading={isLoading}
+                onStepChange={setCurrentFormStep}
+              />
+            )}
+
+            {currentFormStep === 'interviewer-matching' && candidateFormData && (
+              <InterviewerMatchingPage
+                formData={candidateFormData}
+                onInterviewerFound={handleInterviewerFound}
+                onNoMatch={handleNoMatch}
+                onGoBack={handleGoBack}
+              />
+            )}
+
+            {currentFormStep === 'plan-selection' && (
+              <PlanSelection
+                selectedPlan={selectedPlan}
+                onPlanSelect={setSelectedPlan}
+                onContinue={handlePlanContinue}
+                matchedInterviewer={matchedInterviewer}
+                selectedSlot={selectedSlot}
+                onSlotSelect={setSelectedSlot}
+              />
+            )}
             
             {hasSuccessfulPayment && paymentSession && (
               <div className="mt-6 sm:mt-8">

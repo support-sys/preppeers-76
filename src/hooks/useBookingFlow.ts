@@ -35,6 +35,24 @@ export const useBookingFlow = () => {
     }
   };
 
+  // Helper function to extract duration from time slot string
+  const extractDurationFromTimeSlot = (timeSlot: string): number => {
+    try {
+      // Handle format: "Wednesday, 24/09/2025 15:00-15:30"
+      const timeMatch = timeSlot.match(/(\d{2}):(\d{2})-(\d{2}):(\d{2})/);
+      if (timeMatch) {
+        const [, startHour, startMin, endHour, endMin] = timeMatch;
+        const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
+        const endMinutes = parseInt(endHour) * 60 + parseInt(endMin);
+        return endMinutes - startMinutes;
+      }
+      return 30; // Default to 30 minutes if parsing fails
+    } catch (error) {
+      console.error('Error extracting duration from time slot:', error);
+      return 30; // Default to 30 minutes if parsing fails
+    }
+  };
+
   const handleFormSubmit = async (data: any) => {
     // Validate required fields
     if (!data.timeSlot) {
@@ -94,7 +112,7 @@ export const useBookingFlow = () => {
     }
   };
 
-  const handleProceedToPayment = async (timeSlot?: string) => {
+  const handleProceedToPayment = async (timeSlot?: string, selectedPlanId?: string) => {
     if (timeSlot) {
       setSelectedTimeSlot(timeSlot);
       // Update formData with selected time slot
@@ -114,15 +132,24 @@ export const useBookingFlow = () => {
       setIsLoading(true);
       
       // Create temporary reservation to secure the time slot
+      // Extract duration from the selected time slot (e.g., "15:00-15:30" = 30 minutes)
+      const timeSlotDuration = extractDurationFromTimeSlot(timeSlot || selectedTimeSlot);
       const reservationId = await createTemporaryReservation(
         matchedInterviewer.id,
         timeSlot || selectedTimeSlot,
         user.id,
-        formData.interviewDuration || 60
+        timeSlotDuration
       );
       
       setTemporaryReservationId(reservationId);
       console.log('🔒 Created temporary reservation:', reservationId);
+      
+      // Determine the correct plan ID based on user selection or fallback to duration-based logic
+      let planId = selectedPlanId;
+      if (!planId) {
+        // Fallback to duration-based logic if no plan selected
+        planId = timeSlotDuration === 30 ? 'essential' : timeSlotDuration === 60 ? 'professional' : 'executive';
+      }
       
       // Update formData with matched interviewer data
       setFormData(prev => ({ 
@@ -133,10 +160,10 @@ export const useBookingFlow = () => {
         interviewer_user_id: matchedInterviewer?.user_id,
         selected_time_slot: timeSlot || prev.selectedTimeSlot || prev.timeSlot,
         selected_date: timeSlot ? parseTimeSlotToDate(timeSlot) : null,
-        plan_duration: prev.interviewDuration || 60,
+        plan_duration: timeSlotDuration, // Use actual slot duration instead of plan duration
         match_score: matchedInterviewer?.matchScore || 0,
-        selected_plan: prev.selectedPlan || 'professional',
-        interview_duration: prev.interviewDuration || 60
+        selected_plan: planId, // Use the correct plan ID
+        interview_duration: timeSlotDuration // Use actual slot duration instead of plan duration
       }));
       
       setCurrentStep('payment');

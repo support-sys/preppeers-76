@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, startOfDay, isSameDay } from 'date-fns';
 
-interface AvailableTimeSlot {
+export interface AvailableTimeSlot {
   date: string; // YYYY-MM-DD format
   dayName: string; // Monday, Tuesday, etc.
   startTime: string; // HH:MM format

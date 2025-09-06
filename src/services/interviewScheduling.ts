@@ -245,6 +245,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate, 
         console.log(`❌ Interviewer ${index + 1} BLOCKED: Skills score ${skillsResult.score} below minimum threshold ${MINIMUM_SKILL_THRESHOLD}`);
         return {
           ...interviewer,
+          timeSlots: interviewer.current_time_slots, // Map current_time_slots to timeSlots for PlanSelection component
           matchScore: 0,
           matchReasons: [],
           matchDetails: ['Insufficient skill match - blocked'],
@@ -293,10 +294,8 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate, 
         selectedPlan: candidateData.selectedPlan,
         hasSelectedPlan: !!candidateData.selectedPlan
       });
-      // Default to Essential plan (30 minutes) if no plan selected, since candidate wants 30-min slot
-      const planDuration = candidateData.selectedPlan === 'essential' ? 30 : 
-                          candidateData.selectedPlan === 'professional' ? 60 :
-                          candidateData.selectedPlan === 'executive' ? 60 : 30; // Default to 30
+      // Use default 30 minutes for time slot calculations - plan duration doesn't affect matching
+      const planDuration = 30; // Default duration for time slot calculations
       console.log('🔍 DEBUG: Using plan duration:', planDuration, 'minutes');
       const availableTimeSlots = await getAvailableTimeSlotsForInterviewer(
         interviewer.id,
@@ -322,6 +321,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate, 
       
       return {
         ...interviewer,
+        timeSlots: interviewer.current_time_slots, // Map current_time_slots to timeSlots for PlanSelection component
         matchScore: totalScore,
         matchReasons: allReasons,
         matchDetails: allDetails,

@@ -11,11 +11,10 @@ interface PaymentPageProps {
   userName: string;
   onSuccess: (paymentData: any) => void;
   onError: (error: any) => void;
-  onGoBack?: () => void;
 }
 
-const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError, onGoBack }: PaymentPageProps) => {
-  const selectedPlan = getPlanById(formData.selectedPlan || 'professional');
+const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: PaymentPageProps) => {
+  const selectedPlan = getPlanById(formData.selected_plan || 'professional');
   const amount = formData.amount || selectedPlan?.price || 999;
 
   return (
@@ -40,17 +39,6 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError, onGoBa
             Securely complete your payment for the mock interview session.
           </p>
 
-          {/* Back Button */}
-          {onGoBack && (
-            <div className="text-center mb-6">
-              <button
-                onClick={onGoBack}
-                className="text-blue-400 hover:text-blue-300 underline text-sm"
-              >
-                ← Go Back to Interviewer Selection
-              </button>
-            </div>
-          )}
 
           <CashfreePayment
             amount={amount}
