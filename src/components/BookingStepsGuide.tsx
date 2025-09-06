@@ -10,13 +10,13 @@ const BookingStepsGuide = () => {
     },
     {
       id: 2,
-      title: "Select Plan",
-      description: "Choose your plan"
+      title: "Find Interviewer",
+      description: "Get matched"
     },
     {
       id: 3,
-      title: "Find Interviewer",
-      description: "Get matched"
+      title: "Select Plan",
+      description: "Choose your plan"
     },
     {
       id: 4,
@@ -32,6 +32,11 @@ const BookingStepsGuide = () => {
       id: 6,
       title: "Attend",
       description: "Join interview"
+    },
+    {
+      id: 7,
+      title: "Feedback",
+      description: "Feedback and Improvement"
     }
   ];
 
@@ -45,7 +50,7 @@ const BookingStepsGuide = () => {
               How It Works
             </h2>
             <p className="text-slate-300 text-sm">
-              6 simple steps to book your interview
+              7 simple steps to book your interview
             </p>
           </div>
 
@@ -53,7 +58,7 @@ const BookingStepsGuide = () => {
           <div className="relative">
             {/* Desktop: Horizontal Timeline */}
             <div className="hidden md:block">
-              <div className="grid grid-cols-6 gap-4 items-start">
+              <div className="grid grid-cols-7 gap-4 items-start">
                 {steps.map((step, index) => (
                   <div key={step.id} className="flex flex-col items-center relative">
                     {/* Step Number */}

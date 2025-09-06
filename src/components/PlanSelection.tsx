@@ -227,144 +227,108 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
     }
   };
 
+  const formatSlotDisplayMobile = (slot: AvailableTimeSlot) => {
+    try {
+      const date = parseISO(slot.date);
+      const dayShort = format(date, 'EEE'); // Wed, Thu, etc.
+      const dateShort = format(date, 'MMM d'); // Sep 10, Sep 11, etc.
+      return `${dayShort}, ${dateShort} ${slot.startTime}-${slot.endTime}`;
+    } catch (error) {
+      return slot.displayText;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-3 sm:p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-4 sm:p-6">
+      <div className="max-w-3xl mx-auto">
         {/* Header Section */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 px-2">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
             Choose Your Plan
           </h1>
-          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto px-4">
+          <p className="text-lg text-slate-300 max-w-xl mx-auto">
             Select the interview plan that best fits your needs
           </p>
         </div>
 
-        {/* Plans List - Mobile Optimized */}
-        <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+        {/* Plans List - Clean Design */}
+        <div className="space-y-4 mb-8">
           {Object.values(INTERVIEW_PLANS).map((plan) => {
-            const color = getPlanColor(plan.id);
-            const expanded = isExpanded(plan.id);
             const isSelected = selectedPlan === plan.id;
             
             return (
               <Card 
                 key={plan.id}
-                className={`relative transition-all duration-300 ${
+                className={`cursor-pointer transition-all duration-200 shadow-lg ${
                   isSelected 
-                    ? `ring-2 ring-${color}-500 bg-${color}-50/10 border-${color}-500 shadow-xl shadow-${color}-500/25` 
-                    : 'bg-slate-800/70 border-slate-600 hover:border-slate-500 hover:shadow-lg'
+                    ? 'bg-blue-600/20 border-blue-500 shadow-blue-500/20' 
+                    : 'bg-white/10 border-white/20 hover:bg-white/15 hover:border-white/30'
                 }`}
                 onClick={() => onPlanSelect(plan.id)}
               >
-                {/* Badges */}
-                {plan.isPopular && (
-                  <div className="absolute -top-2 left-4 z-10">
-                    <Badge className="bg-blue-600 text-white px-3 py-1 text-xs font-bold shadow-lg">
-                      <Star className="w-3 h-3 mr-1" />
-                      Popular
-                    </Badge>
-                  </div>
-                )}
-                
-                {plan.isRecommended && !plan.isPopular && (
-                  <div className="absolute -top-2 right-4 z-10">
-                    <Badge className="bg-green-600 text-white px-3 py-1 text-xs font-bold shadow-lg">
-                      Recommended
-                    </Badge>
-                  </div>
-                )}
-
-                {/* Card Header - Always Visible */}
-                <CardHeader className="pb-3 pt-4 px-4 sm:px-6">
+                <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-${color}-500/20`}>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
                         {getPlanIcon(plan.id)}
                       </div>
                       <div>
-                        <CardTitle className="text-lg sm:text-xl font-bold text-white">
+                        <CardTitle className="text-xl font-bold text-white mb-1">
                           {plan.name}
                         </CardTitle>
-                        <div className="flex items-center space-x-2">
-                          <span className={`text-2xl sm:text-3xl font-bold text-${color}-400`}>₹{plan.price}</span>
-                          <span className="text-slate-400 text-sm">/session</span>
-                        </div>
+                        <p className="text-slate-300 text-sm">
+                          {plan.id === 'essential' && 'Quick practice with basic feedback'}
+                          {plan.id === 'professional' && 'Comprehensive interview with detailed feedback'}
+                          {plan.id === 'executive' && 'Premium package with career guidance'}
+                        </p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      <div className="text-right">
-                        <div className="flex items-center space-x-1 text-slate-400 text-sm">
-                          <Clock className="w-4 h-4" />
-                          <span>{plan.duration} min</span>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          {plan.features.length} features
-                        </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-white mb-1">
+                        ₹{plan.price}
                       </div>
-                      <button
-                        onClick={(e) => togglePlanExpansion(plan.id, e)}
-                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
-                      >
-                        {expanded ? (
-                          <ChevronUp className="w-5 h-5 text-slate-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-slate-400" />
-                        )}
-                      </button>
+                      <div className="flex items-center space-x-2 text-slate-400 text-sm">
+                        <Clock className="w-4 h-4" />
+                        <span>{plan.duration} min</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Short Description */}
-                  <div className="mt-2">
-                    <p className="text-slate-300 text-sm">
-                      {plan.id === 'essential' && 'Quick practice session with basic feedback'}
-                      {plan.id === 'professional' && 'Comprehensive interview with detailed feedback'}
-                      {plan.id === 'executive' && 'Premium package with career guidance'}
-                    </p>
                   </div>
                 </CardHeader>
 
-                {/* Expandable Content */}
-                {expanded && (
-                  <CardContent className="pt-0 px-4 sm:px-6 pb-4">
-                    <div className="space-y-4">
-                      {/* Features */}
-                      <div>
-                        <h4 className="font-semibold text-white mb-3 text-sm">What's Included:</h4>
-                        <ul className="space-y-2">
-                          {plan.features.map((feature, index) => (
-                            <li key={index} className="flex items-start space-x-2 text-sm text-slate-300">
-                              <span className="text-green-400 mr-2 mt-1">•</span>
-                              <span className="leading-relaxed">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
+                {/* Features - Always Visible */}
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {plan.features.slice(0, 4).map((feature, index) => (
+                      <div key={index} className="flex items-center space-x-2 text-sm text-slate-300">
+                        <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <span>{feature}</span>
                       </div>
+                    ))}
+                  </div>
+                  
+                  {plan.features.length > 4 && (
+                    <div className="mt-3 text-center">
+                      <button
+                        onClick={(e) => togglePlanExpansion(plan.id, e)}
+                        className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                      >
+                        {isExpanded(plan.id) ? 'Show Less' : `+${plan.features.length - 4} More Features`}
+                      </button>
+                    </div>
+                  )}
+                </CardContent>
 
-                      {/* Plan-specific highlights */}
-                      {plan.id === 'professional' && (
-                        <div className="bg-blue-500/10 border border-blue-400/30 p-3 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <Users className="w-4 h-4 text-blue-400" />
-                            <span className="text-blue-200 font-semibold text-sm">
-                              Best Value for Money
-                            </span>
-                          </div>
+                {/* Expanded Features */}
+                {isExpanded(plan.id) && plan.features.length > 4 && (
+                  <CardContent className="pt-0 border-t border-white/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {plan.features.slice(4).map((feature, index) => (
+                        <div key={index} className="flex items-center space-x-2 text-sm text-slate-300">
+                          <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                          <span>{feature}</span>
                         </div>
-                      )}
-
-                      {plan.id === 'executive' && (
-                        <div className="bg-purple-500/10 border border-purple-400/30 p-3 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <Zap className="w-4 h-4 text-purple-400" />
-                            <span className="text-purple-200 font-semibold text-sm">
-                              Premium Career Package
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                      ))}
                     </div>
                   </CardContent>
                 )}
@@ -373,29 +337,22 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
           })}
         </div>
 
-        {/* Selected Plan Summary - Sticky on Mobile */}
+        {/* Selected Plan Summary */}
         {selectedPlanData && (
-          <div className="sticky bottom-4 z-10 mb-4">
-            <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-2xl">
-              <CardContent className="p-4">
+          <div className="mb-8">
+            <Card className="bg-blue-600/10 border-blue-500/30 shadow-lg">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <Check className="w-4 h-4 text-green-500" />
-                      <span className="text-green-600 text-sm font-medium">Plan Selected</span>
+                  <div className="flex items-center space-x-3">
+                    <Check className="w-6 h-6 text-green-400" />
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        {selectedPlanData.name} Selected
+                      </h3>
+                      <p className="text-slate-300 text-sm">
+                        {selectedPlanData.duration} minutes • ₹{selectedPlanData.price} one-time payment
+                      </p>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {selectedPlanData.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {selectedPlanData.duration} minutes • {selectedPlanData.features.length} features
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">
-                      ₹{selectedPlanData.price}
-                    </div>
-                    <div className="text-xs text-gray-500">One-time payment</div>
                   </div>
                 </div>
               </CardContent>
@@ -405,8 +362,8 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
 
         {/* Time Slot Selection */}
         {matchedInterviewer && (
-          <div className="max-w-4xl mx-auto mt-8 px-3 sm:px-0">
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+          <div className="mb-8">
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-lg">
               <CardHeader>
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -434,21 +391,28 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                         </div>
                       </div>
                     ) : filteredSlots.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                      <div className="space-y-2 max-h-80 overflow-y-auto">
                         {filteredSlots.map((slot, index) => (
                           <Button
                             key={index}
                             variant={currentSlot === `${slot.dayName}, ${String(new Date(slot.date).getDate()).padStart(2, '0')}/${String(new Date(slot.date).getMonth() + 1).padStart(2, '0')}/${new Date(slot.date).getFullYear()} ${slot.startTime}-${slot.endTime}` ? "default" : "outline"}
                             onClick={() => handleSlotSelect(slot)}
-                            className={`text-left justify-start h-auto p-3 ${
+                            className={`w-full text-left justify-start h-auto p-3 ${
                               currentSlot === `${slot.dayName}, ${String(new Date(slot.date).getDate()).padStart(2, '0')}/${String(new Date(slot.date).getMonth() + 1).padStart(2, '0')}/${new Date(slot.date).getFullYear()} ${slot.startTime}-${slot.endTime}`
                                 ? 'bg-blue-600 text-white border-blue-600'
                                 : 'bg-white/10 border-white/20 text-slate-300 hover:bg-white/20 hover:text-white'
                             }`}
                           >
-                            <div className="flex items-center space-x-2">
-                              <Clock className="w-4 h-4" />
-                              <span className="text-sm">{formatSlotDisplay(slot)}</span>
+                            <div className="flex items-center space-x-2 w-full min-w-0">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="block sm:hidden">
+                                  <span className="text-sm font-medium truncate">{formatSlotDisplayMobile(slot)}</span>
+                                </div>
+                                <div className="hidden sm:block">
+                                  <span className="text-sm font-medium">{formatSlotDisplay(slot)}</span>
+                                </div>
+                              </div>
                             </div>
                           </Button>
                         ))}
@@ -470,12 +434,14 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                   </div>
                   
                   {currentSlot && (
-                    <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4">
+                    <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-3">
                       <div className="flex items-center space-x-2">
-                        <Check className="w-4 h-4 text-green-400" />
-                        <span className="text-green-200 font-medium">
-                          Selected: {currentSlot}
-                        </span>
+                        <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-green-200 font-medium text-sm sm:text-base">
+                            Selected: <span className="break-words">{currentSlot}</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -486,21 +452,21 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
         )}
 
         {/* Continue Button */}
-        <div className="text-center mt-6 sm:mt-8 px-3 sm:px-0">
+        <div className="text-center">
           <Button 
             onClick={() => onContinue(currentSlot, selectedPlan)}
             disabled={!selectedPlan || (matchedInterviewer && !currentSlot)}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-12 py-3 sm:py-4 text-lg sm:text-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {matchedInterviewer ? 'Continue to Payment' : 'Continue to Interviewer Match'}
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
+            <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
 
         {/* Pro Tip */}
-        <div className="text-center mt-4 sm:mt-6 px-3 sm:px-0">
-          <div className="inline-block p-3 sm:p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-            <p className="text-xs sm:text-sm text-blue-200 leading-relaxed">
+        <div className="text-center mt-6">
+          <div className="inline-block p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <p className="text-sm text-blue-200">
               💡 <strong>Pro Tip:</strong> Most candidates choose Professional or Executive for better results and comprehensive feedback!
             </p>
           </div>

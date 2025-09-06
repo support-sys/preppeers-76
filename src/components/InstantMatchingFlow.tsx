@@ -64,7 +64,7 @@ const InstantMatchingFlow = ({ onStartMatching }: InstantMatchingFlowProps) => {
   };
 
   if (isMatching) {
-    return <MatchingLoader />;
+    return <MatchingLoader embedded={true} />;
   }
 
   if (!user) {

@@ -12,7 +12,7 @@ const PaymentContainer = forwardRef<HTMLDivElement, PaymentContainerProps>(
     if (!showPaymentForm) return null;
 
     return (
-      <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+      <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-white text-xl">Complete Your Payment</CardTitle>
           <CardDescription className="text-slate-300">

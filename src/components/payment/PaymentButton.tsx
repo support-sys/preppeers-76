@@ -24,7 +24,7 @@ const PaymentButton = ({ isLoading, amount, onPayment }: PaymentButtonProps) => 
       ) : (
         <>
           <CreditCard className="w-5 h-5 mr-2" />
-          Pay ₹{amount} & Book Interview
+          Book Interview
         </>
       )}
     </Button>

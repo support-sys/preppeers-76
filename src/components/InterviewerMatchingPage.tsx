@@ -106,14 +106,14 @@ const InterviewerMatchingPage: React.FC<InterviewerMatchingPageProps> = ({
         </div>
 
         {/* Interviewer Card */}
-        <Card className="bg-white/10 backdrop-blur-lg border-white/20 mb-8">
+        <Card className="bg-white/10 backdrop-blur-lg border-white/20 mb-8 shadow-lg">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
                   <Users className="w-8 h-8 text-blue-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <CardTitle className="text-2xl text-white">
                     {matchedInterviewer.name || 'Professional Interviewer'}
                   </CardTitle>
@@ -122,7 +122,7 @@ const InterviewerMatchingPage: React.FC<InterviewerMatchingPageProps> = ({
                   </CardDescription>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="flex justify-center sm:justify-end">
                 <Badge className="bg-green-600 text-white px-4 py-2 text-sm font-bold">
                   <Check className="w-4 h-4 mr-2" />
                   Matched
@@ -198,14 +198,6 @@ const InterviewerMatchingPage: React.FC<InterviewerMatchingPageProps> = ({
           </div>
         </div>
 
-        {/* Info Note */}
-        <div className="mt-8 text-center">
-          <div className="inline-block p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-            <p className="text-sm text-blue-200">
-              💡 <strong>Next Step:</strong> You'll select your interview plan and choose a time slot that works for both you and your interviewer.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

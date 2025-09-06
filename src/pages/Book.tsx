@@ -116,6 +116,24 @@ const Book = () => {
     );
   }
 
+  if (currentStep === 'matching') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <Navigation />
+        
+        <div className="container mx-auto px-3 sm:px-4 py-16 sm:py-20">
+          <div className="max-w-4xl mx-auto">
+            <BookingHeader hasSuccessfulPayment={hasSuccessfulPayment} />
+            <MatchingLoader embedded={true} />
+          </div>
+        </div>
+        
+        <WhatsAppChat />
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
