@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, Check, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -12,6 +13,7 @@ import MatchingLoader from "@/components/MatchingLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { IntervieweeButton } from "@/components/SmartCTAButtons";
 import WelcomeMessage from "@/components/WelcomeMessage";
+import ComparisonSection from "@/components/ComparisonSection";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
   const {
@@ -230,7 +232,8 @@ const Index = () => {
         </div>
       </div>
 
-
+      {/* Comparison Section */}
+      <ComparisonSection />
 
       {/* Testimonials Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
@@ -295,61 +298,167 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Pricing Preview Section */}
-      <div className="relative z-10 bg-slate-800/50 border-t border-white/10">
+      {/* Pricing Section */}
+      <div className="relative z-10 border-t border-white/10" style={{ backgroundColor: '#16285a' }}>
         <div className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-xl text-slate-300 mb-12 max-w-3xl mx-auto">
-              Choose the plan that fits your needs. All sessions include live feedback and improvement plans.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-white mb-2">Essential</h3>
-                <div className="text-4xl font-bold text-blue-400 mb-4">₹499</div>
-                <p className="text-slate-300 mb-6">Quick practice session</p>
-                <ul className="text-slate-300 text-left space-y-2">
-                  <li>• 30-minute focused session</li>
-                  <li>• Basic verbal feedback</li>
-                </ul>
-              </div>
-
-              <div className="bg-white/10 rounded-2xl p-8 border-2 border-blue-400 hover:bg-white/15 transition-all duration-300 relative">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
-                  Most Popular
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Professional</h3>
-                <div className="text-4xl font-bold text-blue-400 mb-4">₹999</div>
-                <p className="text-slate-300 mb-6">Complete interview prep</p>
-                <ul className="text-slate-300 text-left space-y-2">
-                  <li>• 60-minute comprehensive session</li>
-                  <li>• Comprehensive feedback report covering technical skills, communication, behavior & presentation</li>
-                  <li>• Personalized action plan</li>
-                  <li>• Follow-up support</li>
-                </ul>
-              </div>
-
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-white mb-2">Executive</h3>
-                <div className="text-4xl font-bold text-blue-400 mb-4">₹1299</div>
-                <p className="text-slate-300 mb-6">Premium career package</p>
-                <ul className="text-slate-300 text-left space-y-2">
-                  <li>• 60-minute comprehensive session</li>
-                  <li>• Professional resume feedback</li>
-                  <li>• Comprehensive feedback report covering technical skills, communication, behavior & presentation</li>
-                  <li>• Priority customer support</li>
-                </ul>
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                Simple, Transparent Pricing
+              </h2>
+              <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
+                Choose the plan that fits your needs. All sessions include live feedback and improvement plans.
+              </p>
+              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 max-w-2xl mx-auto">
+                <p className="text-white font-semibold text-lg">
+                  🎯 All sessions are live, GMeet based, and conducted by real engineers from top tech companies
+                </p>
               </div>
             </div>
 
-            <Link to="/pricing">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105">
-                See Full Pricing
-              </Button>
-            </Link>
+            {/* Pricing Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+              <Card className="bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 relative">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-white text-2xl">Essential</CardTitle>
+                  <div className="text-4xl font-bold text-blue-400 my-4">₹499</div>
+                  <CardDescription className="text-slate-300">
+                    Perfect for quick interview practice and basic feedback
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      30-minute focused mock interview session
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Basic verbal feedback during the interview
+                    </li>
+                  </ul>
+                  <Link to="/book" className="block">
+                    <Button 
+                      size="lg" 
+                      className="w-full py-3 text-lg font-semibold bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                      variant="outline"
+                    >
+                      Get Started
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 border-2 border-blue-400 hover:bg-white/15 transition-all duration-300 relative transform transition-transform duration-300 hover:scale-105">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold flex items-center">
+                  <Star className="w-4 h-4 mr-1" />
+                  Most Popular
+                </div>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-white text-2xl">Professional</CardTitle>
+                  <div className="text-4xl font-bold text-blue-400 my-4">₹999</div>
+                  <CardDescription className="text-slate-300">
+                    Most popular choice for comprehensive interview preparation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      60-minute comprehensive mock interview
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Personalized action plan for improvement
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Interview performance analysis
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Follow-up support and guidance
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Interview recording (optional)
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Priority customer support
+                    </li>
+                  </ul>
+                  <Link to="/book" className="block">
+                    <Button 
+                      size="lg" 
+                      className="w-full py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      Most Popular
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 relative">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-white text-2xl">Executive</CardTitle>
+                  <div className="text-4xl font-bold text-blue-400 my-4">₹1,299</div>
+                  <CardDescription className="text-slate-300">
+                    Premium career development package with complete support
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      60-minute comprehensive mock interview
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Professional Resume Feedback (not during mock interview)
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Personalized action plan for improvement
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Interview performance analysis
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Follow-up support and guidance
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Interview recording (optional)
+                    </li>
+                    <li className="flex items-center text-slate-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      Priority customer support
+                    </li>
+                  </ul>
+                  <Link to="/book" className="block">
+                    <Button 
+                      size="lg" 
+                      className="w-full py-3 text-lg font-semibold bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                      variant="outline"
+                    >
+                      Go Executive
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
