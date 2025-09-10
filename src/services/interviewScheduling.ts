@@ -279,7 +279,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate, 
 
       // 3. Time slot availability (15 points max) - Reduced priority
       console.log('\n⏰ STEP 3: Time Availability Evaluation');
-      const timeMatch = checkTimeSlotMatch(candidateData.timeSlot || '', interviewer.current_time_slots);
+      const timeMatch = checkTimeSlotMatch(candidateData.timeSlot || '', interviewer.time_slots);
       if (timeMatch) {
         totalScore += 15; // Reduced from 25 to 15
         allReasons.push('Perfect time match');
@@ -299,7 +299,7 @@ export const findMatchingInterviewer = async (candidateData: MatchingCandidate, 
       console.log('🔍 DEBUG: Using plan duration:', planDuration, 'minutes');
       const availableTimeSlots = await getAvailableTimeSlotsForInterviewer(
         interviewer.id,
-        interviewer.current_time_slots,
+        interviewer.time_slots, // Use time_slots instead of current_time_slots
         candidateData.timeSlot, // Pass candidate's preferred date
         14, // daysToCheck - check next 14 days
         planDuration, // Pass the plan duration

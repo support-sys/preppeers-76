@@ -31,9 +31,22 @@ const Auth = () => {
   
   const [searchParams] = useSearchParams();
 
-  const { signUp, signIn, resetPassword } = useAuth();
+  const { signUp, signIn, resetPassword, user, userRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect if user is already authenticated
+  React.useEffect(() => {
+    if (!authLoading && user && userRole) {
+      if (userRole === 'interviewee') {
+        navigate('/book', { replace: true });
+      } else if (userRole === 'interviewer') {
+        navigate('/become-interviewer', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [user, userRole, authLoading, navigate]);
 
   // Check URL parameters for role and mode
   React.useEffect(() => {
@@ -253,6 +266,15 @@ const Auth = () => {
         </div>
         
         <Footer />
+      </div>
+    );
+  }
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }

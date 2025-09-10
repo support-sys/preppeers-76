@@ -24,6 +24,18 @@ export const getAvailableTimeSlotsForInterviewer = async (
   
   if (!interviewerTimeSlots) return [];
 
+  // Parse the JSON string if it's a string
+  let parsedTimeSlots = interviewerTimeSlots;
+  if (typeof interviewerTimeSlots === 'string') {
+    try {
+      parsedTimeSlots = JSON.parse(interviewerTimeSlots);
+      console.log('🔍 Parsed time slots from JSON string:', parsedTimeSlots);
+    } catch (error) {
+      console.error('❌ Error parsing time slots JSON:', error);
+      return [];
+    }
+  }
+
   const availableSlots: AvailableTimeSlot[] = [];
   
   // Parse candidate's preferred date or use today as fallback
@@ -156,7 +168,7 @@ export const getAvailableTimeSlotsForInterviewer = async (
       console.log(`🔍 Checking day ${i}: ${dayName} ${dateString}`);
 
       // Check if this day has available slots in interviewer's schedule
-      const daySlots = interviewerTimeSlots[dayName];
+      const daySlots = parsedTimeSlots[dayName];
       if (!daySlots || !Array.isArray(daySlots)) {
         console.log(`🔍 No slots for ${dayName}, skipping`);
         continue;

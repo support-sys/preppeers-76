@@ -59,8 +59,8 @@ export const createTemporaryReservation = async (
       p_blocked_date: scheduledDateStr,
       p_start_time: startTime,
       p_end_time: endTime,
-      p_reserved_by_user_id: userId,
-      p_duration_minutes: 10
+      p_duration_minutes: 10,
+      p_reserved_by_user_id: userId
     });
     
     if (error) {
@@ -181,9 +181,8 @@ export const isTimeSlotAvailable = async (
     // Use the database function to check availability
     const { data, error } = await supabase.rpc('is_time_slot_available', {
       p_interviewer_id: interviewerId,
-      p_blocked_date: scheduledDateStr,
-      p_start_time: startTime,
-      p_end_time: endTime
+      p_scheduled_time: timeSlot,
+      p_duration_minutes: durationMinutes
     });
     
     if (error) {

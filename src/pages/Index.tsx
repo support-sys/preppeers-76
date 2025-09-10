@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { IntervieweeButton } from "@/components/SmartCTAButtons";
 import WelcomeMessage from "@/components/WelcomeMessage";
 import ComparisonSection from "@/components/ComparisonSection";
+import InterviewerShowcase from "@/components/InterviewerShowcase";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
   const {
@@ -234,6 +235,15 @@ const Index = () => {
 
       {/* Comparison Section */}
       <ComparisonSection />
+
+      {/* Interviewer Showcase Section */}
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-7xl mx-auto">
+            <InterviewerShowcase />
+          </div>
+        </div>
+      </div>
 
       {/* Testimonials Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">

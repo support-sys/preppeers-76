@@ -151,6 +151,18 @@ export const checkTimeSlotMatch = (candidateTimeSlot: string, interviewerTimeSlo
     return false;
   }
 
+  // Parse the JSON string if it's a string
+  let parsedTimeSlots = interviewerTimeSlots;
+  if (typeof interviewerTimeSlots === 'string') {
+    try {
+      parsedTimeSlots = JSON.parse(interviewerTimeSlots);
+      console.log('🔍 Parsed time slots from JSON string:', parsedTimeSlots);
+    } catch (error) {
+      console.error('❌ Error parsing time slots JSON:', error);
+      return false;
+    }
+  }
+
   const parsedCandidateTime = parseTimeSlot(candidateTimeSlot);
   if (!parsedCandidateTime) {
     console.log('❌ Could not parse candidate time slot');
@@ -163,10 +175,10 @@ export const checkTimeSlotMatch = (candidateTimeSlot: string, interviewerTimeSlo
   console.log(`🎯 Looking for availability on ${dayOfWeek} at ${hour}:${minutes.toString().padStart(2, '0')} (${candidateTimeInMinutes} minutes from midnight)`);
 
   // Check if interviewer has slots for this day
-  const daySlots = interviewerTimeSlots[dayOfWeek];
+  const daySlots = parsedTimeSlots[dayOfWeek];
   if (!daySlots || !Array.isArray(daySlots)) {
     console.log(`❌ No slots found for ${dayOfWeek}`);
-    console.log(`Available days: ${Object.keys(interviewerTimeSlots).join(', ')}`);
+    console.log(`Available days: ${Object.keys(parsedTimeSlots).join(', ')}`);
     return false;
   }
 
