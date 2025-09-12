@@ -14,7 +14,6 @@ interface InterviewerCardProps {
   };
   profile: {
     full_name: string | null;
-    avatar_url: string | null;
   } | null;
 }
 

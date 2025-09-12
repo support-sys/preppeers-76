@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import InterviewerCard from './InterviewerCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -16,10 +17,10 @@ interface Interviewer {
 interface Profile {
   id: string;
   full_name: string | null;
-  avatar_url: string | null;
 }
 
 const InterviewerShowcase: React.FC = () => {
+  const { user } = useAuth();
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -33,28 +34,19 @@ const InterviewerShowcase: React.FC = () => {
       setLoading(true);
       
       console.log('🔍 Fetching interviewers...');
+      console.log('👤 Current user:', user?.id, user?.email);
       
-      // First, let's check if there are any interviewers at all
-      const { data: allInterviewers, error: allError } = await supabase
-        .from('interviewers')
-        .select('id, position, experience_years, skills, technologies, bio, user_id, is_eligible')
-        .limit(5);
-
-      console.log('📊 All interviewers (first 5):', allInterviewers);
-      console.log('❌ All interviewers error:', allError);
-
       // Fetch eligible interviewers
       const { data: interviewerData, error: interviewerError } = await supabase
         .from('interviewers')
-        .select('id, position, experience_years, skills, technologies, bio, user_id')
+        .select('id, position, experience_years, skills, technologies, bio, user_id, is_eligible')
         .eq('is_eligible', true)
-        .not('position', 'is', null)
-        .not('experience_years', 'is', null)
         .order('experience_years', { ascending: false })
         .limit(20);
 
       console.log('✅ Eligible interviewers:', interviewerData);
       console.log('❌ Eligible interviewers error:', interviewerError);
+      console.log('📊 Eligible interviewers count:', interviewerData?.length || 0);
 
       if (interviewerError) {
         console.error('Error fetching interviewers:', interviewerError);
@@ -62,13 +54,21 @@ const InterviewerShowcase: React.FC = () => {
       }
 
       if (interviewerData && interviewerData.length > 0) {
-        setInterviewers(interviewerData);
+        console.log('🎉 Found eligible interviewers, setting state...');
+        
+        // Remove duplicates based on id
+        const uniqueInterviewers = interviewerData.filter((interviewer, index, self) => 
+          index === self.findIndex(i => i.id === interviewer.id)
+        );
+        
+        console.log('📊 Unique interviewers count:', uniqueInterviewers.length);
+        setInterviewers(uniqueInterviewers);
         
         // Fetch profiles for these interviewers
-        const userIds = interviewerData.map(i => i.user_id);
+        const userIds = uniqueInterviewers.map(i => i.user_id);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url')
+          .select('id, full_name')
           .in('id', userIds);
 
         console.log('👤 Profiles data:', profileData);
@@ -76,13 +76,34 @@ const InterviewerShowcase: React.FC = () => {
 
         if (profileError) {
           console.error('Error fetching profiles:', profileError);
-        } else if (profileData) {
-          const profileMap = profileData.reduce((acc, profile) => {
-            acc[profile.id] = profile;
-            return acc;
-          }, {} as Record<string, Profile>);
-          setProfiles(profileMap);
         }
+        
+        // Create profile map with fallback data
+        const profileMap: Record<string, Profile> = {};
+        
+        // Add fetched profiles
+        if (profileData) {
+          profileData.forEach(profile => {
+            profileMap[profile.id] = profile;
+          });
+        }
+        
+        // Create fallback profiles for missing ones
+        uniqueInterviewers.forEach(interviewer => {
+          if (!profileMap[interviewer.user_id]) {
+            const fallbackName = interviewer.position 
+              ? `${interviewer.position} ${interviewer.experience_years || 0}+ years`
+              : 'Interviewer';
+            
+            profileMap[interviewer.user_id] = {
+              id: interviewer.user_id,
+              full_name: fallbackName
+            };
+          }
+        });
+        
+        console.log('👤 Final profile map:', profileMap);
+        setProfiles(profileMap);
       } else {
         console.log('⚠️ No eligible interviewers found');
       }
@@ -91,7 +112,7 @@ const InterviewerShowcase: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchInterviewers();
@@ -172,9 +193,9 @@ const InterviewerShowcase: React.FC = () => {
     ];
 
     const mockProfiles: Record<string, Profile> = {
-      'mock-user-1': { id: 'mock-user-1', full_name: 'Sarah Johnson', avatar_url: null },
-      'mock-user-2': { id: 'mock-user-2', full_name: 'Michael Chen', avatar_url: null },
-      'mock-user-3': { id: 'mock-user-3', full_name: 'David Rodriguez', avatar_url: null }
+      'mock-user-1': { id: 'mock-user-1', full_name: 'Sarah Johnson' },
+      'mock-user-2': { id: 'mock-user-2', full_name: 'Michael Chen' },
+      'mock-user-3': { id: 'mock-user-3', full_name: 'David Rodriguez' }
     };
 
     return (

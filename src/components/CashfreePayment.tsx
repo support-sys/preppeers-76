@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaymentStatusPolling } from "@/hooks/usePaymentStatusPolling";
+import { useAuth } from "@/contexts/AuthContext";
 import PaymentErrorDisplay from "./payment/PaymentErrorDisplay";
 import PaymentDetails from "./payment/PaymentDetails";
 import PaymentSecurityFeatures from "./payment/PaymentSecurityFeatures";
@@ -72,6 +73,7 @@ const CashfreePayment = ({
   onError,
   selectedPlan 
 }: CashfreePaymentProps) => {
+  const { user } = useAuth();
   // Helper function to parse human-readable time slot to date
   const parseTimeSlotToDate = (timeSlot: string): string | null => {
     try {
@@ -119,7 +121,6 @@ const CashfreePayment = ({
 
   const createPaymentSession = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Get user's mobile number from metadata or candidate data
@@ -196,6 +197,18 @@ const CashfreePayment = ({
       setIsLoading(true);
       setError(null);
       console.log('Starting payment process...');
+
+      // Check if user is authenticated
+      if (!user) {
+        const errorMsg = "You must be logged in to make a payment. Please sign in and try again.";
+        setError(errorMsg);
+        toast({
+          title: "Authentication Required",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Check if we have a matched interviewer
       if (!candidateData.matchedInterviewer) {
