@@ -11,7 +11,6 @@ import BookingStepsGuide from "@/components/BookingStepsGuide";
 import CandidateRegistrationForm from "@/components/CandidateRegistrationForm";
 import InterviewerMatchingPage from "@/components/InterviewerMatchingPage";
 import PlanSelection from "@/components/PlanSelection";
-import InstantMatchingButton from "@/components/InstantMatchingButton";
 import PaymentDetails from "@/components/PaymentDetails";
 import MatchingLoader from "@/components/MatchingLoader";
 import InterviewerPreview from "@/components/InterviewerPreview";
@@ -41,7 +40,6 @@ const Book = () => {
     handleProceedToPayment,
     handlePaymentSuccess,
     handlePaymentError,
-    handleStartMatching,
     handleAcceptAlternativeTime,
     handleWaitForBetterMatch,
     handleTryAgain
@@ -107,7 +105,7 @@ const Book = () => {
   if (currentStep === 'payment') {
     return (
       <PaymentPage
-        formData={formData}
+        formData={{ ...formData, matchedInterviewer }}
         userEmail={user?.email || ''}
         userName={user?.user_metadata?.full_name || user?.email || ''}
         onSuccess={handlePaymentSuccess}
@@ -145,15 +143,6 @@ const Book = () => {
           {/* Step-by-Step Guide - Only show on initial form step */}
           {currentStep === 'form' && currentFormStep === 'form' && <BookingStepsGuide />}
 
-          {/* Show Instant Matching Button if payment is successful but no interview scheduled yet */}
-          {hasSuccessfulPayment && !paymentLoading && !isInterviewAlreadyMatched && (
-            <div className="mb-6 sm:mb-8">
-              <InstantMatchingButton
-                onStartMatching={handleStartMatching}
-                isLoading={isLoading}
-              />
-            </div>
-          )}
 
           {/* Main Content - Full Width */}
           <div className="w-full">

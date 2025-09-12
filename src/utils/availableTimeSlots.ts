@@ -78,21 +78,58 @@ export const getAvailableTimeSlotsForInterviewer = async (
       // The existing client should work if the user is logged in
     }
     
-    const { data: blockedSlots, error } = await supabaseClient
+    // Try multiple approaches to get blocked slots due to potential RLS issues
+    let blockedSlots: any[] = [];
+    let error: any = null;
+
+    // Approach 1: Try the original query
+    const { data: blockedSlots1, error: error1 } = await supabaseClient
       .from('interviewer_time_blocks')
-      .select('blocked_date, start_time, end_time')
+      .select('blocked_date, start_time, end_time, is_temporary, expires_at')
       .eq('interviewer_id', interviewerId)
       .gte('blocked_date', startDateStr)
       .lte('blocked_date', endDateStr);
 
-    if (error) {
-      console.error('Error fetching blocked slots:', error);
-      console.error('Error details:', error.message, error.details, error.hint);
-      return [];
+    if (!error1 && blockedSlots1) {
+      blockedSlots = blockedSlots1;
+      console.log('🔍 Blocked slots from database (approach 1):', blockedSlots);
+    } else {
+      console.log('🔍 Approach 1 failed:', error1);
+      
+      // Approach 2: Try without date filters
+      const { data: blockedSlots2, error: error2 } = await supabaseClient
+        .from('interviewer_time_blocks')
+        .select('blocked_date, start_time, end_time, is_temporary, expires_at')
+        .eq('interviewer_id', interviewerId);
+
+      if (!error2 && blockedSlots2) {
+        // Filter manually by date
+        blockedSlots = blockedSlots2.filter(slot => 
+          slot.blocked_date >= startDateStr && slot.blocked_date <= endDateStr
+        );
+        console.log('🔍 Blocked slots from database (approach 2):', blockedSlots);
+      } else {
+        console.log('🔍 Approach 2 failed:', error2);
+        
+        // Approach 3: Try with different client (unauthenticated)
+        const { data: blockedSlots3, error: error3 } = await supabase
+          .from('interviewer_time_blocks')
+          .select('blocked_date, start_time, end_time, is_temporary, expires_at')
+          .eq('interviewer_id', interviewerId)
+          .gte('blocked_date', startDateStr)
+          .lte('blocked_date', endDateStr);
+
+        if (!error3 && blockedSlots3) {
+          blockedSlots = blockedSlots3;
+          console.log('🔍 Blocked slots from database (approach 3):', blockedSlots);
+        } else {
+          console.log('🔍 Approach 3 failed:', error3);
+          error = error3;
+        }
+      }
     }
 
-    console.log('🔍 Blocked slots from database:', blockedSlots);
-    console.log('🔍 Number of blocked slots found:', blockedSlots ? blockedSlots.length : 0);
+    console.log('🔍 Final blocked slots count:', blockedSlots ? blockedSlots.length : 0);
     
     // Test query: Check if there are ANY blocked slots for this interviewer
     const { data: allBlockedSlots, error: testError } = await supabaseClient
@@ -138,8 +175,19 @@ export const getAvailableTimeSlotsForInterviewer = async (
     // Convert blocked slots to a map for quick lookup
     const blockedSlotsMap = new Map<string, Array<{start: string, end: string}>>();
     (blockedSlots || []).forEach(slot => {
+      // Check if this is a temporary reservation that has expired
+      if (slot.is_temporary && slot.expires_at) {
+        const now = new Date();
+        const expiresAt = new Date(slot.expires_at);
+        if (now > expiresAt) {
+          console.log(`🔍 Skipping expired temporary reservation: ${slot.blocked_date} ${slot.start_time}-${slot.end_time}`);
+          return; // Skip expired temporary reservations
+        }
+      }
+      
       const dateKey = slot.blocked_date;
-      console.log(`🔍 Processing blocked slot: date=${dateKey}, start=${slot.start_time}, end=${slot.end_time}`);
+      console.log(`🔍 Processing blocked slot: date=${dateKey}, start=${slot.start_time}, end=${slot.end_time}, temporary=${slot.is_temporary}, expires=${slot.expires_at}`);
+      
       if (!blockedSlotsMap.has(dateKey)) {
         blockedSlotsMap.set(dateKey, []);
       }
