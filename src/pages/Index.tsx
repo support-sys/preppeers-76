@@ -11,9 +11,10 @@ import { findMatchingInterviewer, scheduleInterview } from "@/services/interview
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import MatchingLoader from "@/components/MatchingLoader";
 import { supabase } from "@/integrations/supabase/client";
-import { IntervieweeButton } from "@/components/SmartCTAButtons";
+import { IntervieweeButton, SmartCTAButtons } from "@/components/SmartCTAButtons";
 import WelcomeMessage from "@/components/WelcomeMessage";
 import ComparisonSection from "@/components/ComparisonSection";
+import FeedbackReportPreview from "@/components/FeedbackReportPreview";
 import InterviewerShowcase from "@/components/InterviewerShowcase";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
@@ -129,7 +130,7 @@ const Index = () => {
           </p>
 
           {/* CTA Buttons */}
-          <IntervieweeButton className="mb-16 px-8 py-4 text-lg font-semibold rounded-xl" />
+          <SmartCTAButtons className="mb-16" />
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
@@ -160,81 +161,145 @@ const Index = () => {
         </div>
       </div>
 
-      {/* For Interviewees Section */}
+      {/* For Interviewees Section - Simplified */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-16">
           <div className="max-w-6xl mx-auto">
             {/* Section Header */}
-            <div className="text-center mb-8 md:mb-16">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
                 For <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Interviewees</span>
               </h2>
-              <p className="text-base md:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto px-4">
-                Get ready for your next tech interview with personalized mock sessions and expert feedback
+              <p className="text-lg text-slate-300 max-w-2xl mx-auto">
+                Get ready for your next tech interview
               </p>
             </div>
 
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 mb-12">
-              {/* Register and Upload Resume */}
-              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-purple-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Upload className="w-6 h-6 md:w-8 md:h-8 text-purple-400" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Register & Upload Resume</h3>
-                <p className="text-sm md:text-base text-slate-300">Create your profile and upload your resume to get personalized interview experiences</p>
-              </div>
+            {/* Side-by-Side Grid - Desktop */}
+            <div className="hidden md:block mb-12">
+              <div className="max-w-5xl mx-auto">
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Step 1: Register & Upload */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-lg">1</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">Register & Upload</h3>
+                        <p className="text-slate-300 text-sm">Create profile and upload resume</p>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Select Target Role */}
-              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-blue-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <User className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Select Target Role & Tech Stack</h3>
-                <p className="text-sm md:text-base text-slate-300">Choose from Java, Python, React, Node.js, and more to match your career goals</p>
-              </div>
+                  {/* Step 2: Select Role & Book */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-lg">2</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">Select Role & Book</h3>
+                        <p className="text-slate-300 text-sm">Choose role and schedule interview</p>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Book Interview Slot */}
-              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-green-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Calendar className="w-6 h-6 md:w-8 md:h-8 text-green-400" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Book an Interview Slot</h3>
-                <p className="text-sm md:text-base text-slate-300">Schedule your mock interview at a convenient time that works for you</p>
-              </div>
+                  {/* Step 3: Join Interview */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-lg">3</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">Join Interview</h3>
+                        <p className="text-slate-300 text-sm">Connect via Google Meet</p>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Join via GMeet */}
-              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-                <div className="bg-red-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Video className="w-6 h-6 md:w-8 md:h-8 text-red-400" />
+                  {/* Step 4: Get Insights */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-lg">4</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">Get Insights</h3>
+                        <p className="text-slate-300 text-sm">Receive detailed feedback</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Join via Google Meet</h3>
-                <p className="text-sm md:text-base text-slate-300">Connect seamlessly with your interviewer through integrated video calls</p>
-              </div>
-
-              {/* Get Detailed Feedback - Full Width on Mobile, Spans 2 on Larger Screens */}
-              <div className="bg-white/10 rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group col-span-1 md:col-span-2 lg:col-span-2">
-                <div className="bg-yellow-500/20 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <FileText className="w-6 h-6 md:w-8 md:h-8 text-yellow-400" />
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">Get Detailed Feedback & Improvement Plan</h3>
-                <p className="text-sm md:text-base text-slate-300">Receive comprehensive feedback on your performance with actionable steps to improve your interview skills and technical knowledge</p>
               </div>
             </div>
 
-            {/* CTA Button */}
-            <div className="text-center px-4">
-              <IntervieweeButton 
-                size="lg" 
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6 md:px-12 py-3 md:py-4 text-base md:text-xl font-semibold rounded-xl w-full md:w-auto" 
-              />
+            {/* Mobile: Simplified Vertical Steps */}
+            <div className="md:hidden space-y-4 mb-12">
+              <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">1</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-white">Register & Upload</h3>
+                    <p className="text-xs text-slate-300">Create profile and upload resume</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">2</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-white">Select Role & Book</h3>
+                    <p className="text-xs text-slate-300">Choose role and schedule interview</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">3</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-white">Join Interview</h3>
+                    <p className="text-xs text-slate-300">Connect via Google Meet</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">4</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-white">Get Insights</h3>
+                    <p className="text-xs text-slate-300">Receive detailed feedback</p>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
 
       {/* Comparison Section */}
       <ComparisonSection />
+
+      {/* Feedback Report Preview Section */}
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-6xl mx-auto">
+            <FeedbackReportPreview />
+          </div>
+        </div>
+      </div>
 
       {/* Interviewer Showcase Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
@@ -270,7 +335,7 @@ const Index = () => {
                   </div>
                 </div>
                 <p className="text-slate-300">
-                  "The mock interviews helped me identify my weak areas and gave me confidence. Landed my dream job at JP Morgan!"
+                  "I was confused first to book interview but The mock interviews helped me identify my weak areas and gave me confidence. Finally Landed my dream job at JPM!"
                 </p>
               </div>
 
@@ -285,7 +350,7 @@ const Index = () => {
                   </div>
                 </div>
                 <p className="text-slate-300">
-                  "The detailed feedback was incredibly valuable. I improved my coding interview skills significantly."
+                  "The detailed feedback was incredibly valuable. I improved my coding interview skills significantly. Totally worth the Price!"
                 </p>
               </div>
 
@@ -300,7 +365,7 @@ const Index = () => {
                   </div>
                 </div>
                 <p className="text-slate-300">
-                  "Practicing with real engineers made all the difference. The experience felt authentic and prepared me well."
+                  "I tried other platforms but they were just AI agents taking MCQs. Practicing with real interviewers made all the difference. Best part is I got a detailed feedback report."
                 </p>
               </div>
             </div>

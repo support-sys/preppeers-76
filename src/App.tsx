@@ -28,11 +28,11 @@ import "@/services/cleanupService"; // Start cleanup service
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-              <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+                <BrowserRouter>
           <AuthProvider>
             <RedirectHandler />
             <Routes>

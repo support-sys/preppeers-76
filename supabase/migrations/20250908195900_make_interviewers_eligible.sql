@@ -8,48 +8,14 @@ WHERE is_eligible = false;
 DO $$
 DECLARE
     interviewer_count integer;
+    user_count integer;
 BEGIN
     SELECT COUNT(*) INTO interviewer_count FROM public.interviewers;
+    SELECT COUNT(*) INTO user_count FROM auth.users;
     
-    IF interviewer_count = 0 THEN
-        -- First create a sample user if none exist
-        IF NOT EXISTS (SELECT 1 FROM auth.users LIMIT 1) THEN
-            INSERT INTO auth.users (
-                id,
-                email,
-                encrypted_password,
-                email_confirmed_at,
-                created_at,
-                updated_at,
-                raw_app_meta_data,
-                raw_user_meta_data,
-                is_super_admin,
-                role,
-                aud,
-                confirmation_token,
-                email_change,
-                email_change_token_new,
-                recovery_token
-            ) VALUES (
-                gen_random_uuid(),
-                'sample-interviewer@example.com',
-                crypt('password123', gen_salt('bf')),
-                NOW(),
-                NOW(),
-                NOW(),
-                '{"provider": "email", "providers": ["email"]}',
-                '{"full_name": "Sample Interviewer"}',
-                false,
-                'authenticated',
-                'authenticated',
-                '',
-                '',
-                '',
-                ''
-            );
-        END IF;
-        
-        -- Insert a sample interviewer
+    -- Only create sample data if we have users and no interviewers
+    IF interviewer_count = 0 AND user_count > 0 THEN
+        -- Insert a sample interviewer if none exist
         INSERT INTO public.interviewers (
             id,
             user_id,

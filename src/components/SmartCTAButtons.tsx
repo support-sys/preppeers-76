@@ -68,7 +68,7 @@ export const InterviewerButton = ({ className = "", size = "lg" }: SmartCTAButto
     if (!user) {
       return {
         text: "Become an Interviewer",
-        to: "/auth?role=interviewer"
+        to: "/become-interviewer"
       };
     }
 

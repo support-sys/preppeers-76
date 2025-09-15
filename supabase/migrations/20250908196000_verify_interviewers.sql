@@ -43,7 +43,7 @@ BEGIN
             '',
             '',
             ''
-        ) ON CONFLICT (email) DO NOTHING;
+        ) ON CONFLICT DO NOTHING;
         
         -- Get the user ID
         DECLARE
