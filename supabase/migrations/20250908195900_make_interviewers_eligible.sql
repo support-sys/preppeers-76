@@ -8,10 +8,13 @@ WHERE is_eligible = false;
 DO $$
 DECLARE
     interviewer_count integer;
+    user_count integer;
 BEGIN
     SELECT COUNT(*) INTO interviewer_count FROM public.interviewers;
+    SELECT COUNT(*) INTO user_count FROM auth.users;
     
-    IF interviewer_count = 0 THEN
+    -- Only create sample data if we have users and no interviewers
+    IF interviewer_count = 0 AND user_count > 0 THEN
         -- Insert a sample interviewer if none exist
         INSERT INTO public.interviewers (
             id,

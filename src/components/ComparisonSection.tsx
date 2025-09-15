@@ -1,158 +1,141 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, Users, MessageSquare, Award, Zap, DollarSign, Target } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 const ComparisonSection = () => {
   const comparisonData = [
     {
-      category: "Interview Format",
-      otherPlatforms: "AI bots, MCQs, scripted Q&A",
-      withUs: "Real live interviews with experienced engineers",
-      icon: <MessageSquare className="w-5 h-5" />
+      feature: "Real Live Interviews",
+      others: false,
+      us: true
     },
     {
-      category: "Experience",
-      otherPlatforms: "Feels like practicing questions, not interviews",
-      withUs: "Simulates the real job interview environment",
-      icon: <Users className="w-5 h-5" />
+      feature: "AI Agent Interviews",
+      others: true,
+      us: false
     },
     {
-      category: "Feedback",
-      otherPlatforms: "Basic \"right/wrong\" answers only",
-      withUs: "Detailed feedback on communication, confidence, problem-solving & presentation",
-      icon: <Award className="w-5 h-5" />
+      feature: "Human Expert Feedback",
+      others: false,
+      us: true
     },
     {
-      category: "Human Element",
-      otherPlatforms: "No real human guidance",
-      withUs: "Interviewers are real engineers who take interviews in top companies",
-      icon: <Users className="w-5 h-5" />
+      feature: "24/7 Availability",
+      others: true,
+      us: false
     },
     {
-      category: "Matching",
-      otherPlatforms: "Pay first, then get access",
-      withUs: "Instantly matched with your interviewer before paying",
-      icon: <Zap className="w-5 h-5" />
+      feature: "Industry Expert Interviewers",
+      others: false,
+      us: true
     },
     {
-      category: "Soft Skills Prep",
-      otherPlatforms: "Ignored completely",
-      withUs: "Covers technical + communication + behavioral aspects",
-      icon: <MessageSquare className="w-5 h-5" />
+      feature: "Instant Matching",
+      others: false,
+      us: true
     },
     {
-      category: "Pricing",
-      otherPlatforms: "Often costly for low-value prep",
-      withUs: "Affordable plans designed for job seekers",
-      icon: <DollarSign className="w-5 h-5" />
+      feature: "Soft Skills Training",
+      others: false,
+      us: true
     },
     {
-      category: "Outcome",
-      otherPlatforms: "You learn questions, but don't feel ready",
-      withUs: "You gain confidence to face real interviews",
-      icon: <Target className="w-5 h-5" />
+      feature: "Lower Cost",
+      others: true,
+      us: false
+    },
+    {
+      feature: "Pay After Matching",
+      others: false,
+      us: true
+    },
+    {
+      feature: "Confidence Building",
+      others: false,
+      us: true
     }
   ];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8 md:mb-16">
+          <div className="text-center mb-8 md:mb-12">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">
               Why Choose Us Over Other Platforms?
             </h2>
             <p className="text-base md:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto px-4">
-              See how we provide a superior interview preparation experience compared to traditional platforms
+              See how we provide a superior interview preparation experience
             </p>
           </div>
 
-          {/* Mobile-First Comparison Cards */}
-          <div className="space-y-4 sm:hidden">
-            {comparisonData.map((item, index) => (
-              <div key={index} className="rounded-2xl p-6 border border-white/20 hover:opacity-90 transition-all duration-300" style={{ backgroundColor: '#16285a' }}>
-                {/* Category Header */}
-                <div className="flex items-center space-x-3 mb-4 pb-3 border-b border-white/10">
-                  <div className="text-blue-400 flex-shrink-0">
-                    {item.icon}
-                  </div>
-                  <span className="font-semibold text-white text-sm">{item.category}</span>
-                </div>
-
-                {/* Other Platforms */}
-                <div className="mb-4">
-                  <div className="flex items-start space-x-2 mb-2">
-                    <X className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Other Platforms</span>
-                  </div>
-                  <p className="text-zinc-200 text-sm leading-relaxed pl-6">{item.otherPlatforms}</p>
-                </div>
-
-                {/* With Us */}
-                <div>
-                  <div className="flex items-start space-x-2 mb-2">
-                    <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-xs font-medium text-green-400 uppercase tracking-wide">With Us</span>
-                  </div>
-                  <p className="text-slate-300 text-sm leading-relaxed pl-6 font-medium">{item.withUs}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop Comparison Table */}
-          <div className="hidden sm:block rounded-2xl border border-white/20 overflow-hidden" style={{ backgroundColor: '#16285a' }}>
+          {/* Clean Comparison Table */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-3 border-b border-white/20" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
-              <div className="p-6 text-center">
-                <h3 className="text-lg font-semibold text-slate-300">Category</h3>
+            <div className="grid grid-cols-3 bg-white/10 border-b border-white/10">
+              <div className="p-4 md:p-6">
+                <h3 className="text-sm md:text-base font-semibold text-slate-300 text-left">Features</h3>
               </div>
-              <div className="p-6 text-center border-l border-white/20">
-                <h3 className="text-lg font-semibold text-slate-300">Other Platforms</h3>
+              <div className="p-4 md:p-6 text-center border-l border-white/10">
+                <h3 className="text-sm md:text-base font-semibold text-slate-300">Other Platforms</h3>
               </div>
-              <div className="p-6 text-center border-l border-white/20">
-                <h3 className="text-lg font-semibold text-green-400">With Us</h3>
+              <div className="p-4 md:p-6 text-center border-l border-white/10">
+                <h3 className="text-sm md:text-base font-semibold text-green-400">Interviewise</h3>
               </div>
             </div>
 
             {/* Comparison Rows */}
-            <div className="divide-y divide-white/10">
+            <div className="divide-y divide-white/5">
               {comparisonData.map((item, index) => (
-                <div key={index} className="grid grid-cols-3 hover:opacity-90 transition-all duration-300">
-                  {/* Category */}
-                  <div className="p-6 flex items-center space-x-3">
-                    <div className="text-blue-400 flex-shrink-0">
-                      {item.icon}
-                    </div>
-                    <span className="font-semibold text-white">{item.category}</span>
+                <div key={index} className="grid grid-cols-3 hover:bg-white/5 transition-all duration-300">
+                  {/* Feature */}
+                  <div className="p-4 md:p-6 flex items-center">
+                    <span className="text-sm md:text-base font-medium text-white">{item.feature}</span>
                   </div>
 
                   {/* Other Platforms */}
-                  <div className="p-6 border-l border-white/20 flex items-start space-x-3">
-                    <X className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-zinc-200 text-sm leading-relaxed">{item.otherPlatforms}</span>
+                  <div className="p-4 md:p-6 border-l border-white/10 flex items-center justify-center">
+                    {item.others ? (
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <Check className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <X className="w-3 h-3 md:w-4 md:h-4 text-red-400" />
+                      </div>
+                    )}
                   </div>
 
                   {/* With Us */}
-                  <div className="p-6 border-l border-white/20 flex items-start space-x-3">
-                    <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-300 text-sm leading-relaxed font-medium">{item.withUs}</span>
+                  <div className="p-4 md:p-6 border-l border-white/10 flex items-center justify-center">
+                    {item.us ? (
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <Check className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <X className="w-3 h-3 md:w-4 md:h-4 text-red-400" />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Bottom CTA */}
-          <div className="text-center mt-12">
-            <div className="inline-block p-6 rounded-xl max-w-md mx-auto border border-white/20" style={{ backgroundColor: '#16285a' }}>
-              <p className="text-lg text-white font-semibold mb-2">
-                Ready to experience the difference?
-              </p>
-              <p className="text-slate-300">
-                Join thousands of job seekers who've transformed their interview skills with real practice
-              </p>
+          {/* Bottom Stats */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-2">1000+</div>
+              <p className="text-sm md:text-base text-slate-300">Mock Interviews Conducted</p>
+            </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="text-2xl md:text-3xl font-bold text-green-400 mb-2">95%</div>
+              <p className="text-sm md:text-base text-slate-300">Success Rate</p>
+            </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2">4.9/5</div>
+              <p className="text-sm md:text-base text-slate-300">Average Rating</p>
             </div>
           </div>
         </div>

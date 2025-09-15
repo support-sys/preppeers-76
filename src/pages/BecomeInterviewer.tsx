@@ -63,7 +63,7 @@ const BecomeInterviewer = () => {
                 size="lg" 
                 className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25"
               >
-                Become Interviewer
+                Register Interviewer
                 <ArrowRight className="ml-3 w-6 h-6" />
               </Button>
             </>
@@ -309,7 +309,7 @@ const BecomeInterviewer = () => {
                   size="lg" 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25"
                 >
-                  Become Interviewer Now
+                  Register Interviewer Now
                   <ArrowRight className="ml-3 w-6 h-6" />
                 </Button>
               </>
