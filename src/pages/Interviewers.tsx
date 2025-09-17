@@ -465,10 +465,11 @@ const Interviewers = () => {
       // Database save successful
       toast({
         title: "Profile Submitted Successfully!",
-        description: "Your profile has been submitted and is now under assessment. You'll receive an email with assessment details shortly."
+        description: "Your profile has been submitted. You can now complete the assessment from your dashboard to become eligible for interviews."
       });
 
-      setIsSubmitted(true);
+      // Navigate to dashboard instead of showing assessment
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Database save failed:', error);
       toast({
@@ -480,6 +481,7 @@ const Interviewers = () => {
       setLoading(false);
     }
   };
+
 
   if (isSubmitted) {
     return (
@@ -939,7 +941,7 @@ const Interviewers = () => {
                     </>
                                       ) : (
                       <>
-                        Submit Profile & Schedule
+                        Give Assessment
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </>
                     )}
