@@ -297,8 +297,8 @@ const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
           <div>
             <Label className="text-white">Skills</Label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSkills.map(skill => (
-                <div key={skill} className="flex items-center space-x-2">
+              {availableSkills.map((skill, index) => (
+                <div key={`${profileData.selectedCategories[0]}-${skill}-${index}`} className="flex items-center space-x-2">
                   <Checkbox
                     id={skill}
                     checked={profileData.skills.includes(skill)}

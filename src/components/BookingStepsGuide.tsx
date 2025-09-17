@@ -10,47 +10,32 @@ const BookingStepsGuide = () => {
     },
     {
       id: 2,
-      title: "Find Interviewer",
-      description: "Get matched"
+      title: "Get Matched",
+      description: "Find your interviewer"
     },
     {
       id: 3,
-      title: "Select Plan",
-      description: "Choose your plan"
+      title: "Book & Pay",
+      description: "Select plan and pay"
     },
     {
       id: 4,
-      title: "Select Slot",
-      description: "Pick time"
-    },
-    {
-      id: 5,
-      title: "Pay",
-      description: "Secure payment"
-    },
-    {
-      id: 6,
       title: "Attend",
       description: "Join interview"
-    },
-    {
-      id: 7,
-      title: "Feedback",
-      description: "Feedback and Improvement"
     }
   ];
 
   return (
-    <div className="mb-8">
+    <div className="mb-6">
                   <Card className="bg-white/5 border-white/20">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           {/* Header */}
-          <div className="text-center mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+          <div className="text-center mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-white mb-1 sm:mb-2">
               How It Works
             </h2>
-            <p className="text-slate-300 text-sm">
-              7 simple steps to book your interview
+            <p className="text-slate-300 text-xs sm:text-sm">
+              4 simple steps to book your interview
             </p>
           </div>
 
@@ -58,7 +43,7 @@ const BookingStepsGuide = () => {
           <div className="relative">
             {/* Desktop: Horizontal Timeline */}
             <div className="hidden md:block">
-              <div className="grid grid-cols-7 gap-4 items-start">
+              <div className="grid grid-cols-4 gap-4 items-start">
                 {steps.map((step, index) => (
                   <div key={step.id} className="flex flex-col items-center relative">
                     {/* Step Number */}
@@ -85,36 +70,33 @@ const BookingStepsGuide = () => {
               </div>
             </div>
 
-            {/* Mobile: Vertical Timeline */}
-            <div className="md:hidden space-y-4">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-start space-x-4 relative">
-                  {/* Step Number */}
-                  <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-xs">
-                    {step.id}
+            {/* Mobile: Compact Grid */}
+            <div className="md:hidden">
+              <div className="grid grid-cols-2 gap-3">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    {/* Step Number */}
+                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-xs">
+                      {step.id}
+                    </div>
+                    
+                    {/* Step Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-semibold text-xs mb-0.5 truncate">
+                        {step.title}
+                      </h3>
+                      <p className="text-slate-400 text-xs truncate">
+                        {step.description}
+                      </p>
+                    </div>
                   </div>
-                  
-                  {/* Step Content */}
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold text-sm mb-1">
-                      {step.title}
-                    </h3>
-                    <p className="text-slate-400 text-xs">
-                      {step.description}
-                    </p>
-                  </div>
-
-                  {/* Connecting Line */}
-                  {index < steps.length - 1 && (
-                    <div className="absolute top-7 left-3.5 w-0.5 h-6 bg-slate-600 transform -translate-x-1/2" />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Call to Action */}
-          <div className="text-center mt-4 pt-3 border-t border-white/10">
+          <div className="text-center mt-3 pt-2 border-t border-white/10">
             <p className="text-slate-300 text-xs">
               Ready to start? Fill the form below
             </p>

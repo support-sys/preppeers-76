@@ -2,16 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, CalendarX, Settings, User, Video, ExternalLink, FileText, Trash2, Eye } from 'lucide-react';
+import { Calendar, Clock, Users, CalendarX, Settings, Video, ExternalLink, FileText, Trash2, Eye, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ScheduleEditor from './ScheduleEditor';
 import DateBlocker from './DateBlocker';
-import ProfileSettings from './ProfileSettings';
 import TimeSlotManager from './TimeSlotManager';
 import InterviewDetailsDialog from './InterviewDetailsDialog';
 import { formatDateTimeIST } from '@/utils/dateUtils';
+import { assessmentConfig } from '@/config/assessmentConfig';
 
 // Helper function to format plan name
 const formatPlanName = (plan: string): string => {
@@ -72,17 +72,23 @@ const InterviewerDashboard = () => {
   const { toast } = useToast();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'profile' | 'time-slots'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'time-slots'>('dashboard');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [blockedDatesCount, setBlockedDatesCount] = useState(0);
   const [isEligible, setIsEligible] = useState<boolean | null>(null);
   const [isProfileComplete, setIsProfileComplete] = useState<boolean>(false);
+  const [assessmentStatus, setAssessmentStatus] = useState({
+    mcqCompleted: false,
+    sessionCompleted: false,
+    assessmentCompleted: false
+  });
 
   useEffect(() => {
     fetchInterviews();
     fetchBlockedDatesCount();
     fetchInterviewerStatus();
+    fetchAssessmentStatus();
   }, []);
 
   const fetchInterviews = async () => {
@@ -185,6 +191,109 @@ const InterviewerDashboard = () => {
     }
   };
 
+  const fetchAssessmentStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from('interviewers')
+        .select('assessment_mcq_completed, assessment_session_completed, assessment_completed_at')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        setAssessmentStatus({
+          mcqCompleted: data.assessment_mcq_completed || false,
+          sessionCompleted: data.assessment_session_completed || false,
+          assessmentCompleted: !!data.assessment_completed_at
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching assessment status:', error);
+    }
+  };
+
+  const handleMarkMcqComplete = async () => {
+    try {
+      console.log('=== MCQ COMPLETE FUNCTION START ===');
+      console.log('User ID:', user?.id);
+      console.log('User object:', user);
+      
+      if (!user?.id) {
+        console.error('No user ID found!');
+        return;
+      }
+      
+      console.log('Attempting to mark MCQ complete for user:', user.id);
+      
+      const { data, error } = await supabase
+        .from('interviewers')
+        .update({ assessment_mcq_completed: true })
+        .eq('user_id', user.id)
+        .select();
+
+      console.log('Update result:', { data, error });
+      console.log('Data length:', data?.length);
+      console.log('Error details:', error);
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        console.log('Successfully updated MCQ status');
+        setAssessmentStatus(prev => ({ ...prev, mcqCompleted: true }));
+        toast({
+          title: "MCQ Marked Complete",
+          description: "MCQ assessment marked as completed!"
+        });
+      } else {
+        console.error('No data returned from update');
+      }
+    } catch (error) {
+      console.error('Error in handleMarkMcqComplete:', error);
+      toast({
+        title: "Error",
+        description: `Failed to update MCQ status: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleMarkSessionComplete = async () => {
+    try {
+      console.log('Attempting to mark session complete for user:', user?.id);
+      
+      const { data, error } = await supabase
+        .from('interviewers')
+        .update({ assessment_session_completed: true })
+        .eq('user_id', user.id)
+        .select();
+
+      console.log('Update result:', { data, error });
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      setAssessmentStatus(prev => ({ ...prev, sessionCompleted: true }));
+      toast({
+        title: "Session Marked Complete",
+        description: "Live session marked as completed!"
+      });
+    } catch (error) {
+      console.error('Error in handleMarkSessionComplete:', error);
+      toast({
+        title: "Error",
+        description: `Failed to update session status: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+
   const handleJoinMeeting = (meetLink: string) => {
     if (meetLink) {
       window.open(meetLink, '_blank');
@@ -277,9 +386,6 @@ const InterviewerDashboard = () => {
     />;
   }
 
-  if (activeView === 'profile') {
-    return <ProfileSettings onClose={() => setActiveView('dashboard')} />;
-  }
 
   if (activeView === 'time-slots') {
     return <TimeSlotManager onClose={() => setActiveView('dashboard')} />;
@@ -287,19 +393,12 @@ const InterviewerDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">Interviewer Dashboard</h1>
-        <div className="flex space-x-2">
-          <Button 
-            onClick={() => setActiveView('profile')}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <User className="w-4 h-4 mr-2" />
-            Profile Settings
-          </Button>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Interviewer Dashboard</h1>
+        <div className="flex flex-wrap gap-2">
           <Button 
             onClick={() => setActiveView('time-slots')}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 text-sm"
           >
             <Clock className="w-4 h-4 mr-2" />
             Manage Schedule
@@ -307,7 +406,7 @@ const InterviewerDashboard = () => {
           <Button 
             variant="outline" 
             onClick={() => setActiveView('block-dates')}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm"
           >
             <CalendarX className="w-4 h-4 mr-2" />
             Block Dates
@@ -321,32 +420,92 @@ const InterviewerDashboard = () => {
           <CardHeader>
             <CardTitle className="text-amber-300 flex items-center">
               <Clock className="w-5 h-5 mr-2" />
-              Profile Under Assessment
+              Complete Your Assessment
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-amber-100">
-                🎯 <strong>Your profile is currently under assessment!</strong>
+                🎯 <strong>Your profile is not completed!</strong> To complete, please take the assessment by clicking the button below. 
+                If you already completed the assessment via email links, mark them as completed.
               </p>
-              <p className="text-amber-200 text-sm">
-                We've received your profile and are currently reviewing your qualifications and experience. 
-                This process typically takes 24-48 hours.
-              </p>
-              <div className="bg-amber-600/20 border border-amber-500/30 p-3 rounded-lg">
-                <p className="text-amber-100 text-sm">
-                  📧 <strong>Next Step:</strong> Check your email for assessment details. You'll receive:
-                </p>
-                <ul className="text-amber-200 text-sm mt-2 ml-4 space-y-1">
-                  <li>• Assessment questionnaire or technical test</li>
-                  <li>• Instructions to complete the evaluation</li>
-                  <li>• Timeline for profile review</li>
-                </ul>
+              
+              {/* Assessment Progress */}
+              <div className="bg-amber-600/20 border border-amber-500/30 p-4 rounded-lg">
+                <h4 className="text-amber-200 font-semibold mb-3">Assessment Progress:</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-amber-100 text-sm">1. MCQ Technical Assessment</span>
+                    {assessmentStatus.mcqCompleted ? (
+                      <div className="flex items-center text-green-400">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        <span className="text-xs">Completed</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(assessmentConfig.mcqFormUrl, '_blank')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Take MCQ
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            console.log('Mark Done button clicked for MCQ');
+                            handleMarkMcqComplete();
+                          }}
+                          className="border-green-500/30 text-green-400 hover:bg-green-500/10 text-xs"
+                        >
+                          Mark Done
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-amber-100 text-sm">2. Live Interview Session</span>
+                    {assessmentStatus.sessionCompleted ? (
+                      <div className="flex items-center text-green-400">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        <span className="text-xs">Completed</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(assessmentConfig.sessionBookingUrl, '_blank')}
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Book Session
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            console.log('Mark Done button clicked for Session');
+                            handleMarkSessionComplete();
+                          }}
+                          className="border-green-500/30 text-green-400 hover:bg-green-500/10 text-xs"
+                        >
+                          Mark Done
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <p className="text-amber-200 text-sm">
-                <strong>What happens next?</strong> Once you complete the assessment and we review your profile, 
-                you'll be eligible to take interviews and start earning!
-              </p>
+
+              {/* Assessment Instructions */}
+              <div className="text-center">
+                <p className="text-amber-200 text-sm">
+                  Complete both steps above to finish your assessment
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
