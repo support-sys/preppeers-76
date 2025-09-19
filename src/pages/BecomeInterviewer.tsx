@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 
 const BecomeInterviewer = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, profileComplete } = useAuth();
   const navigate = useNavigate();
 
   const handleBecomeInterviewer = () => {
@@ -18,6 +18,14 @@ const BecomeInterviewer = () => {
       // If not logged in, go to signup with interviewer role
       navigate('/auth?role=interviewer');
     }
+  };
+
+  const handleCompleteProfile = () => {
+    navigate('/interviewers');
+  };
+
+  const handleGoToDashboard = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -35,17 +43,31 @@ const BecomeInterviewer = () => {
               </h1>
               
               <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-                Ready to continue helping candidates succeed? Access your dashboard to manage interviews and profile.
+                {profileComplete 
+                  ? "Ready to continue helping candidates succeed? Access your dashboard to manage interviews and profile."
+                  : "Complete your profile to start conducting interviews and helping candidates succeed."
+                }
               </p>
 
-              <Button 
-                onClick={handleBecomeInterviewer}
-                size="lg" 
-                className="bg-green-600 hover:bg-green-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25"
-              >
-                Go to Dashboard
-                <ArrowRight className="ml-3 w-6 h-6" />
-              </Button>
+              {profileComplete ? (
+                <Button 
+                  onClick={handleGoToDashboard}
+                  size="lg" 
+                  className="bg-green-600 hover:bg-green-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25"
+                >
+                  Go to Dashboard
+                  <ArrowRight className="ml-3 w-6 h-6" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleCompleteProfile}
+                  size="lg" 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25"
+                >
+                  Complete Your Profile
+                  <ArrowRight className="ml-3 w-6 h-6" />
+                </Button>
+              )}
             </>
           ) : (
             // New user - show become interviewer message
@@ -284,16 +306,30 @@ const BecomeInterviewer = () => {
                   Ready to <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Continue?</span>
                 </h2>
                 <p className="text-xl text-slate-300 mb-8">
-                  Access your dashboard to manage interviews, update your profile, and help more candidates succeed.
+                  {profileComplete 
+                    ? "Access your dashboard to manage interviews, update your profile, and help more candidates succeed."
+                    : "Complete your profile to start conducting interviews and help candidates succeed."
+                  }
                 </p>
-                <Button 
-                  onClick={handleBecomeInterviewer}
-                  size="lg" 
-                  className="bg-green-600 hover:bg-green-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25"
-                >
-                  Go to Dashboard
-                  <ArrowRight className="ml-3 w-6 h-6" />
-                </Button>
+                {profileComplete ? (
+                  <Button 
+                    onClick={handleGoToDashboard}
+                    size="lg" 
+                    className="bg-green-600 hover:bg-green-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-green-500/25"
+                  >
+                    Go to Dashboard
+                    <ArrowRight className="ml-3 w-6 h-6" />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleCompleteProfile}
+                    size="lg" 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-xl font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25"
+                  >
+                    Complete Your Profile
+                    <ArrowRight className="ml-3 w-6 h-6" />
+                  </Button>
+                )}
               </>
             ) : (
               // New user
