@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, ArrowRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -683,7 +683,7 @@ const Interviewers = () => {
                     value={interviewerData.bio}
                     onChange={handleInputChange}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 resize-none"
-                    placeholder="Write a short bio about yourself"
+                    placeholder="Write a short bio about yourself, which will be displayed to candidates"
                     rows={4}
                     required
                   />
@@ -853,55 +853,57 @@ const Interviewers = () => {
 
                     {/* Time Slots for Selected Days */}
                     {Object.keys(availability).filter(day => availability[day]?.available).map((day) => (
-                      <div key={day} className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
-                        <h4 className="text-white font-medium mb-3">{day} Time Slots</h4>
+                      <div key={day} className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                        <h4 className="text-white font-medium mb-2 text-sm">{day} Time Slots</h4>
                         
                         {/* Existing Time Slots */}
-                        {availability[day]?.timeSlots.map((slot) => (
-                          <div key={slot.id} className="flex items-center space-x-2 mb-2">
-                            <Select 
-                              value={slot.start} 
-                              onValueChange={(value) => updateTimeSlot(day, slot.id, 'start', value)}
-                            >
-                              <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {generateTimeOptions().map(time => (
-                                  <SelectItem key={time} value={time}>
-                                    {formatTimeForDisplay(time)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <span className="text-white">to</span>
-                            <Select 
-                              value={slot.end} 
-                              onValueChange={(value) => updateTimeSlot(day, slot.id, 'end', value)}
-                            >
-                              <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {generateTimeOptions().map(time => (
-                                  <SelectItem key={time} value={time}>
-                                    {formatTimeForDisplay(time)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <span className="text-green-400 text-sm font-medium">Duration: 1 hour</span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeTimeSlot(day, slot.id)}
-                              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        ))}
+                        <div className="space-y-2">
+                          {availability[day]?.timeSlots.map((slot) => (
+                            <div key={slot.id} className="flex items-center gap-2 p-2 bg-white/5 rounded border border-white/10">
+                              <Select 
+                                value={slot.start} 
+                                onValueChange={(value) => updateTimeSlot(day, slot.id, 'start', value)}
+                              >
+                                <SelectTrigger className="w-20 sm:w-24 bg-white/10 border-white/20 text-white h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {generateTimeOptions().map(time => (
+                                    <SelectItem key={time} value={time}>
+                                      {formatTimeForDisplay(time)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-white text-xs">to</span>
+                              <Select 
+                                value={slot.end} 
+                                onValueChange={(value) => updateTimeSlot(day, slot.id, 'end', value)}
+                              >
+                                <SelectTrigger className="w-20 sm:w-24 bg-white/10 border-white/20 text-white h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {generateTimeOptions().map(time => (
+                                    <SelectItem key={time} value={time}>
+                                      {formatTimeForDisplay(time)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-green-400 text-xs hidden sm:inline">1h</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeTimeSlot(day, slot.id)}
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 p-1 h-6 w-6 ml-auto"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
                         
                         {/* Add New Time Slot Button */}
                         <Button
@@ -909,9 +911,9 @@ const Interviewers = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => addTimeSlot(day)}
-                          className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                          className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 h-8 text-xs mt-2"
                         >
-                          + Add Time Slot
+                          + Add Slot
                         </Button>
                       </div>
                     ))}
