@@ -41,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [shouldRedirectToBook, setShouldRedirectToBook] = useState(false);
   const [shouldRedirectToMain, setShouldRedirectToMain] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener
@@ -69,8 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setUserRole(profile?.role || null);
             
-            // Set redirect flags immediately based on user role (don't wait for profile completion check)
-            if (event === 'SIGNED_IN') {
+            // Set redirect flags only on actual new sign-ins, not on initial load or session refreshes
+            if (event === 'SIGNED_IN' && !isInitialLoad) {
               if (profile?.role === 'interviewee') {
                 setShouldRedirectToBook(true);
               } else if (profile?.role === 'interviewer') {
@@ -99,6 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Mark initial load as complete
+      setIsInitialLoad(false);
     });
 
     return () => subscription.unsubscribe();
