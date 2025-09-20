@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Star, Clock, Award, FileText, Users, Zap, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, Users, ArrowRight, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { findMatchingInterviewer } from "@/services/interviewScheduling";
@@ -109,53 +109,86 @@ const InterviewerMatchingPage: React.FC<InterviewerMatchingPageProps> = ({
         <Card className="bg-white/10 backdrop-blur-lg border-white/20 mb-8 shadow-lg">
           <CardHeader>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <div className="flex items-start space-x-4">
+                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <Users className="w-8 h-8 text-blue-400" />
                 </div>
-                <div className="flex-1">
-                  <CardTitle className="text-2xl text-white">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-xl sm:text-2xl text-white mb-1">
                     {matchedInterviewer.name || 'Professional Interviewer'}
                   </CardTitle>
-                  <CardDescription className="text-slate-300 text-lg">
-                    {matchedInterviewer.company || 'Experienced Professional'}
+                  <CardDescription className="text-slate-300 text-base sm:text-lg mb-2">
+                    {matchedInterviewer.position || 'Senior Professional'} at {matchedInterviewer.company || 'Leading Company'}
                   </CardDescription>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className="bg-green-600 text-white px-3 py-1 text-xs font-bold">
+                      <Check className="w-3 h-3 mr-1" />
+                      Matched
+                    </Badge>
+                    <Badge variant="outline" className="border-blue-400/30 text-blue-300 px-3 py-1 text-xs">
+                      {matchedInterviewer.experience_years || '5+'} years exp
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-center sm:justify-end">
-                <Badge className="bg-green-600 text-white px-4 py-2 text-sm font-bold">
-                  <Check className="w-4 h-4 mr-2" />
-                  Matched
-                </Badge>
               </div>
             </div>
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* Interviewer Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Bio Section */}
+            {matchedInterviewer.bio && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Experience</h3>
-                <div className="flex items-center space-x-2 text-slate-300">
-                  <Clock className="w-5 h-5" />
-                  <span>{matchedInterviewer.experience_years || '5+'} years of experience</span>
-                </div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                  <MessageSquare className="w-5 h-5 mr-2 text-blue-400" />
+                  About This Interviewer
+                </h3>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  {matchedInterviewer.bio.length > 150 
+                    ? `${matchedInterviewer.bio.substring(0, 150)}...` 
+                    : matchedInterviewer.bio}
+                </p>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {(matchedInterviewer.skills || []).slice(0, 3).map((skill: string, index: number) => (
-                    <Badge key={index} variant="outline" className="border-blue-400/30 text-blue-300">
-                      {skill}
-                    </Badge>
-                  ))}
-                  {(matchedInterviewer.skills || []).length > 3 && (
-                    <Badge variant="outline" className="border-slate-400/30 text-slate-300">
-                      +{(matchedInterviewer.skills || []).length - 3} more
-                    </Badge>
-                  )}
-                </div>
+            )}
+
+            {/* How This Interviewer Will Help */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">
+                How This Interviewer Will Help You
+              </h3>
+              <ul className="space-y-2">
+                <li className="flex items-start space-x-2 text-slate-300">
+                  <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Get detailed expert feedback on your performance and areas for improvement</span>
+                </li>
+                <li className="flex items-start space-x-2 text-slate-300">
+                  <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Learn from someone with real-world industry experience in your field</span>
+                </li>
+                <li className="flex items-start space-x-2 text-slate-300">
+                  <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Receive comprehensive evaluation of your technical and soft skills</span>
+                </li>
+                <li className="flex items-start space-x-2 text-slate-300">
+                  <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Get personalized career guidance and advice to advance your career</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Key Skills */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">Key Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {(matchedInterviewer.technologies || matchedInterviewer.skills || []).slice(0, 4).map((skill: string, index: number) => (
+                  <Badge key={index} variant="outline" className="border-blue-400/30 text-blue-300 text-xs">
+                    {skill}
+                  </Badge>
+                ))}
+                {(matchedInterviewer.technologies || matchedInterviewer.skills || []).length > 4 && (
+                  <Badge variant="outline" className="border-slate-400/30 text-slate-300 text-xs">
+                    +{(matchedInterviewer.technologies || matchedInterviewer.skills || []).length - 4} more
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -168,7 +201,7 @@ const InterviewerMatchingPage: React.FC<InterviewerMatchingPageProps> = ({
                   {matchedInterviewer.matchReasons.map((reason: string, index: number) => (
                     <li key={index} className="flex items-start space-x-2 text-slate-300">
                       <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
-                      <span>{reason}</span>
+                      <span className="text-sm">{reason}</span>
                     </li>
                   ))}
                 </ul>

@@ -20,6 +20,10 @@ export interface MatchingCandidate {
 export interface MatchedInterviewer {
   id: string;
   company?: string;
+  position?: string;
+  bio?: string;
+  linkedin_url?: string;
+  github_url?: string;
   skills?: string[];
   technologies?: string[];
   experience_years?: number;
