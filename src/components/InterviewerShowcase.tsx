@@ -314,7 +314,7 @@ const InterviewerShowcase: React.FC = () => {
           Meet Our <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Expert Interviewers</span>
         </h2>
         <p className="text-slate-300 text-lg max-w-3xl mx-auto">
-          Real engineers from top tech companies, ready to help you ace your interviews
+        Interviewers who hire for the jobs you want.
         </p>
       </div>
 

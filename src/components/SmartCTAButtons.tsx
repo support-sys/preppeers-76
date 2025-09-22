@@ -17,7 +17,7 @@ export const IntervieweeButton = ({ className = "", size = "lg" }: SmartCTAButto
   const getButtonProps = () => {
     if (!user) {
       return {
-        text: "Book a Mock Interview",
+        text: "Start My Mock Interview",
         to: "/auth?role=interviewee"
       };
     }
@@ -38,7 +38,7 @@ export const IntervieweeButton = ({ className = "", size = "lg" }: SmartCTAButto
 
     // Default fallback - should rarely hit this
     return {
-      text: "Book a Mock Interview",
+      text: "Start My Mock Interview",
       to: "/book"
     };
   };
@@ -67,25 +67,38 @@ export const InterviewerButton = ({ className = "", size = "lg" }: SmartCTAButto
   const getButtonProps = () => {
     if (!user) {
       return {
-        text: "Become an Interviewer",
-        to: "/become-interviewer"
+        text: "Already an Interviewer? Register here.",
+        to: "/become-interviewer",
+        isLink: true
       };
     }
 
     if (!profileComplete) {
       return {
         text: "Complete Your Profile",
-        to: "/interviewers"
+        to: "/interviewers",
+        isLink: false
       };
     }
 
     return {
       text: "Go to Dashboard",
-      to: "/dashboard"
+      to: "/dashboard",
+      isLink: false
     };
   };
 
-  const { text, to } = getButtonProps();
+  const { text, to, isLink } = getButtonProps();
+
+  if (isLink) {
+    return (
+      <Link to={to} className={className}>
+        <span className="text-white/80 hover:text-white transition-colors duration-300 text-lg font-medium underline decoration-white/40 hover:decoration-white/80 underline-offset-4">
+          {text}
+        </span>
+      </Link>
+    );
+  }
 
   return (
     <Link to={to}>
@@ -105,7 +118,7 @@ export const SmartCTAButtons = ({ className = "" }: { className?: string }) => {
   const { user, userRole } = useAuth();
 
   return (
-    <div className={`flex flex-col sm:flex-row gap-6 justify-center items-center ${className}`}>
+    <div className={`flex flex-col gap-2 justify-center items-center ${className}`}>
       <IntervieweeButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
       <InterviewerButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
     </div>

@@ -39,11 +39,6 @@ const ComparisonSection = () => {
       us: true
     },
     {
-      feature: "Lower Cost",
-      others: true,
-      us: false
-    },
-    {
       feature: "Pay After Matching",
       others: false,
       us: true
@@ -62,11 +57,10 @@ const ComparisonSection = () => {
           {/* Header */}
           <div className="text-center mb-8 md:mb-12">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">
-              Why Choose Us Over Other Platforms?
+            Others Prepare you with AI,
             </h2>
             <p className="text-base md:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto px-4">
-              See how we provide a superior interview preparation experience
-            </p>
+            Our Interviewers know what hiring managers really look for.           </p>
           </div>
 
           {/* Clean Comparison Table */}
@@ -124,20 +118,7 @@ const ComparisonSection = () => {
           </div>
 
           {/* Bottom Stats */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-              <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-2">1000+</div>
-              <p className="text-sm md:text-base text-slate-300">Mock Interviews Conducted</p>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-              <div className="text-2xl md:text-3xl font-bold text-green-400 mb-2">95%</div>
-              <p className="text-sm md:text-base text-slate-300">Success Rate</p>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-              <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2">4.9/5</div>
-              <p className="text-sm md:text-base text-slate-300">Average Rating</p>
-            </div>
-          </div>
+     
         </div>
       </div>
     </section>

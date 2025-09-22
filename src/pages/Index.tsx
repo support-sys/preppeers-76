@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, Check, Star } from "lucide-react";
+import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, Check, Star, GraduationCap, Zap, Rocket, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -18,6 +19,7 @@ import FeedbackReportPreview from "@/components/FeedbackReportPreview";
 import InterviewerShowcase from "@/components/InterviewerShowcase";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const {
     toast
   } = useToast();
@@ -30,6 +32,10 @@ const Index = () => {
     paymentSession,
     hasSuccessfulPayment
   } = usePaymentStatus();
+
+  const toggleFAQ = (index: number) => {
+    setOpenFAQ(openFAQ === index ? null : index);
+  };
 
   // Redirect to payment processing page only for successful payments that haven't been matched
   useEffect(() => {
@@ -115,51 +121,83 @@ const Index = () => {
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Get Interview Ready with{" "}
+          Tired of Rejections? <br />{" "}
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Real Tech Interviewers
-            </span>
+            Walk in the Next Interview with Confidence
+              </span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-          Practice with Tech Engineers who take Real Interviews in Top Companies. <br /> 
-          <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-           Not AI Agents.
-            </span>
+          <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+          Practice with Tech Interviewers from top companies and get detailed feedback before your Big Day.
+          <br />
           </p>
 
           {/* CTA Buttons */}
-          <SmartCTAButtons className="mb-16" />
+          <SmartCTAButtons className="mb-4" />
+
 
           {/* Feature Highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
-            <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-              <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 group-hover:scale-110">
-                <Users className="w-8 h-8 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Real Engineers</h3>
-              <p className="text-zinc-200">Practice with experienced Interviewers from top tech companies</p>
+       
+        </div>
+      </div>
+
+      {/* Limited Slots Notice */}
+    
+
+      {/* Who It's For Section */}
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto">
+            {/* Section Header */}
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+                Who It's <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">For</span>
+              </h2>
+              <p className="text-lg text-slate-300 max-w-2xl mx-auto">
+                Whether you're starting fresh or making your next career move
+              </p>
             </div>
 
-            <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-              <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 group-hover:scale-110">
-                <MessageSquare className="w-8 h-8 text-green-400" />
+            {/* Target Audience Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Freshers */}
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group text-center">
+                <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <GraduationCap className="w-10 h-10 text-purple-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">Freshers</h3>
+                <p className="text-slate-300 text-lg leading-relaxed">
+                  "Test your confidence before your first big break."
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Real Feedback</h3>
-              <p className="text-slate-300">Get detailed insights and actionable improvement suggestions</p>
-            </div>
 
-            <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
-              <div className="bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 group-hover:scale-110">
-                <Trophy className="w-8 h-8 text-yellow-400" />
+              {/* Mid-level devs */}
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group text-center">
+                <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <Zap className="w-10 h-10 text-blue-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">Mid-level Devs</h3>
+                <p className="text-slate-300 text-lg leading-relaxed">
+                  "Ace tough technical rounds and explain projects clearly."
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Real Results</h3>
-              <p className="text-slate-300">Join thousands who landed their dream jobs after practicing</p>
+
+              {/* Job switchers */}
+              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group text-center">
+                <div className="bg-gradient-to-br from-green-500/20 to-yellow-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 group-hover:scale-110">
+                  <Rocket className="w-10 h-10 text-green-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">Job Switchers</h3>
+                <p className="text-slate-300 text-lg leading-relaxed">
+                  "Don't let rejections delay your next big salary jump."
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
 
       {/* For Interviewees Section - Simplified */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
@@ -168,10 +206,10 @@ const Index = () => {
             {/* Section Header */}
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-                For <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Interviewees</span>
+              How it  <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Works</span>
               </h2>
               <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-                Get ready for your next tech interview
+              So Simple, You Can Start Today
               </p>
             </div>
 
@@ -187,7 +225,7 @@ const Index = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-white mb-1">Register & Upload</h3>
-                        <p className="text-slate-300 text-sm">Create profile and upload resume</p>
+                        <p className="text-slate-300 text-sm">Tell us about your background</p>
                       </div>
                     </div>
                   </div>
@@ -213,7 +251,7 @@ const Index = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-white mb-1">Join Interview</h3>
-                        <p className="text-slate-300 text-sm">Connect via Google Meet</p>
+                        <p className="text-slate-300 text-sm">Face a Real Interviewer over GMeet.</p>
                       </div>
                     </div>
                   </div>
@@ -226,7 +264,7 @@ const Index = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-white mb-1">Get Insights</h3>
-                        <p className="text-slate-300 text-sm">Receive detailed feedback</p>
+                        <p className="text-slate-300 text-sm">Walk away with detailed feedback & action plan</p>
                       </div>
                     </div>
                   </div>
@@ -316,7 +354,8 @@ const Index = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                What Our Users Say
+              From Rejections → to Dream Offers
+
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
                 Real feedback from professionals who've transformed their careers
@@ -380,14 +419,14 @@ const Index = () => {
             {/* Header */}
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Simple, Transparent Pricing
+              One Rejection costs you Weeks. <br /><br /> A mock interview costs pretty less.
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
-                Choose the plan that fits your needs. All sessions include live feedback and improvement plans.
+              Choose the plan that saves you time, confidence, and lost opportunities
               </p>
               <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 max-w-2xl mx-auto">
                 <p className="text-white font-semibold text-lg">
-                  🎯 All sessions are live, GMeet based, and conducted by real engineers from top tech companies
+                  🎯 All sessions are live, GMeet based, and conducted by Real Interviewers from top tech companies
                 </p>
               </div>
             </div>
@@ -533,6 +572,238 @@ const Index = () => {
                   </Link>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-4xl mx-auto">
+            {/* Section Header */}
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                Frequently Asked <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Questions</span>
+              </h2>
+              <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+                Everything you need to know before booking your mock interview
+              </p>
+            </div>
+
+            {/* FAQ Items */}
+            <div className="space-y-4">
+              {/* FAQ 1 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(0)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">What if I'm not ready yet?</h3>
+                  {openFAQ === 0 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 0 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      That's exactly why you should do a mock. Even if you fail here, it's safe. You'll get detailed feedback so you know exactly what to improve before the real interview.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 2 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(1)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">Who will take my mock interview?</h3>
+                  {openFAQ === 1 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 1 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      All interviews are conducted by real engineers from top tech companies — professionals who take actual interviews daily. No AI bots, no random freelancers.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 3 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(2)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">Will the interviewer know my tech stack?</h3>
+                  {openFAQ === 2 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 2 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      Yes. You can select interviewers based on your role and technology (Java, Python, Frontend, Data Engineering, etc.), so your mock is 100% relevant.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 4 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(3)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">How soon can I book a mock?</h3>
+                  {openFAQ === 3 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 3 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      You can book as early as same day (subject to interviewer availability). Many candidates use our service just a day or two before their real interviews.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 5 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(4)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">Do I get recordings or notes?</h3>
+                  {openFAQ === 4 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 4 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      You'll get a detailed feedback report after your session, covering:
+                    </p>
+                    <ul className="text-slate-300 mt-3 ml-4 space-y-1">
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
+                        What went well
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
+                        What needs improvement
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
+                        Action plan to prepare better
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 6 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(5)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">What if I already gave multiple interviews?</h3>
+                  {openFAQ === 5 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 5 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      That's perfect. Many of our candidates come to us after 2–3 rejections. A mock helps you identify why you're failing and fix it before the next chance.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 7 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(6)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">What if I don't find value in the session?</h3>
+                  {openFAQ === 6 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 6 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      We're confident you'll walk away with insights, but if you truly feel you didn't get value, reach out — we'll make it right.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 8 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(7)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">Can freshers use this platform, or is it only for experienced professionals?</h3>
+                  {openFAQ === 7 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 7 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      Both. Freshers build confidence and learn how to handle project/HR questions. Experienced devs sharpen technical depth and practice explaining their projects clearly.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 9 */}
+              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
+                <button
+                  onClick={() => toggleFAQ(8)}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
+                >
+                  <h3 className="text-lg font-semibold text-white">Is my data/resume safe?</h3>
+                  {openFAQ === 8 ? (
+                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === 8 && (
+                  <div className="px-6 pb-6">
+                    <p className="text-slate-300 text-lg leading-relaxed">
+                      Yes, 100%. Your details are only shared with your selected interviewer. We don't use your data for any other purpose.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -54,8 +54,8 @@ const FeedbackReportPreview = () => {
   return (
     <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl border border-white/20 p-8 md:p-12 shadow-2xl">
       <div className="text-center mb-12">
-        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">See What You'll Get ✨</h3>
-        <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto">Detailed feedback report after every interview</p>
+        <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">No more guessing what went wrong.</h3>
+        <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto">Detailed feedback report after every mock interview</p>
       </div>
       
       {/* All Images Grid - Aligned at Same Level */}
