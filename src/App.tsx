@@ -19,6 +19,7 @@ import Pricing from "./pages/Pricing";
 import BecomeInterviewer from "./pages/BecomeInterviewer";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
 import AdminAuth from "./pages/admin/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/become-interviewer" element={<BecomeInterviewer />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             
             {/* Admin Routes - Completely separate from main app */}
             <Route path="/admin/auth" element={<AdminAuth />} />

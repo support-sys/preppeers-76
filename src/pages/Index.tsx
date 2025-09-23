@@ -134,8 +134,16 @@ const Index = () => {
           </p>
 
           {/* CTA Buttons */}
-          <SmartCTAButtons className="mb-4" />
-
+          <div className="flex flex-col items-center gap-6 mb-8">
+            <SmartCTAButtons className="mb-0" />
+            
+             {/* Satisfaction Guarantee Badge - Compact */}
+             <img 
+               src="/guarantee-badge.png" 
+               alt="100% Satisfaction or Your Money Back Guarantee"
+               className="w-32 h-auto shadow-lg hover:scale-105 transition-transform duration-300"
+             />
+          </div>
 
           {/* Feature Highlights */}
        
