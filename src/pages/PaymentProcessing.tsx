@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const PaymentProcessing = () => {
   const { paymentSession, isLoading, hasSuccessfulPayment } = usePaymentStatus();
@@ -15,7 +16,11 @@ const PaymentProcessing = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showFailure, setShowFailure] = useState(false);
 
+  // Scroll to top when route changes
+  useScrollToTop();
+
   useEffect(() => {
+    
     // If no user, redirect to auth
     if (!user) {
       navigate('/auth');

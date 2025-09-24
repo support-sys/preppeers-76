@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { findMatchingInterviewer, scheduleInterview } from "@/services/interviewScheduling";
 import { createTemporaryReservation, releaseTemporaryReservation } from "@/utils/temporaryBlocking";
+import { trackPlanSelection, trackTimeSlotSelection, trackInterviewerMatching, trackPaymentInitiation } from "@/utils/bookingProgressTracker";
 
 export const useBookingFlow = () => {
   const [currentStep, setCurrentStep] = useState<'form' | 'preview-match' | 'payment' | 'matching' | 'success' | 'no-match' | 'time-confirmation'>('form');
@@ -75,6 +76,33 @@ export const useBookingFlow = () => {
       interviewDuration: data.interviewDuration,
       amount: data.amount
     });
+    
+    console.log('🔍 DEBUG: Full form data object:', data);
+    console.log('🔍 DEBUG: selectedPlan in form data:', data.selectedPlan);
+    console.log('🔍 DEBUG: selectedPlan type:', typeof data.selectedPlan);
+    console.log('🔍 DEBUG: All form data keys:', Object.keys(data));
+
+    // Track plan selection in funnel
+    if (user?.id && data.selectedPlan) {
+      // Debug: Log the selectedPlan object structure
+      console.log('🔍 Debug selectedPlan object:', data.selectedPlan);
+      console.log('🔍 Debug selectedPlan type:', typeof data.selectedPlan);
+      console.log('🔍 Debug selectedPlan.id:', data.selectedPlan.id);
+      
+      // Extract the correct plan ID
+      const planId = typeof data.selectedPlan === 'string' 
+        ? data.selectedPlan 
+        : data.selectedPlan.id || data.selectedPlan.name || data.selectedPlan;
+      
+      console.log('🔍 Final planId for tracking:', planId);
+      await trackPlanSelection(user.id, planId, data);
+    }
+
+    // Track time slot selection in funnel
+    if (user?.id && data.timeSlot) {
+      await trackTimeSlotSelection(user.id, data.timeSlot);
+    }
+
     setFormData(data);
     setIsLoading(true);
     
@@ -89,6 +117,16 @@ export const useBookingFlow = () => {
       if (interviewer) {
         console.log('Preview interviewer found:', interviewer);
         setMatchedInterviewer(interviewer);
+        
+        // Track interviewer matching in funnel
+        if (user?.id && interviewer.id) {
+          await trackInterviewerMatching(
+            user.id, 
+            interviewer.id, 
+            interviewer.full_name || interviewer.name || 'Unknown',
+            interviewer.matchScore || 0
+          );
+        }
         
         // Always proceed to payment for new bookings - no time confirmation needed for fresh bookings
         setCurrentStep('preview-match');
@@ -113,10 +151,24 @@ export const useBookingFlow = () => {
   };
 
   const handleProceedToPayment = async (timeSlot?: string, selectedPlanId?: string) => {
+    console.log('🔍 handleProceedToPayment called with:', { timeSlot, selectedPlanId });
+    
     if (timeSlot) {
       setSelectedTimeSlot(timeSlot);
       // Update formData with selected time slot
       setFormData(prev => ({ ...prev, selectedTimeSlot: timeSlot }));
+    }
+    
+    if (selectedPlanId) {
+      console.log('🔍 Updating formData with selectedPlanId:', selectedPlanId);
+      // Update formData with selected plan
+      setFormData(prev => ({ ...prev, selectedPlan: selectedPlanId }));
+      
+      // Track plan selection in funnel
+      if (user?.id) {
+        console.log('🔍 Tracking plan selection in funnel:', selectedPlanId);
+        await trackPlanSelection(user.id, selectedPlanId, formData);
+      }
     }
     
     if (!matchedInterviewer?.id || !user?.id) {
@@ -146,9 +198,17 @@ export const useBookingFlow = () => {
       
       // Determine the correct plan ID based on user selection or fallback to duration-based logic
       let planId = selectedPlanId;
+      if (!planId && formData?.selectedPlan) {
+        // Use the plan from formData if available
+        planId = typeof formData.selectedPlan === 'string' 
+          ? formData.selectedPlan 
+          : formData.selectedPlan.id || formData.selectedPlan.name || formData.selectedPlan;
+      }
+      
       if (!planId) {
         // Fallback to duration-based logic if no plan selected
         planId = timeSlotDuration === 30 ? 'essential' : timeSlotDuration === 60 ? 'professional' : 'executive';
+        console.log('⚠️ No plan selected, using duration-based fallback:', planId);
       }
       
       // Update formData with matched interviewer data

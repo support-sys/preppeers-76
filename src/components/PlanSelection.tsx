@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, Star, Clock, Award, FileText, Users, Zap, ArrowRight, ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { Check, ArrowRight, Calendar, X, Clock } from "lucide-react";
 import { INTERVIEW_PLANS, InterviewPlan } from "@/utils/planConfig";
 import { convertToISODateTime, AvailableTimeSlot } from "@/utils/availableTimeSlots";
 import { format, parseISO } from 'date-fns';
@@ -25,7 +24,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
   onSlotSelect
 }) => {
   const selectedPlanData = INTERVIEW_PLANS[selectedPlan as keyof typeof INTERVIEW_PLANS];
-  const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set([selectedPlan]));
   const [currentSlot, setCurrentSlot] = useState<string>(selectedSlot || '');
   const [availableSlots, setAvailableSlots] = useState<AvailableTimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -37,12 +35,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
     document.documentElement.scrollTop = 0;
   }, []);
 
-  // Auto-expand selected plan
-  useEffect(() => {
-    if (selectedPlan) {
-      setExpandedPlans(prev => new Set([...prev, selectedPlan]));
-    }
-  }, [selectedPlan]);
 
   // Use alternativeTimeSlots from interviewer matching (already filtered for blocked slots)
   useEffect(() => {
@@ -173,38 +165,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
     return validSlots;
   }, [availableSlots, selectedPlanData]);
 
-  const getPlanIcon = (planId: string) => {
-    switch (planId) {
-      case 'essential': return <Clock className="w-6 h-6 text-green-400" />;
-      case 'professional': return <FileText className="w-6 h-6 text-blue-400" />;
-      case 'executive': return <Award className="w-6 h-6 text-purple-400" />;
-      default: return <Clock className="w-6 h-6 text-blue-400" />;
-    }
-  };
 
-  const getPlanColor = (planId: string) => {
-    switch (planId) {
-      case 'essential': return 'green';
-      case 'professional': return 'blue';
-      case 'executive': return 'purple';
-      default: return 'blue';
-    }
-  };
-
-  const togglePlanExpansion = (planId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpandedPlans(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(planId)) {
-        newSet.delete(planId);
-      } else {
-        newSet.add(planId);
-      }
-      return newSet;
-    });
-  };
-
-  const isExpanded = (planId: string) => expandedPlans.has(planId);
 
   const handleSlotSelect = (slot: AvailableTimeSlot) => {
     // Use displayText format for temporary reservation (e.g., "Wednesday, 2025-09-10 11:00-12:00")
@@ -251,90 +212,148 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
           </p>
         </div>
 
-        {/* Plans List - Clean Design */}
-        <div className="space-y-4 mb-8">
-          {Object.values(INTERVIEW_PLANS).map((plan) => {
-            const isSelected = selectedPlan === plan.id;
-            
-            return (
-              <Card 
-                key={plan.id}
-                className={`cursor-pointer transition-all duration-200 shadow-lg ${
-                  isSelected 
-                    ? 'bg-blue-600/20 border-blue-500 shadow-blue-500/20' 
-                    : 'bg-white/10 border-white/20 hover:bg-white/15 hover:border-white/30'
-                }`}
-                onClick={() => onPlanSelect(plan.id)}
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        {getPlanIcon(plan.id)}
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl font-bold text-white mb-1">
-                          {plan.name}
-                        </CardTitle>
-                        <p className="text-slate-300 text-sm">
-                          {plan.id === 'essential' && 'Quick practice with basic feedback'}
-                          {plan.id === 'professional' && 'Comprehensive interview with detailed feedback'}
-                          {plan.id === 'executive' && 'Premium package with career guidance'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-white mb-1">
-                        ₹{plan.price}
-                      </div>
-                      <div className="flex items-center space-x-2 text-slate-400 text-sm">
-                        <Clock className="w-4 h-4" />
-                        <span>{plan.duration} min</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {/* Features - Always Visible */}
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {plan.features.slice(0, 4).map((feature, index) => (
-                      <div key={index} className="flex items-center space-x-2 text-sm text-slate-300">
-                        <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {plan.features.length > 4 && (
-                    <div className="mt-3 text-center">
-                      <button
-                        onClick={(e) => togglePlanExpansion(plan.id, e)}
-                        className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                      >
-                        {isExpanded(plan.id) ? 'Show Less' : `+${plan.features.length - 4} More Features`}
-                      </button>
-                    </div>
-                  )}
-                </CardContent>
-
-                {/* Expanded Features */}
-                {isExpanded(plan.id) && plan.features.length > 4 && (
-                  <CardContent className="pt-0 border-t border-white/10">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {plan.features.slice(4).map((feature, index) => (
-                        <div key={index} className="flex items-center space-x-2 text-sm text-slate-300">
-                          <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
-                          <span>{feature}</span>
+        {/* Plan Comparison Table */}
+        <div className="mb-8">
+          <Card className="bg-slate-800/50 backdrop-blur-lg border-slate-700/50 shadow-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[400px]">
+                {/* Header */}
+                <thead>
+                  <tr className="bg-slate-700/50 border-b border-slate-600/50">
+                    <th className="text-left py-2 px-2 sm:px-6 text-blue-300 font-semibold text-xs sm:text-base">Features</th>
+                    <th className="text-center py-2 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Essential</th>
+                    <th className="text-center py-2 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Professional</th>
+                    <th className="text-center py-2 px-1 sm:px-4 text-green-400 font-semibold text-xs sm:text-base">Executive</th>
+                  </tr>
+                </thead>
+                
+                {/* Plan Headers with Pricing */}
+                <thead>
+                  <tr className="bg-slate-700/30 border-b border-slate-600/30">
+                    <td className="py-2 px-2 sm:px-6"></td>
+                    {Object.values(INTERVIEW_PLANS).map((plan) => (
+                      <td key={plan.id} className="text-center py-2 px-1 sm:px-4">
+                        <div 
+                          className={`cursor-pointer transition-all duration-200 rounded-lg p-1 sm:p-3 ${
+                            selectedPlan === plan.id 
+                              ? 'bg-blue-600/30 border-2 border-blue-500' 
+                              : 'bg-slate-600/20 border-2 border-transparent hover:bg-slate-600/30'
+                          }`}
+                          onClick={() => onPlanSelect(plan.id)}
+                        >
+                          <div className="text-xs sm:text-lg font-bold text-white mb-1">{plan.name}</div>
+                          <div className="text-sm sm:text-2xl font-bold text-blue-400 mb-1">₹{plan.price}</div>
+                          <div className="text-xs text-slate-400">{plan.duration} min</div>
+                          {plan.isPopular && (
+                            <div className="text-xs text-yellow-400 font-medium mt-1">⭐ Popular</div>
+                          )}
                         </div>
-                      ))}
+                      </td>
+                    ))}
+                  </tr>
+                </thead>
+                
+                {/* Features Comparison */}
+                <tbody>
+                  {/* Core Features - Only Critical/Deal-Breaker Features */}
+                  <tr className="border-b border-slate-600/20">
+                    <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Live Interviewer</td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr className="border-b border-slate-600/20">
+                    <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Verbal Feedback</td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr className="border-b border-slate-600/20">
+                    <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">PDF Report</td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr className="border-b border-slate-600/20">
+                    <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Action Plan</td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr>
+                    <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Resume Review</td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="flex justify-center">
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
                     </div>
-                  </CardContent>
-                )}
               </Card>
-            );
-          })}
         </div>
 
         {/* Selected Plan Summary */}

@@ -13,6 +13,7 @@ import PaymentButton from "./payment/PaymentButton";
 import PaymentMethodsInfo from "./payment/PaymentMethodsInfo";
 import PaymentContainer from "./payment/PaymentContainer";
 import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
+import { trackPaymentInitiation } from "@/utils/bookingProgressTracker";
 import { InterviewPlan } from "@/utils/planConfig";
 
 interface CashfreePaymentProps {
@@ -152,11 +153,19 @@ const CashfreePayment = ({
       console.log('selectedPlan.id:', selectedPlan?.id);
       console.log('selectedPlan.duration:', selectedPlan?.duration);
       
+      // Extract the correct plan ID
+      const planId = typeof selectedPlan === 'string' 
+        ? selectedPlan 
+        : selectedPlan?.id || selectedPlan?.name || candidateData?.selected_plan || 'professional';
+      
+      console.log('🔍 CashfreePayment - selectedPlan object:', selectedPlan);
+      console.log('🔍 CashfreePayment - extracted planId:', planId);
+      
       const paymentSessionData = {
         user_id: user.id,
         candidate_data: candidateData,
         amount: amount,
-        selected_plan: selectedPlan?.id || 'professional',
+        selected_plan: planId,
         interview_duration: selectedPlan?.duration || 60,
         plan_details: selectedPlan as any,
         payment_status: 'pending',
@@ -183,6 +192,11 @@ const CashfreePayment = ({
 
       console.log('Payment session created in database:', sessionData);
       console.log('User mobile number:', userMobile);
+      
+      // Track payment initiation in funnel
+      if (user?.id) {
+        await trackPaymentInitiation(user.id, sessionData.id);
+      }
       
       setPaymentSessionId(sessionData.id);
       return { ...sessionData, userMobile };

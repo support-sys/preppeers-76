@@ -21,6 +21,8 @@ import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
+import FunnelTest from "./pages/FunnelTest";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminAuth from "./pages/admin/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
@@ -84,6 +86,10 @@ const App = () => (
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
+            
+            {/* Funnel Tracking Routes */}
+            <Route path="/funnel-test" element={<FunnelTest />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
             
             {/* Admin Routes - Completely separate from main app */}
             <Route path="/admin/auth" element={<AdminAuth />} />

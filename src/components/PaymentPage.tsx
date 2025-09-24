@@ -1,9 +1,11 @@
 
+import React from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
 import CashfreePayment from "@/components/CashfreePayment";
 import { getPlanById } from "@/utils/planConfig";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 interface PaymentPageProps {
   formData: any;
@@ -16,6 +18,9 @@ interface PaymentPageProps {
 const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: PaymentPageProps) => {
   const selectedPlan = getPlanById(formData.selected_plan || 'professional');
   const amount = formData.amount || selectedPlan?.price || 999;
+
+  // Scroll to top when component mounts
+  useScrollToTop();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
