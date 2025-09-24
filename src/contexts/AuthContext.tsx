@@ -113,22 +113,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     console.log('Signing up user with redirect URL:', redirectUrl);
     
+    const signupData = {
+      role: role,
+      full_name: fullName,
+      mobile_number: mobileNumber
+    };
+    
+    console.log('Signup metadata being sent:', signupData);
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: {
-          role: role,
-          full_name: fullName,
-          mobile_number: mobileNumber
-        }
+        data: signupData
       }
     });
 
     // Log the signup response for debugging
     console.log('Signup response:', { data, error });
     console.log('User confirmation status:', data?.user?.email_confirmed_at);
+    console.log('User metadata in response:', data?.user?.user_metadata);
 
     return { error, data };
   };
