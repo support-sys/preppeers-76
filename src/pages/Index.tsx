@@ -17,6 +17,7 @@ import WelcomeMessage from "@/components/WelcomeMessage";
 import ComparisonSection from "@/components/ComparisonSection";
 import FeedbackReportPreview from "@/components/FeedbackReportPreview";
 import InterviewerShowcase from "@/components/InterviewerShowcase";
+import CouponBanner from "@/components/CouponBanner";
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
@@ -101,9 +102,11 @@ const Index = () => {
   }
   return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
+      <CouponBanner />
       
-      
-      <WelcomeMessage />
+      <div className="pt-32">
+        <WelcomeMessage />
+      </div>
       
       {/* Tech Background Pattern */}
       <div className="absolute inset-0 opacity-10">

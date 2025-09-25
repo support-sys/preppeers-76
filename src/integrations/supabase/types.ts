@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupons: {
+        Row: {
+          id: string
+          coupon_name: string
+          discount_type: string
+          discount_value: number
+          status: string
+          expiring_on: string
+          plan_type: string
+          usage_limit: number | null
+          usage_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          coupon_name: string
+          discount_type: string
+          discount_value: number
+          status?: string
+          expiring_on: string
+          plan_type?: string
+          usage_limit?: number | null
+          usage_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          coupon_name?: string
+          discount_type?: string
+          discount_value?: number
+          status?: string
+          expiring_on?: string
+          plan_type?: string
+          usage_limit?: number | null
+          usage_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interviewees: {
         Row: {
           bio: string | null
@@ -491,9 +533,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_coupon: {
+        Args: {
+          p_coupon_name: string
+          p_plan_type?: string
+        }
+        Returns: {
+          is_valid: boolean
+          discount_type: string
+          discount_value: number
+          message: string
+        }[]
+      }
     }
     Enums: {
-      user_role: "interviewer" | "interviewee"
+      user_role: "interviewer" | "interviewee" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -621,7 +675,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["interviewer", "interviewee"],
+      user_role: ["interviewer", "interviewee", "admin"],
     },
   },
 } as const

@@ -1,11 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WhatsAppChat from "@/components/WhatsAppChat";
 import CashfreePayment from "@/components/CashfreePayment";
+import CouponInput from "@/components/CouponInput";
+import AvailableCoupons from "@/components/AvailableCoupons";
 import { getPlanById } from "@/utils/planConfig";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { DiscountCalculation } from "@/utils/couponUtils";
 
 interface PaymentPageProps {
   formData: any;
@@ -17,10 +20,27 @@ interface PaymentPageProps {
 
 const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: PaymentPageProps) => {
   const selectedPlan = getPlanById(formData.selected_plan || 'professional');
-  const amount = formData.amount || selectedPlan?.price || 999;
+  const originalAmount = formData.amount || selectedPlan?.price || 999;
+  const [finalAmount, setFinalAmount] = useState(originalAmount);
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCalculation | null>(null);
+  const [externalCouponCode, setExternalCouponCode] = useState<string>('');
 
   // Scroll to top when component mounts
   useScrollToTop();
+
+  const handleCouponApplied = (discount: DiscountCalculation | null) => {
+    setAppliedDiscount(discount);
+    setFinalAmount(discount ? discount.final_price : originalAmount);
+  };
+
+  const handleCouponSelect = (couponName: string) => {
+    setExternalCouponCode(couponName);
+  };
+
+  const handleExternalCouponCodeChange = () => {
+    // Reset the external coupon code after it's been applied
+    setExternalCouponCode('');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -44,16 +64,35 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
             Securely complete your payment for the mock interview session.
           </p>
 
-
-          <CashfreePayment
-            amount={amount}
-            candidateData={formData}
-            userEmail={userEmail}
-            userName={userName}
-            onSuccess={onSuccess}
-            onError={onError}
-            selectedPlan={selectedPlan}
+          {/* Available Coupons Section */}
+          <AvailableCoupons
+            planType={formData.selected_plan || 'professional'}
+            onCouponSelect={handleCouponSelect}
           />
+
+          {/* Coupon Input Section */}
+          <div className="mt-6">
+            <CouponInput
+              originalPrice={originalAmount}
+              planType={formData.selected_plan || 'professional'}
+              onCouponApplied={handleCouponApplied}
+              externalCouponCode={externalCouponCode}
+              onExternalCouponCodeChange={handleExternalCouponCodeChange}
+            />
+          </div>
+
+          <div className="mt-8">
+            <CashfreePayment
+              amount={finalAmount}
+              candidateData={formData}
+              userEmail={userEmail}
+              userName={userName}
+              onSuccess={onSuccess}
+              onError={onError}
+              selectedPlan={selectedPlan}
+              appliedDiscount={appliedDiscount}
+            />
+          </div>
         </div>
       </div>
       

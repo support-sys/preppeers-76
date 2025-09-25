@@ -15,6 +15,7 @@ import PaymentContainer from "./payment/PaymentContainer";
 import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 import { trackPaymentInitiation } from "@/utils/bookingProgressTracker";
 import { InterviewPlan } from "@/utils/planConfig";
+import { DiscountCalculation } from "@/utils/couponUtils";
 
 interface CashfreePaymentProps {
   amount: number;
@@ -24,6 +25,7 @@ interface CashfreePaymentProps {
   onSuccess: (paymentData: any) => void;
   onError: (error: any) => void;
   selectedPlan?: InterviewPlan;
+  appliedDiscount?: DiscountCalculation | null;
 }
 
 // Cashfree SDK loading utility
@@ -72,7 +74,8 @@ const CashfreePayment = ({
   userName, 
   onSuccess, 
   onError,
-  selectedPlan 
+  selectedPlan,
+  appliedDiscount
 }: CashfreePaymentProps) => {
   const { user } = useAuth();
   // Helper function to parse human-readable time slot to date
@@ -323,12 +326,15 @@ const CashfreePayment = ({
 
       // Initialize Cashfree payment with embedded checkout
       const cashfree = new (window as any).Cashfree({
-         mode: "production"
-         //mode: "sandbox"
+         //mode: "production"
+         mode: "sandbox"
       });
 
       // Show payment form container
       setShowPaymentForm(true);
+
+      // Wait for the container to be rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const checkoutOptions = {
         paymentSessionId: cashfreeData.payment_session_id,
@@ -392,6 +398,21 @@ const CashfreePayment = ({
       };
 
       console.log('Initializing embedded Cashfree checkout...');
+      console.log('Checkout options:', checkoutOptions);
+      console.log('Payment session ID:', cashfreeData.payment_session_id);
+      console.log('Container element:', paymentContainerRef.current);
+      
+      // Validate container element exists
+      if (!paymentContainerRef.current) {
+        throw new Error('Payment container element not found');
+      }
+      
+      // Validate payment session ID
+      if (!cashfreeData.payment_session_id || typeof cashfreeData.payment_session_id !== 'string') {
+        throw new Error('Invalid payment session ID');
+      }
+      
+      console.log('All validations passed, initializing checkout...');
       await cashfree.checkout(checkoutOptions);
 
     } catch (error: any) {
