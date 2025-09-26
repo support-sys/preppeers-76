@@ -5,54 +5,14 @@ import { Check, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { INTERVIEW_PLANS } from "@/utils/planConfig";
 
 const Pricing = () => {
-  const plans = [
-    {
-      name: "Essential",
-      price: "₹499",
-      description: "Perfect for quick interview practice and basic feedback",
-      features: [
-        "30-minute focused mock interview session",
-        "Basic verbal feedback during the interview"
-      ],
-      popular: false,
-      buttonText: "Get Started"
-    },
-    {
-      name: "Professional",
-      price: "₹999",
-      description: "Most popular choice for comprehensive interview preparation",
-      features: [
-        "60-minute comprehensive mock interview",
-        "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
-        "Personalized action plan for improvement",
-        "Interview performance analysis",
-        "Follow-up support and guidance",
-        "Interview recording (optional)",
-        "Priority customer support"
-      ],
-      popular: true,
-      buttonText: "Most Popular"
-    },
-    {
-      name: "Executive",
-      price: "₹1,299",
-      description: "Premium career development package with complete support",
-      features: [
-        "60-minute comprehensive mock interview",
-        "Professional Resume Feedback (not during mock interview)",
-        "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
-        "Personalized action plan for improvement",
-        "Interview performance analysis",
-        "Follow-up support and guidance",
-        "Interview recording (optional)",
-        "Priority customer support"
-      ],
-      popular: false,
-      buttonText: "Go Executive"
-    }
-  ];
+  const plans = Object.values(INTERVIEW_PLANS).map(plan => ({
+    ...plan,
+    popular: plan.isPopular || false,
+    buttonText: plan.isPopular ? "Most Popular" : "Get Started"
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -92,7 +52,10 @@ const Pricing = () => {
                 )}
                 <CardHeader className="text-center">
                   <CardTitle className="text-white text-2xl">{plan.name}</CardTitle>
-                  <div className="text-4xl font-bold text-blue-400 my-4">{plan.price}</div>
+                  <div className="my-4">
+                    <div className="text-lg text-slate-400 line-through">₹{plan.price}</div>
+                    <div className="text-4xl font-bold text-blue-400">₹{plan.discountedPrice}</div>
+                  </div>
                   <CardDescription className="text-slate-300">
                     {plan.description}
                   </CardDescription>

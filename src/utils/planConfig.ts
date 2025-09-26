@@ -2,6 +2,7 @@ export interface InterviewPlan {
   id: string;
   name: string;
   price: number;
+  discountedPrice: number;
   duration: number; // in minutes
   features: string[];
   limitations: string[];
@@ -16,6 +17,7 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
     id: 'essential',
     name: "Essential",
     price: 499,
+    discountedPrice: 399,
     duration: 30,
     description: "Perfect for quick interview practice and basic feedback",
     shortDescription: "Quick practice session with basic feedback",
@@ -34,6 +36,7 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
     id: 'professional',
     name: "Professional",
     price: 999,
+    discountedPrice: 799,
     duration: 60,
     description: "Comprehensive interview preparation with detailed feedback",
     shortDescription: "Complete interview prep with detailed feedback",
@@ -58,6 +61,7 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
     id: 'executive',
     name: "Executive",
     price: 1299,
+    discountedPrice: 899,
     duration: 60,
     description: "Premium career development package with complete support",
     shortDescription: "Premium package with resume review & career coaching",
@@ -97,7 +101,7 @@ export const getPlanLimitations = (planId: string): string[] => {
 
 export const getPlanPrice = (planId: string): number => {
   const plan = getPlanById(planId);
-  return plan?.price || 999;
+  return plan?.discountedPrice || 799;
 };
 
 export const getPlanDuration = (planId: string): number => {

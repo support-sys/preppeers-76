@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, Check, Star, GraduationCap, Zap, Rocket, Shield } from "lucide-react";
+import { ArrowRight, Users, MessageSquare, Trophy, Upload, Calendar, Video, FileText, User, Check, Star, GraduationCap, Zap, Rocket, Shield, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -18,6 +18,8 @@ import ComparisonSection from "@/components/ComparisonSection";
 import FeedbackReportPreview from "@/components/FeedbackReportPreview";
 import InterviewerShowcase from "@/components/InterviewerShowcase";
 import CouponBanner from "@/components/CouponBanner";
+import { INTERVIEW_PLANS } from "@/utils/planConfig";
+
 const Index = () => {
   const [isMatching, setIsMatching] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
@@ -97,15 +99,18 @@ const Index = () => {
       setIsMatching(false);
     }
   };
+  
   if (isMatching) {
     return <MatchingLoader />;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navigation />
       <CouponBanner />
       
       <div className="pt-32">
-        <WelcomeMessage />
+      <WelcomeMessage />
       </div>
       
       {/* Tech Background Pattern */}
@@ -119,9 +124,8 @@ const Index = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative z-10 container mx-auto px-4 py-20">
+      <div className="relative z-10 container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
-
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
           Tired of Rejections? <br />{" "}
@@ -147,72 +151,222 @@ const Index = () => {
                className="w-32 h-auto shadow-lg hover:scale-105 transition-transform duration-300"
              />
           </div>
+        </div>
+              </div>
 
-          {/* Feature Highlights */}
-       
+      {/* Interviewer Showcase Section - Moved Up */}
+      <div className="relative z-10 bg-white/5 border-t border-white/10">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-7xl mx-auto">
+            <InterviewerShowcase />
+          </div>
         </div>
       </div>
 
-      {/* Limited Slots Notice */}
-    
-
-      {/* Who It's For Section */}
-      <div className="relative z-10 bg-white/5 border-t border-white/10">
+      {/* Pricing Section - Optimized Compact Design */}
+      <div className="relative z-10 border-t border-white/10" style={{ backgroundColor: '#16285a' }}>
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-6xl mx-auto">
-            {/* Section Header */}
+            {/* Header */}
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-                Who It's <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">For</span>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                One Rejection costs you Weeks. 
               </h2>
-              <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-                Whether you're starting fresh or making your next career move
+              <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
+              A mock interview costs pretty less comparatively.
               </p>
+              
             </div>
 
-            {/* Target Audience Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Freshers */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group text-center">
-                <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <GraduationCap className="w-10 h-10 text-purple-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Freshers</h3>
-                <p className="text-slate-300 text-lg leading-relaxed">
-                  "Test your confidence before your first big break."
-                </p>
+            {/* Compact Plan Comparison Table */}
+            <div className="mb-8">
+              <Card className="bg-white/10 border-white/20 backdrop-blur-lg shadow-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[450px]">
+                    {/* Header */}
+                    <thead>
+                      <tr className="bg-slate-700/50 border-b border-slate-600/50">
+                        <th className="text-left py-3 px-2 sm:px-6 text-blue-300 font-semibold text-xs sm:text-base">Features</th>
+                        <th className="text-center py-3 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Essential</th>
+                        <th className="text-center py-3 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Professional</th>
+                        <th className="text-center py-3 px-1 sm:px-4 text-green-400 font-semibold text-xs sm:text-base">Executive</th>
+                      </tr>
+                    </thead>
+                    <thead>
+                      <tr className="bg-slate-700/30 border-b border-slate-600/30">
+                        <td className="py-3 px-2 sm:px-6"></td>
+                        {Object.values(INTERVIEW_PLANS).map((plan) => (
+                          <td key={plan.id} className="text-center py-3 px-1 sm:px-4">
+                            <div 
+                              className={`cursor-pointer transition-all duration-200 rounded-lg p-1 sm:p-3 ${
+                                plan.isPopular 
+                                  ? 'bg-blue-500/20 border-2 border-blue-400 hover:bg-blue-500/30' 
+                                  : 'bg-slate-600/20 border-2 border-transparent hover:bg-slate-600/30'
+                              }`}
+                            >
+                               {plan.isPopular && (
+                                <div className="text-xs text-yellow-400 font-medium mb-1">⭐ Popular</div>
+                              )}
+                               <div className="mb-1">
+                                 <div className="text-xs sm:text-sm text-slate-400 line-through">₹{plan.price}</div>
+                                 <div className="text-sm sm:text-2xl font-bold text-blue-400">₹{plan.discountedPrice}</div>
+                               </div>
+                              
+                             
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    </thead>
+                    {/* Plan Headers with Pricing */}
+               
+                    
+                    <tbody>
+                      {/* Live Interviewer */}
+                       <tr className="border-b border-slate-600/20">
+                         <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Duration</td>
+                         <td className="text-center py-3 px-1 sm:px-4">
+                           <div className="text-blue-400 font-semibold text-xs sm:text-sm">
+                             {INTERVIEW_PLANS.essential.duration} min
+                           </div>
+                         </td>
+                         <td className="text-center py-3 px-1 sm:px-4">
+                           <div className="text-blue-400 font-semibold text-xs sm:text-sm">
+                             {INTERVIEW_PLANS.professional.duration} min
+                           </div>
+                         </td>
+                         <td className="text-center py-3 px-1 sm:px-4">
+                           <div className="text-blue-400 font-semibold text-xs sm:text-sm">
+                             {INTERVIEW_PLANS.executive.duration} min
+                           </div>
+                         </td>
+                       </tr>
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Live Interviewer</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Feedback Report */}
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Feedback Report</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Action Plan */}
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Action Plan</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Recording */}
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Recording</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Resume Feedback */}
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Resume Review</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                    
+                  </table>
               </div>
+              </Card>
+            </div>
 
-              {/* Mid-level devs */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group text-center">
-                <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Zap className="w-10 h-10 text-blue-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Mid-level Devs</h3>
-                <p className="text-slate-300 text-lg leading-relaxed">
-                  "Ace tough technical rounds and explain projects clearly."
-                </p>
-              </div>
-
-              {/* Job switchers */}
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 group text-center">
-                <div className="bg-gradient-to-br from-green-500/20 to-yellow-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 group-hover:scale-110">
-                  <Rocket className="w-10 h-10 text-green-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Job Switchers</h3>
-                <p className="text-slate-300 text-lg leading-relaxed">
-                  "Don't let rejections delay your next big salary jump."
-                </p>
+            {/* CTA Section */}
+            <div className="text-center">
+              <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <Link to="/book">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    Start My Mock Interview
+                    <ArrowRight className="ml-2 w-6 h-6" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-
-      {/* For Interviewees Section - Simplified */}
+      {/* How It Works + Feedback Report Preview Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 py-12">
           <div className="max-w-6xl mx-auto">
             {/* Section Header */}
             <div className="text-center mb-12">
@@ -224,67 +378,9 @@ const Index = () => {
               </p>
             </div>
 
-            {/* Side-by-Side Grid - Desktop */}
-            <div className="hidden md:block mb-12">
-              <div className="max-w-5xl mx-auto">
-                <div className="grid grid-cols-2 gap-6">
+            {/* Compact 3-Step Process - Mobile Optimized */}
+            <div className="space-y-4 mb-12">
                   {/* Step 1: Register & Upload */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-lg">1</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-1">Register & Upload</h3>
-                        <p className="text-slate-300 text-sm">Tell us about your background</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 2: Select Role & Book */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-lg">2</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-1">Select Role & Book</h3>
-                        <p className="text-slate-300 text-sm">Choose role and schedule interview</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 3: Join Interview */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-lg">3</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-1">Join Interview</h3>
-                        <p className="text-slate-300 text-sm">Face a Real Interviewer over GMeet.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 4: Get Insights */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-lg">4</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-1">Get Insights</h3>
-                        <p className="text-slate-300 text-sm">Walk away with detailed feedback & action plan</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile: Simplified Vertical Steps */}
-            <div className="md:hidden space-y-4 mb-12">
               <div className="bg-white/10 rounded-xl p-4 border border-white/20">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
@@ -297,6 +393,7 @@ const Index = () => {
                 </div>
               </div>
 
+              {/* Step 2: Select Role & Book */}
               <div className="bg-white/10 rounded-xl p-4 border border-white/20">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -309,22 +406,11 @@ const Index = () => {
                 </div>
               </div>
 
+              {/* Step 3: Get Insights */}
               <div className="bg-white/10 rounded-xl p-4 border border-white/20">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">3</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-white">Join Interview</h3>
-                    <p className="text-xs text-slate-300">Connect via Google Meet</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">4</span>
                   </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-white">Get Insights</h3>
@@ -332,41 +418,21 @@ const Index = () => {
                   </div>
                 </div>
               </div>
+            </div>            {/* Feedback Report Preview */}
+            <div className="max-w-4xl mx-auto">
+              <FeedbackReportPreview />
             </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* Comparison Section */}
-      <ComparisonSection />
-
-      {/* Feedback Report Preview Section */}
-      <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-6xl mx-auto">
-            <FeedbackReportPreview />
-          </div>
-        </div>
-      </div>
-
-      {/* Interviewer Showcase Section */}
-      <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-7xl mx-auto">
-            <InterviewerShowcase />
           </div>
         </div>
       </div>
 
       {/* Testimonials Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-12">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               From Rejections → to Dream Offers
-
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
                 Real feedback from professionals who've transformed their careers
@@ -423,174 +489,9 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Pricing Section */}
-      <div className="relative z-10 border-t border-white/10" style={{ backgroundColor: '#16285a' }}>
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              One Rejection costs you Weeks. <br /><br /> A mock interview costs pretty less.
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
-              Choose the plan that saves you time, confidence, and lost opportunities
-              </p>
-              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 max-w-2xl mx-auto">
-                <p className="text-white font-semibold text-lg">
-                  🎯 All sessions are live, GMeet based, and conducted by Real Interviewers from top tech companies
-                </p>
-              </div>
-            </div>
-
-            {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              <Card className="bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 relative">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-white text-2xl">Essential</CardTitle>
-                  <div className="text-4xl font-bold text-blue-400 my-4">₹499</div>
-                  <CardDescription className="text-slate-300">
-                    Perfect for quick interview practice and basic feedback
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      30-minute focused mock interview session
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Basic verbal feedback during the interview
-                    </li>
-                  </ul>
-                  <Link to="/book" className="block">
-                    <Button 
-                      size="lg" 
-                      className="w-full py-3 text-lg font-semibold bg-white/10 border border-white/20 text-white hover:bg-white/20"
-                      variant="outline"
-                    >
-                      Get Started
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/10 border-2 border-blue-400 hover:bg-white/15 transition-all duration-300 relative transform transition-transform duration-300 hover:scale-105">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold flex items-center">
-                  <Star className="w-4 h-4 mr-1" />
-                  Most Popular
-                </div>
-                <CardHeader className="text-center">
-                  <CardTitle className="text-white text-2xl">Professional</CardTitle>
-                  <div className="text-4xl font-bold text-blue-400 my-4">₹999</div>
-                  <CardDescription className="text-slate-300">
-                    Most popular choice for comprehensive interview preparation
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      60-minute comprehensive mock interview
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Personalized action plan for improvement
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Interview performance analysis
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Follow-up support and guidance
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Interview recording (optional)
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Priority customer support
-                    </li>
-                  </ul>
-                  <Link to="/book" className="block">
-                    <Button 
-                      size="lg" 
-                      className="w-full py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
-                    >
-                      Most Popular
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 relative">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-white text-2xl">Executive</CardTitle>
-                  <div className="text-4xl font-bold text-blue-400 my-4">₹1,299</div>
-                  <CardDescription className="text-slate-300">
-                    Premium career development package with complete support
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      60-minute comprehensive mock interview
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Professional Resume Feedback (not during mock interview)
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Personalized action plan for improvement
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Interview performance analysis
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Follow-up support and guidance
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Interview recording (optional)
-                    </li>
-                    <li className="flex items-center text-slate-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      Priority customer support
-                    </li>
-                  </ul>
-                  <Link to="/book" className="block">
-                    <Button 
-                      size="lg" 
-                      className="w-full py-3 text-lg font-semibold bg-white/10 border border-white/20 text-white hover:bg-white/20"
-                      variant="outline"
-                    >
-                      Go Executive
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* FAQ Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto">
             {/* Section Header */}
             <div className="text-center mb-16">
@@ -646,7 +547,7 @@ const Index = () => {
                     </p>
                   </div>
                 )}
-              </div>
+            </div>
 
               {/* FAQ 3 */}
               <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
@@ -690,7 +591,7 @@ const Index = () => {
                     </p>
                   </div>
                 )}
-              </div>
+                </div>
 
               {/* FAQ 5 */}
               <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
@@ -714,16 +615,16 @@ const Index = () => {
                       <li className="flex items-center">
                         <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
                         What went well
-                      </li>
+                    </li>
                       <li className="flex items-center">
                         <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
                         What needs improvement
-                      </li>
+                    </li>
                       <li className="flex items-center">
                         <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
                         Action plan to prepare better
-                      </li>
-                    </ul>
+                    </li>
+                  </ul>
                   </div>
                 )}
               </div>
@@ -734,7 +635,7 @@ const Index = () => {
                   onClick={() => toggleFAQ(5)}
                   className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
                 >
-                  <h3 className="text-lg font-semibold text-white">What if I already gave multiple interviews?</h3>
+                  <h3 className="text-lg font-semibold text-white">What if I don't find value in the session?</h3>
                   {openFAQ === 5 ? (
                     <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
                   ) : (
@@ -744,73 +645,7 @@ const Index = () => {
                 {openFAQ === 5 && (
                   <div className="px-6 pb-6">
                     <p className="text-slate-300 text-lg leading-relaxed">
-                      That's perfect. Many of our candidates come to us after 2–3 rejections. A mock helps you identify why you're failing and fix it before the next chance.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* FAQ 7 */}
-              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
-                <button
-                  onClick={() => toggleFAQ(6)}
-                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
-                >
-                  <h3 className="text-lg font-semibold text-white">What if I don't find value in the session?</h3>
-                  {openFAQ === 6 ? (
-                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
-                  )}
-                </button>
-                {openFAQ === 6 && (
-                  <div className="px-6 pb-6">
-                    <p className="text-slate-300 text-lg leading-relaxed">
                       We're confident you'll walk away with insights, but if you truly feel you didn't get value, reach out — we'll make it right.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* FAQ 8 */}
-              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
-                <button
-                  onClick={() => toggleFAQ(7)}
-                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
-                >
-                  <h3 className="text-lg font-semibold text-white">Can freshers use this platform, or is it only for experienced professionals?</h3>
-                  {openFAQ === 7 ? (
-                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
-                  )}
-                </button>
-                {openFAQ === 7 && (
-                  <div className="px-6 pb-6">
-                    <p className="text-slate-300 text-lg leading-relaxed">
-                      Both. Freshers build confidence and learn how to handle project/HR questions. Experienced devs sharpen technical depth and practice explaining their projects clearly.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* FAQ 9 */}
-              <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300 overflow-hidden">
-                <button
-                  onClick={() => toggleFAQ(8)}
-                  className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
-                >
-                  <h3 className="text-lg font-semibold text-white">Is my data/resume safe?</h3>
-                  {openFAQ === 8 ? (
-                    <ChevronUp className="w-6 h-6 text-white flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 text-white flex-shrink-0" />
-                  )}
-                </button>
-                {openFAQ === 8 && (
-                  <div className="px-6 pb-6">
-                    <p className="text-slate-300 text-lg leading-relaxed">
-                      Yes, 100%. Your details are only shared with your selected interviewer. We don't use your data for any other purpose.
                     </p>
                   </div>
                 )}
@@ -823,9 +658,10 @@ const Index = () => {
       {/* Floating Elements */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
       <div className="absolute bottom-20 right-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-xl animate-pulse delay-700"></div>
-      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
 
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

@@ -234,18 +234,30 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                     {Object.values(INTERVIEW_PLANS).map((plan) => (
                       <td key={plan.id} className="text-center py-2 px-1 sm:px-4">
                         <div 
-                          className={`cursor-pointer transition-all duration-200 rounded-lg p-1 sm:p-3 ${
+                          className={`cursor-pointer transition-all duration-300 rounded-xl p-2 sm:p-4 relative ${
                             selectedPlan === plan.id 
-                              ? 'bg-blue-600/30 border-2 border-blue-500' 
-                              : 'bg-slate-600/20 border-2 border-transparent hover:bg-slate-600/30'
+                              ? 'bg-gradient-to-br from-blue-500/40 to-cyan-500/30 border-3 border-blue-400 shadow-lg shadow-blue-500/25 scale-105' 
+                              : 'bg-slate-600/20 border-2 border-transparent hover:bg-slate-600/30 hover:border-slate-500/50 hover:scale-[1.02]'
                           }`}
                           onClick={() => onPlanSelect(plan.id)}
                         >
-                          <div className="text-xs sm:text-lg font-bold text-white mb-1">{plan.name}</div>
-                          <div className="text-sm sm:text-2xl font-bold text-blue-400 mb-1">₹{plan.price}</div>
-                          <div className="text-xs text-slate-400">{plan.duration} min</div>
+                          {selectedPlan === plan.id && (
+                            <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 shadow-lg">
+                              <Check className="w-3 h-3" />
+                            </div>
+                          )}
+                          <div className="mb-1">
+                            <div className={`text-xs sm:text-sm line-through ${
+                              selectedPlan === plan.id ? 'text-slate-300' : 'text-slate-400'
+                            }`}>₹{plan.price}</div>
+                            <div className={`text-sm sm:text-2xl font-bold ${
+                              selectedPlan === plan.id ? 'text-white' : 'text-blue-400'
+                            }`}>₹{plan.discountedPrice}</div>
+                          </div>
                           {plan.isPopular && (
-                            <div className="text-xs text-yellow-400 font-medium mt-1">⭐ Popular</div>
+                            <div className={`text-xs font-medium mt-1 ${
+                              selectedPlan === plan.id ? 'text-yellow-300' : 'text-yellow-400'
+                            }`}>⭐ Popular</div>
                           )}
                         </div>
                       </td>
@@ -255,6 +267,26 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                 
                 {/* Features Comparison */}
                 <tbody>
+                  {/* Duration */}
+                  <tr className="border-b border-slate-600/20">
+                    <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Duration</td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="text-blue-400 font-semibold text-xs sm:text-sm">
+                        {INTERVIEW_PLANS.essential.duration} min
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="text-blue-400 font-semibold text-xs sm:text-sm">
+                        {INTERVIEW_PLANS.professional.duration} min
+                      </div>
+                    </td>
+                    <td className="text-center py-2 px-1 sm:px-4">
+                      <div className="text-blue-400 font-semibold text-xs sm:text-sm">
+                        {INTERVIEW_PLANS.executive.duration} min
+                      </div>
+                    </td>
+                  </tr>
+                  
                   {/* Core Features - Only Critical/Deal-Breaker Features */}
                   <tr className="border-b border-slate-600/20">
                     <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Live Interviewer</td>

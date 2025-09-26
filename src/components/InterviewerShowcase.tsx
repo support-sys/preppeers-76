@@ -387,24 +387,7 @@ const InterviewerShowcase: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="mt-12 text-center">
-        <div className="inline-flex items-center space-x-8 bg-white/5 rounded-xl px-8 py-4 border border-white/10">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{interviewers.length}+</div>
-            <div className="text-slate-300 text-sm">Expert Interviewers</div>
-          </div>
-          <div className="w-px h-8 bg-white/20"></div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-400">4.8★</div>
-            <div className="text-slate-300 text-sm">Average Rating</div>
-          </div>
-          <div className="w-px h-8 bg-white/20"></div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">1000+</div>
-            <div className="text-slate-300 text-sm">Interviews Conducted</div>
-          </div>
-        </div>
-      </div>
+  
     </div>
   );
 };

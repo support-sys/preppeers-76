@@ -28,19 +28,14 @@ const InterviewerCard: React.FC<InterviewerCardProps> = ({ interviewer, profile 
   return (
     <Card className="bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 w-80 flex-shrink-0 mx-2">
       <CardContent className="p-6">
-        {/* Header with Avatar and Basic Info */}
-        <div className="flex items-start space-x-4 mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-xl">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-white font-semibold text-lg truncate">{displayName}</h3>
-            <p className="text-slate-300 text-sm truncate">{position}</p>
-            <div className="flex items-center space-x-1 mt-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-current" />
-              <span className="text-yellow-400 text-sm font-medium">4.8</span>
-              <span className="text-slate-400 text-sm">({experience})</span>
-            </div>
+        {/* Header with Basic Info */}
+        <div className="mb-4">
+          <h3 className="text-white font-semibold text-lg mb-1">{displayName}</h3>
+          <p className="text-slate-300 text-sm mb-2">{position}</p>
+          <div className="flex items-center space-x-1">
+            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+            <span className="text-yellow-400 text-sm font-medium">4.8</span>
+            <span className="text-slate-400 text-sm">({experience})</span>
           </div>
         </div>
 
