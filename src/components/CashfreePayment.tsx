@@ -16,6 +16,8 @@ import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 import { trackPaymentInitiation } from "@/utils/bookingProgressTracker";
 import { InterviewPlan } from "@/utils/planConfig";
 import { DiscountCalculation } from "@/utils/couponUtils";
+import { AddOnService } from "@/services/addOnService";
+import { AddOn } from "@/utils/addOnConfig";
 
 interface CashfreePaymentProps {
   amount: number;
@@ -26,6 +28,10 @@ interface CashfreePaymentProps {
   onError: (error: any) => void;
   selectedPlan?: InterviewPlan;
   appliedDiscount?: DiscountCalculation | null;
+  addOns?: {
+    resumeReview: boolean;
+    meetingRecording: boolean;
+  };
 }
 
 // Cashfree SDK loading utility
@@ -75,7 +81,8 @@ const CashfreePayment = ({
   onSuccess, 
   onError,
   selectedPlan,
-  appliedDiscount
+  appliedDiscount,
+  addOns
 }: CashfreePaymentProps) => {
   const { user } = useAuth();
   // Helper function to parse human-readable time slot to date
@@ -101,11 +108,43 @@ const CashfreePayment = ({
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [availableAddOns, setAvailableAddOns] = useState<AddOn[]>([]);
+
+  // Convert add-ons selection to backend format
+  const convertToBackendFormat = (selectedAddOns: { [key: string]: boolean }) => {
+    return availableAddOns
+      .filter(addon => selectedAddOns[addon.addon_key])
+      .map(addon => ({
+        addon_key: addon.addon_key,
+        name: addon.name,
+        price: typeof addon.price === 'string' ? parseFloat(addon.price) : addon.price,
+        quantity: 1,
+        total: typeof addon.price === 'string' ? parseFloat(addon.price) : addon.price
+      }));
+  };
   const paymentContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Use the polling hook for payment status
   const { isPolling, startPolling, manualStatusCheck } = usePaymentStatusPolling(paymentSessionId);
+
+  // Fetch available add-ons when component mounts
+  useEffect(() => {
+    const fetchAddOns = async () => {
+      if (!selectedPlan?.id) return;
+      
+      try {
+        console.log('🔍 CashfreePayment: Fetching add-ons for plan:', selectedPlan.id);
+        const addOns = await AddOnService.getAddOnsForPlan(selectedPlan.id);
+        console.log('✅ CashfreePayment: Available add-ons:', addOns);
+        setAvailableAddOns(addOns);
+      } catch (error) {
+        console.error('❌ CashfreePayment: Error fetching add-ons:', error);
+      }
+    };
+
+    fetchAddOns();
+  }, [selectedPlan?.id]);
 
   // Load Cashfree SDK on component mount
   useEffect(() => {
@@ -164,6 +203,10 @@ const CashfreePayment = ({
       console.log('🔍 CashfreePayment - selectedPlan object:', selectedPlan);
       console.log('🔍 CashfreePayment - extracted planId:', planId);
       
+      // Convert add-ons to backend format
+      const selectedAddOns = addOns ? convertToBackendFormat(addOns) : [];
+      const addOnsTotal = selectedAddOns.reduce((total, addon) => total + addon.total, 0);
+
       const paymentSessionData = {
         user_id: user.id,
         candidate_data: candidateData,
@@ -177,7 +220,9 @@ const CashfreePayment = ({
         selected_time_slot: candidateData.timeSlot || null,
         selected_date: candidateData.timeSlot ? parseTimeSlotToDate(candidateData.timeSlot) : null,
         plan_duration: candidateData.interviewDuration || 60,
-        match_score: candidateData.matchedInterviewer?.matchScore || null
+        match_score: candidateData.matchedInterviewer?.matchScore || null,
+        selected_add_ons: JSON.stringify(selectedAddOns),
+        add_ons_total: addOnsTotal
       };
       
       console.log('Creating payment session with data:', paymentSessionData);
@@ -252,6 +297,10 @@ const CashfreePayment = ({
         return;
       }
 
+      // Convert add-ons to backend format for edge function call
+      const selectedAddOns = addOns ? convertToBackendFormat(addOns) : [];
+      const addOnsTotal = selectedAddOns.reduce((total, addon) => total + addon.total, 0);
+
       // Create payment session in database first
       const dbSession = await createPaymentSession();
 
@@ -271,6 +320,8 @@ const CashfreePayment = ({
           notify_url: `https://jhhoeodofsbgfxndhotq.supabase.co/functions/v1/payment-webhook`,
           selected_plan: selectedPlan?.id || 'professional',
           plan_details: selectedPlan,
+          selected_add_ons: selectedAddOns, // Add add-ons data
+          add_ons_total: addOnsTotal, // Add add-ons total
           metadata: {
             payment_session_id: dbSession.id,
             candidate_data: {
@@ -279,7 +330,9 @@ const CashfreePayment = ({
               noticePeriod: candidateData?.noticePeriod || candidateData?.notice_period || ''
             },
             user_email: userEmail,
-            user_name: userName
+            user_name: userName,
+            matched_interviewer: candidateData.matchedInterviewer || null,
+            timeSlot: candidateData.timeSlot || null
           }
         }
       });
@@ -459,13 +512,7 @@ const CashfreePayment = ({
   return (
     <div className="space-y-6">
       <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-        <CardHeader className="text-center">
-          <CardTitle className="text-white text-2xl">Interview Payment</CardTitle>
-          <CardDescription className="text-slate-300">
-            Secure payment for your mock interview session
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* SDK Status */}
           {!sdkLoaded && !error && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
@@ -517,7 +564,14 @@ const CashfreePayment = ({
           )}
 
           {/* Payment Details */}
-          <PaymentDetails amount={amount} candidateData={candidateData} />
+          <PaymentDetails 
+            amount={amount} 
+            candidateData={candidateData} 
+            addOns={addOns}
+            appliedDiscount={appliedDiscount}
+            originalAmount={selectedPlan?.discountedPrice}
+            selectedAddOns={addOns ? convertToBackendFormat(addOns) : []}
+          />
 
           {/* Security Features */}
           <PaymentSecurityFeatures />

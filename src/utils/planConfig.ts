@@ -56,29 +56,29 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
       "No resume review included",
       "No career coaching session"
     ]
-  },
-  executive: {
-    id: 'executive',
-    name: "Executive",
-    price: 1299,
-    discountedPrice: 899,
-    duration: 60,
-    description: "Premium career development package with complete support",
-    shortDescription: "Premium package with resume review & career coaching",
-    features: [
-      "60-minute comprehensive mock interview",
-      "Professional Resume Feedback (not during mock interview)",
-      "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
-      "Personalized action plan for improvement",
-      "Interview performance analysis",
-      "Follow-up support and guidance",
-      "Interview recording (optional)",
-      "Priority customer support"
-    ],
-    limitations: [
-      "Premium pricing for comprehensive service"
-    ]
   }
+  // executive: {
+  //   id: 'executive',
+  //   name: "Executive",
+  //   price: 1299,
+  //   discountedPrice: 899,
+  //   duration: 60,
+  //   description: "Premium career development package with complete support",
+  //   shortDescription: "Premium package with resume review & career coaching",
+  //   features: [
+  //     "60-minute comprehensive mock interview",
+  //     "Professional Resume Feedback (not during mock interview)",
+  //     "Comprehensive feedback report (PDF) - technical skills, communication, behavior & presentation analysis",
+  //     "Personalized action plan for improvement",
+  //     "Interview performance analysis",
+  //     "Follow-up support and guidance",
+  //     "Interview recording (optional)",
+  //     "Priority customer support"
+  //   ],
+  //   limitations: [
+  //     "Premium pricing for comprehensive service"
+  //   ]
+  // }
 };
 
 export const getPlanById = (planId: string): InterviewPlan | null => {

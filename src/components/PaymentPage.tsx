@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -18,19 +17,40 @@ interface PaymentPageProps {
   onError: (error: any) => void;
 }
 
+interface AddOnSelection {
+  [key: string]: boolean;
+}
+
 const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: PaymentPageProps) => {
   const selectedPlan = getPlanById(formData.selected_plan || 'professional');
-  const originalAmount = formData.amount || selectedPlan?.price || 999;
+  const originalAmount = formData.amount || selectedPlan?.discountedPrice || 799;
   const [finalAmount, setFinalAmount] = useState(originalAmount);
   const [appliedDiscount, setAppliedDiscount] = useState<DiscountCalculation | null>(null);
   const [externalCouponCode, setExternalCouponCode] = useState<string>('');
+  const [addOns, setAddOns] = useState<AddOnSelection>({});
 
   // Scroll to top when component mounts
   useScrollToTop();
 
+  // Calculate total add-ons price from the CouponInput component
+  // This will be updated by the onAddOnsChange callback
+  const [totalAddOnPrice, setTotalAddOnPrice] = useState(0);
+
+  // Calculate final amount including add-ons and discount
+  const baseAmount = originalAmount + totalAddOnPrice;
+  const finalAmountWithDiscount = appliedDiscount ? appliedDiscount.final_price + totalAddOnPrice : baseAmount;
+
   const handleCouponApplied = (discount: DiscountCalculation | null) => {
     setAppliedDiscount(discount);
-    setFinalAmount(discount ? discount.final_price : originalAmount);
+    const newBaseAmount = originalAmount + totalAddOnPrice;
+    setFinalAmount(discount ? discount.final_price + totalAddOnPrice : newBaseAmount);
+  };
+
+  const handleAddOnsChange = (newAddOns: AddOnSelection, newTotalAddOnPrice: number) => {
+    setAddOns(newAddOns);
+    setTotalAddOnPrice(newTotalAddOnPrice);
+    const newBaseAmount = originalAmount + newTotalAddOnPrice;
+    setFinalAmount(appliedDiscount ? appliedDiscount.final_price + newTotalAddOnPrice : newBaseAmount);
   };
 
   const handleCouponSelect = (couponName: string) => {
@@ -70,7 +90,7 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
             onCouponSelect={handleCouponSelect}
           />
 
-          {/* Coupon Input Section */}
+          {/* Coupon Input and Add-ons Section */}
           <div className="mt-6">
             <CouponInput
               originalPrice={originalAmount}
@@ -78,6 +98,7 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
               onCouponApplied={handleCouponApplied}
               externalCouponCode={externalCouponCode}
               onExternalCouponCodeChange={handleExternalCouponCodeChange}
+              onAddOnsChange={handleAddOnsChange}
             />
           </div>
 
@@ -91,6 +112,7 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
               onError={onError}
               selectedPlan={selectedPlan}
               appliedDiscount={appliedDiscount}
+              addOns={addOns}
             />
           </div>
         </div>

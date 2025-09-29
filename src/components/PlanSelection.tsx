@@ -216,14 +216,13 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
         <div className="mb-8">
           <Card className="bg-slate-800/50 backdrop-blur-lg border-slate-700/50 shadow-2xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[400px]">
+              <table className="w-full min-w-[350px]">
                 {/* Header */}
                 <thead>
                   <tr className="bg-slate-700/50 border-b border-slate-600/50">
                     <th className="text-left py-2 px-2 sm:px-6 text-blue-300 font-semibold text-xs sm:text-base">Features</th>
                     <th className="text-center py-2 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Essential</th>
-                    <th className="text-center py-2 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Professional</th>
-                    <th className="text-center py-2 px-1 sm:px-4 text-green-400 font-semibold text-xs sm:text-base">Executive</th>
+                    <th className="text-center py-2 px-1 sm:px-4 text-green-400 font-semibold text-xs sm:text-base">Professional</th>
                   </tr>
                 </thead>
                 
@@ -280,21 +279,11 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                         {INTERVIEW_PLANS.professional.duration} min
                       </div>
                     </td>
-                    <td className="text-center py-2 px-1 sm:px-4">
-                      <div className="text-blue-400 font-semibold text-xs sm:text-sm">
-                        {INTERVIEW_PLANS.executive.duration} min
-                      </div>
-                    </td>
                   </tr>
                   
                   {/* Core Features - Only Critical/Deal-Breaker Features */}
                   <tr className="border-b border-slate-600/20">
                     <td className="py-2 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm">Live Interviewer</td>
-                    <td className="text-center py-2 px-1 sm:px-4">
-                      <div className="flex justify-center">
-                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                      </div>
-                    </td>
                     <td className="text-center py-2 px-1 sm:px-4">
                       <div className="flex justify-center">
                         <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
@@ -319,11 +308,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                         <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                       </div>
                     </td>
-                    <td className="text-center py-2 px-1 sm:px-4">
-                      <div className="flex justify-center">
-                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                      </div>
-                    </td>
                   </tr>
                   
                   <tr className="border-b border-slate-600/20">
@@ -331,11 +315,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                     <td className="text-center py-2 px-1 sm:px-4">
                       <div className="flex justify-center">
                         <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-                      </div>
-                    </td>
-                    <td className="text-center py-2 px-1 sm:px-4">
-                      <div className="flex justify-center">
-                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                       </div>
                     </td>
                     <td className="text-center py-2 px-1 sm:px-4">
@@ -357,11 +336,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                         <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                       </div>
                     </td>
-                    <td className="text-center py-2 px-1 sm:px-4">
-                      <div className="flex justify-center">
-                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                      </div>
-                    </td>
                   </tr>
                   
                   <tr>
@@ -374,11 +348,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                     <td className="text-center py-2 px-1 sm:px-4">
                       <div className="flex justify-center">
                         <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-                      </div>
-                    </td>
-                    <td className="text-center py-2 px-1 sm:px-4">
-                      <div className="flex justify-center">
-                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                       </div>
                     </td>
                   </tr>
@@ -518,7 +487,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
         <div className="text-center mt-6">
           <div className="inline-block p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
             <p className="text-sm text-blue-200">
-              💡 <strong>Pro Tip:</strong> Most candidates choose Professional or Executive for better results and comprehensive feedback!
+              💡 <strong>Pro Tip:</strong> Most candidates choose Professional for better results and comprehensive feedback!
             </p>
           </div>
         </div>

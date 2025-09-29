@@ -182,14 +182,13 @@ const Index = () => {
             <div className="mb-8">
               <Card className="bg-white/10 border-white/20 backdrop-blur-lg shadow-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[450px]">
+                  <table className="w-full min-w-[350px]">
                     {/* Header */}
                     <thead>
                       <tr className="bg-slate-700/50 border-b border-slate-600/50">
                         <th className="text-left py-3 px-2 sm:px-6 text-blue-300 font-semibold text-xs sm:text-base">Features</th>
                         <th className="text-center py-3 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Essential</th>
-                        <th className="text-center py-3 px-1 sm:px-4 text-slate-300 font-semibold text-xs sm:text-base">Professional</th>
-                        <th className="text-center py-3 px-1 sm:px-4 text-green-400 font-semibold text-xs sm:text-base">Executive</th>
+                        <th className="text-center py-3 px-1 sm:px-4 text-green-400 font-semibold text-xs sm:text-base">Professional</th>
                       </tr>
                     </thead>
                     <thead>
@@ -235,19 +234,9 @@ const Index = () => {
                              {INTERVIEW_PLANS.professional.duration} min
                            </div>
                          </td>
-                         <td className="text-center py-3 px-1 sm:px-4">
-                           <div className="text-blue-400 font-semibold text-xs sm:text-sm">
-                             {INTERVIEW_PLANS.executive.duration} min
-                           </div>
-                         </td>
                        </tr>
                       <tr className="border-b border-slate-600/20">
                         <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Live Interviewer</td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                          </div>
-                        </td>
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
@@ -273,11 +262,6 @@ const Index = () => {
                             <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                           </div>
                         </td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                          </div>
-                        </td>
                       </tr>
                       
                       {/* Action Plan */}
@@ -286,11 +270,6 @@ const Index = () => {
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-                          </div>
-                        </td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                           </div>
                         </td>
                         <td className="text-center py-3 px-1 sm:px-4">
@@ -313,11 +292,6 @@ const Index = () => {
                             <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                           </div>
                         </td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                          </div>
-                        </td>
                       </tr>
                       
                       {/* Resume Feedback */}
@@ -331,11 +305,6 @@ const Index = () => {
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-                          </div>
-                        </td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                           </div>
                         </td>
                       </tr>
@@ -658,6 +627,7 @@ const Index = () => {
       {/* Floating Elements */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
       <div className="absolute bottom-20 right-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-xl animate-pulse delay-700"></div>
+      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
 
       <Footer />
     </div>

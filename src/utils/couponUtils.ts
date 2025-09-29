@@ -7,7 +7,7 @@ export interface Coupon {
   discount_value: number;
   status: 'active' | 'stopped';
   expiring_on: string;
-  plan_type: 'all' | 'essential' | 'professional' | 'executive';
+  plan_type: 'all' | 'essential' | 'professional';
   usage_limit: number | null;
   usage_count: number;
   created_at: string;

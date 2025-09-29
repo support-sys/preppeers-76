@@ -1,9 +1,11 @@
 import React, { useState, forwardRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tag, Check, X, Loader2 } from 'lucide-react';
+import { Tag, Check, X, Loader2, Plus } from 'lucide-react';
 import { validateCoupon, calculateDiscount, CouponValidationResult, DiscountCalculation } from '@/utils/couponUtils';
 import { useToast } from '@/hooks/use-toast';
+import { AddOnService } from '@/services/addOnService';
+import { AddOn } from '@/utils/addOnConfig';
 
 interface CouponInputProps {
   originalPrice: number;
@@ -12,6 +14,11 @@ interface CouponInputProps {
   appliedCoupon?: string | null;
   externalCouponCode?: string;
   onExternalCouponCodeChange?: () => void;
+  onAddOnsChange?: (addOns: AddOnSelection, totalPrice: number) => void;
+}
+
+interface AddOnSelection {
+  [key: string]: boolean;
 }
 
 const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
@@ -20,13 +27,46 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
   onCouponApplied,
   appliedCoupon,
   externalCouponCode,
-  onExternalCouponCodeChange
+  onExternalCouponCodeChange,
+  onAddOnsChange
 }, ref) => {
   const [couponCode, setCouponCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<CouponValidationResult | null>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<DiscountCalculation | null>(null);
+  const [availableAddOns, setAvailableAddOns] = useState<AddOn[]>([]);
+  const [addOns, setAddOns] = useState<AddOnSelection>({});
+  const [isLoadingAddOns, setIsLoadingAddOns] = useState(false);
   const { toast } = useToast();
+
+  // Fetch available add-ons when plan type changes
+  useEffect(() => {
+    const fetchAddOns = async () => {
+      if (!planType) return;
+      
+      setIsLoadingAddOns(true);
+      try {
+        console.log('🔍 Fetching add-ons for plan:', planType);
+        const addOns = await AddOnService.getAddOnsForPlan(planType);
+        console.log('✅ Available add-ons:', addOns);
+        setAvailableAddOns(addOns);
+        
+        // Reset add-ons selection when plan changes
+        setAddOns({});
+      } catch (error) {
+        console.error('❌ Error fetching add-ons:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load available add-ons",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingAddOns(false);
+      }
+    };
+
+    fetchAddOns();
+  }, [planType, toast]);
 
   // Handle external coupon code changes
   useEffect(() => {
@@ -37,6 +77,18 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
       }
     }
   }, [externalCouponCode, couponCode, onExternalCouponCodeChange]);
+
+  // Calculate total add-ons price
+  const totalAddOnPrice = availableAddOns.reduce((total, addon) => {
+    return total + (addOns[addon.addon_key] ? parseFloat(addon.price) : 0);
+  }, 0);
+
+  // Handle add-ons changes
+  useEffect(() => {
+    if (onAddOnsChange) {
+      onAddOnsChange(addOns, totalAddOnPrice);
+    }
+  }, [addOns, totalAddOnPrice, onAddOnsChange]);
 
   const handleApplyCoupon = async () => {
     console.log('🔍 handleApplyCoupon called with:', { couponCode, planType });
@@ -113,6 +165,26 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
     if (e.key === 'Enter') {
       handleApplyCoupon();
     }
+  };
+
+  const handleAddOnToggle = (addonKey: string) => {
+    setAddOns(prev => ({
+      ...prev,
+      [addonKey]: !prev[addonKey]
+    }));
+  };
+
+  // Convert add-ons selection to backend format
+  const convertToBackendFormat = (selectedAddOns: AddOnSelection) => {
+    return availableAddOns
+      .filter(addon => selectedAddOns[addon.addon_key])
+      .map(addon => ({
+        addon_key: addon.addon_key,
+        name: addon.name,
+        price: parseFloat(addon.price),
+        quantity: 1,
+        total: parseFloat(addon.price)
+      }));
   };
 
   return (
@@ -193,30 +265,57 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
         </div>
       )}
 
-      {/* Price Summary */}
-      <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/30">
-        <div className="space-y-2">
-          <div className="flex justify-between text-slate-300">
-            <span>Original Price:</span>
-            <span>₹{originalPrice}</span>
-          </div>
-          
-          {appliedDiscount && (
-            <div className="flex justify-between text-green-400">
-              <span>Discount ({appliedDiscount.discount_type === 'percentage' ? appliedDiscount.discount_value + '%' : '₹' + appliedDiscount.discount_value}):</span>
-              <span>-₹{appliedDiscount.discount_amount}</span>
-            </div>
-          )}
-          
-          <div className="border-t border-slate-600/50 pt-2">
-            <div className="flex justify-between text-lg font-bold text-white">
-              <span>Total Amount:</span>
-              <span className="text-blue-400">
-                ₹{appliedDiscount ? appliedDiscount.final_price : originalPrice}
-              </span>
-            </div>
-          </div>
+      {/* Add-ons Selection */}
+      <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50">
+        <div className="flex items-center space-x-2 mb-4">
+          <Plus className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-medium text-blue-400">Add-ons (Optional)</span>
         </div>
+        
+        <div className="space-y-3">
+          {isLoadingAddOns ? (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+              <span className="ml-2 text-slate-300">Loading add-ons...</span>
+            </div>
+          ) : availableAddOns.length === 0 ? (
+            <div className="text-center p-4 text-slate-400">
+              No add-ons available for this plan
+            </div>
+          ) : (
+            availableAddOns.map((addon) => (
+              <div key={addon.id} className="flex items-center justify-between p-3 bg-slate-600/30 rounded-lg border border-slate-500/30">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => handleAddOnToggle(addon.addon_key)}
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                      addOns[addon.addon_key] 
+                        ? 'bg-blue-500 border-blue-500' 
+                        : 'border-slate-400 hover:border-blue-400'
+                    }`}
+                  >
+                    {addOns[addon.addon_key] && <Check className="w-3 h-3 text-white" />}
+                  </button>
+                  <div>
+                    <div className="text-white font-medium">{addon.name}</div>
+                    <div className="text-sm text-slate-400">{addon.description}</div>
+                  </div>
+                </div>
+                <div className="text-blue-400 font-semibold">+₹{addon.price}</div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Add-ons Total */}
+        {totalAddOnPrice > 0 && (
+          <div className="mt-3 pt-3 border-t border-slate-600/50">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-300">Add-ons Total:</span>
+              <span className="text-blue-400 font-semibold">+₹{totalAddOnPrice}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

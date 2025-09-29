@@ -62,8 +62,7 @@ const formatPlanName = (plan: string): string => {
   
   const planMap: { [key: string]: string } = {
     'essential': 'Essential',
-    'professional': 'Professional', 
-    'executive': 'Executive'
+    'professional': 'Professional'
   };
   
   return planMap[plan] || plan.charAt(0).toUpperCase() + plan.slice(1);

@@ -207,7 +207,7 @@ export const useBookingFlow = () => {
       
       if (!planId) {
         // Fallback to duration-based logic if no plan selected
-        planId = timeSlotDuration === 30 ? 'essential' : timeSlotDuration === 60 ? 'professional' : 'executive';
+        planId = timeSlotDuration === 30 ? 'essential' : 'professional';
         console.log('⚠️ No plan selected, using duration-based fallback:', planId);
       }
       

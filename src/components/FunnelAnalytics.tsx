@@ -15,7 +15,6 @@ interface FunnelData {
   plan_distribution: {
     essential: number;
     professional: number;
-    executive: number;
   };
   avg_match_score: number;
 }
@@ -240,10 +239,6 @@ const FunnelAnalytics: React.FC = () => {
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{funnelData.plan_distribution.professional}</div>
               <div className="text-sm text-gray-600">Professional</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{funnelData.plan_distribution.executive}</div>
-              <div className="text-sm text-gray-600">Executive</div>
             </div>
           </div>
         </CardContent>

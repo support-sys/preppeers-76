@@ -163,8 +163,7 @@ export const getFunnelAnalytics = async (dateRange?: { from: string, to: string 
       completed: data.filter(d => d.booking_progress === 'completed').length,
       plan_distribution: {
         essential: data.filter(d => d.selected_plan === 'essential').length,
-        professional: data.filter(d => d.selected_plan === 'professional').length,
-        executive: data.filter(d => d.selected_plan === 'executive').length
+        professional: data.filter(d => d.selected_plan === 'professional').length
       },
       avg_match_score: data.reduce((sum, d) => sum + (d.match_score || 0), 0) / data.length
     };

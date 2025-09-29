@@ -18,6 +18,7 @@ import {
   releaseTemporaryReservation,
   isTimeSlotAvailable 
 } from "@/utils/temporaryBlocking";
+import { convertToBackendFormat } from "@/utils/addOnConfig";
 
 
 
@@ -494,7 +495,7 @@ export const createInterviewTimeBlock = async (
   }
 };
 
-export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string, planDuration: number = 60, userId?: string) => {
+export const scheduleInterview = async (interviewer: any, candidate: any, userEmail: string, userFullName: string, planDuration: number = 60, userId?: string, addOns?: { [key: string]: boolean }) => {
   try {
     console.log("Scheduling interview with:", { candidate: userFullName });
     console.log("Full interviewer object:", { interviewer: interviewer.company });
@@ -548,6 +549,10 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       console.warn('Could not fetch latest resume_url from interviewees table:', resumeFetchError);
     }
     
+    // Convert add-ons to backend format
+    const selectedAddOns = addOns ? convertToBackendFormat(addOns) : [];
+    const addOnsTotal = selectedAddOns.reduce((total, addon) => total + addon.total, 0);
+
     // Create interview record data - let edge function handle profile lookup
     const interviewData = {
       interviewer_id: interviewer.id,
@@ -563,7 +568,9 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
       resume_url: latestResumeUrl,
       selected_plan: candidate.selectedPlan || 'professional',
       interview_duration: planDuration,
-      plan_details: candidate.selectedPlan || null
+      plan_details: candidate.selectedPlan || null,
+      selected_add_ons: JSON.stringify(selectedAddOns),
+      add_ons_total: addOnsTotal
     };
 
     console.log("📝 Sending interview data to edge function:", interviewData);
