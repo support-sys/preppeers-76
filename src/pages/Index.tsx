@@ -251,7 +251,23 @@ const Index = () => {
                       
                       {/* Feedback Report */}
                       <tr className="border-b border-slate-600/20">
-                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Feedback Report</td>
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Verbal Feedback</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      
+                      </tr>
+
+                      {/* Feedback Report */}
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Detailed Feedback Report</td>
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
@@ -264,9 +280,24 @@ const Index = () => {
                         </td>
                       </tr>
                       
+                         {/* Interview Performance Analysis */}
+                      <tr className="border-b border-slate-600/20">
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Interview Performance Analysis</td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                          </div>
+                        </td>
+                        <td className="text-center py-3 px-1 sm:px-4">
+                          <div className="flex justify-center">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                          </div>
+                        </td>
+                      </tr>
+
                       {/* Action Plan */}
                       <tr className="border-b border-slate-600/20">
-                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Action Plan</td>
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Personalized Action Plan</td>
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
@@ -281,7 +312,7 @@ const Index = () => {
                       
                       {/* Recording */}
                       <tr className="border-b border-slate-600/20">
-                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Recording</td>
+                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Priority Support</td>
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
@@ -290,21 +321,6 @@ const Index = () => {
                         <td className="text-center py-3 px-1 sm:px-4">
                           <div className="flex justify-center">
                             <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                          </div>
-                        </td>
-                      </tr>
-                      
-                      {/* Resume Feedback */}
-                      <tr className="border-b border-slate-600/20">
-                        <td className="py-3 px-2 sm:px-6 text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">Resume Review</td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-                          </div>
-                        </td>
-                        <td className="text-center py-3 px-1 sm:px-4">
-                          <div className="flex justify-center">
-                            <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
                           </div>
                         </td>
                       </tr>

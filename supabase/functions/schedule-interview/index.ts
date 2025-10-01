@@ -657,16 +657,20 @@ ${interviewData.specific_skills && interviewData.specific_skills.length > 0 ? `�
 
 This is an automated calendar event created by Preppeers Interview System.
     `.trim();
-    const { meetLink, eventId } = await createGoogleMeetWithCalendar(`Mock Interview: ${interviewData.target_role}`, calendarDescription, startTime.toISOString(), endTime.toISOString(), [
-      interviewData.candidate_email,
-      interviewerEmail
-    ], interviewerName || 'Professional Interviewer', interviewData.candidate_name, interviewData.target_role, interviewData.plan_details);
+    // SIMPLIFIED: Use default Meet link to avoid Google Calendar API issues
+    // This prevents the Domain-Wide Delegation error and webhook retries
+    console.log('🌐 Setting default Meet link to /new');
+    const meetLink = 'https://meet.google.com/new';
+    const eventId = `meet-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    // TODO: Re-enable Google Calendar integration once Domain-Wide Delegation is configured
+    // const { meetLink, eventId } = await createGoogleMeetWithCalendar(`Mock Interview: ${interviewData.target_role}`, calendarDescription, startTime.toISOString(), endTime.toISOString(), [
+    //   interviewData.candidate_email,
+    //   interviewerEmail
+    // ], interviewerName || 'Professional Interviewer', interviewData.candidate_name, interviewData.target_role, interviewData.plan_details);
     let calendarEventId = eventId;
-    // Check if we got a manual Meet creation requirement
-    if (meetLink === 'MANUAL_MEET_CREATION_REQUIRED') {
-      console.log("⚠️ Manual Meet creation required - proceeding without Meet link");
-    // We'll continue without a Meet link and let the user add it later
-    } else if (!meetLink || !meetLink.includes('meet.google.com')) {
+    // Validate Meet link
+    if (!meetLink || !meetLink.includes('meet.google.com')) {
       console.error("❌ Invalid Google Meet link generated:", meetLink);
       throw new Error("Invalid Google Meet link generated");
     } else {

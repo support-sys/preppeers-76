@@ -109,6 +109,38 @@ const handler = async (req)=>{
       // Extract payment session ID from order_id (format: ORDER_{session_id})
       const sessionId = order_id.replace('ORDER_', '');
       console.log('Extracted session ID:', sessionId);
+      // IDEMPOTENCY CHECK: Check if payment session is already completed
+      const { data: existingSession, error: fetchError } = await supabase.from('payment_sessions').select('payment_status, interview_matched').eq('id', sessionId).single();
+      if (fetchError) {
+        console.error('Error fetching payment session:', fetchError);
+        return new Response(JSON.stringify({
+          status: 'error',
+          message: 'Failed to fetch payment session',
+          error: fetchError.message
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        });
+      }
+      // If already completed, return success without processing
+      if (existingSession && existingSession.payment_status === 'completed') {
+        console.log('🔄 Payment session already completed - skipping duplicate processing');
+        return new Response(JSON.stringify({
+          status: 'success',
+          message: 'Payment already processed (idempotency check)',
+          session_id: sessionId,
+          already_processed: true
+        }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        });
+      }
       // Update payment session status to successful
       const { data: updateData, error: updateError } = await supabase.from('payment_sessions').update({
         payment_status: 'completed',
@@ -132,7 +164,6 @@ const handler = async (req)=>{
         // Trigger auto-booking in background if payment is successful
         if (updateData && updateData.length > 0) {
           const paymentSession = updateData[0];
-          
           // Log add-ons data when payment is completed
           if (paymentSession.selected_add_ons && paymentSession.add_ons_total > 0) {
             console.log('📦 Payment completed with add-ons:', {
@@ -147,7 +178,6 @@ const handler = async (req)=>{
               total_amount: paymentSession.amount
             });
           }
-          
           console.log('🔄 Triggering auto-book interview for payment session:', sessionId);
           // Use background task to auto-book interview
           try {
