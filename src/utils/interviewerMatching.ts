@@ -86,15 +86,44 @@ export const skillCategoryMapping: { [key: string]: string[] } = {
   ]
 };
 
-// Skill match quality thresholds
+// Skill match quality thresholds - UPDATED for domain-first matching
 export const SKILL_MATCH_THRESHOLDS = {
-  EXCELLENT: 40, // Same category + specific tech overlap
-  GOOD: 20,      // Related categories or some tech overlap  
-  POOR: 5,       // Minimal overlap - requires user consent
+  EXCELLENT: 50, // Same domain + strong tech overlap
+  GOOD: 35,      // Same domain + moderate tech overlap
+  POOR: 25,      // Same domain + minimal tech overlap
+  CROSS_DOMAIN: 40, // Different domains - require high threshold
   NONE: 0        // No overlap - block matching
 };
 
-export const MINIMUM_SKILL_THRESHOLD = 20; // Require at least 20 points for matching
+// Domain-first matching thresholds - EXACT DOMAIN ONLY
+export const MINIMUM_SKILL_THRESHOLD = 30; // Minimum for exact domain matches only
+
+// NO DOMAIN COMPATIBILITY - Only exact matches allowed
+// This means:
+// - .NET Backend Developer can ONLY match with .NET Backend Developer
+// - Full Stack Developer can ONLY match with Full Stack Developer  
+// - Mobile Developer (Cross-Platform) can ONLY match with Mobile Developer (Cross-Platform)
+// etc.
+
+// Generic technologies that should have lower weight in cross-domain matching
+export const GENERIC_TECHNOLOGIES = [
+  "REST APIs", "CI/CD", "Docker", "Kubernetes", "Git", "Linux", "Shell Scripting",
+  "Microservices", "SQL", "NoSQL", "Redis", "Monitoring", "Logging", "Testing",
+  "Unit Testing", "Integration Testing", "API Integration", "Responsive Design"
+];
+
+// Domain-specific technologies that should have higher weight
+export const DOMAIN_SPECIFIC_TECHNOLOGIES = {
+  "Frontend Developer": ["React", "Vue.js", "Angular", "Svelte", "Next.js", "HTML", "CSS", "JavaScript", "TypeScript"],
+  "Java Backend Developer": ["Java", "Spring Boot", "Hibernate", "JPA", "Kafka", "RabbitMQ"],
+  "Python Backend Developer": ["Python", "Django", "Flask", "FastAPI", "SQLAlchemy", "Celery"],
+  ".NET Backend Developer": ["C#", ".NET Core", "ASP.NET", "Entity Framework", "SQL Server", "xUnit"],
+  "Mobile Developer (Android)": ["Java", "Kotlin", "Android SDK", "Jetpack Compose", "XML Layouts"],
+  "Mobile Developer (iOS)": ["Swift", "SwiftUI", "Objective-C", "iOS SDK", "CoreData"],
+  "Mobile Developer (Cross-Platform)": ["React Native", "Flutter", "Dart"],
+  "DevOps Engineer": ["Terraform", "Ansible", "AWS", "GCP", "Azure", "Prometheus", "Grafana"],
+  "Full Stack Developer": ["React", "Angular", "Node.js", "Express.js", "MongoDB"]
+};
 
 // Enhanced experience requirements
 export const EXPERIENCE_REQUIREMENTS = {
@@ -339,13 +368,13 @@ export const parseExperience = (experienceStr: string): number => {
   return 2; // Default to 2 years
 };
 
-// Enhanced skills matching with semantic understanding and minimum thresholds
+// Domain-first skills matching with strict domain compatibility
 export const checkEnhancedSkillsMatch = (
   candidate: MatchingCandidate, 
   interviewerSkills: string[], 
   interviewerTechnologies: string[]
 ): { match: boolean; score: number; details: string[]; quality: string } => {
-  console.log('\n🎯 === ENHANCED SKILLS MATCHING DEBUG ===');
+  console.log('\n🎯 === DOMAIN-FIRST SKILLS MATCHING DEBUG ===');
   console.log('👤 Candidate data:', {
     skillCategories: candidate.skillCategories,
     specificSkills: candidate.specificSkills
@@ -359,95 +388,122 @@ export const checkEnhancedSkillsMatch = (
   const technologiesArray = Array.isArray(interviewerTechnologies) ? interviewerTechnologies : [];
   const allInterviewerSkills = [...skillsArray, ...technologiesArray];
 
-  // 1. Hard Category Filter (30 points max) - Prioritize same category matches
-  let categoryScore = 0;
-  if (candidate.skillCategories && candidate.skillCategories.length > 0) {
-    const exactCategoryMatches = candidate.skillCategories.filter(category => 
-      skillsArray.includes(category)
-    );
+  // STEP 1: EXACT DOMAIN CHECK ONLY (Critical - only exact domain matches allowed)
+  let isExactDomain = false;
+  let candidateDomain = '';
+  let interviewerDomain = '';
+  
+  if (candidate.skillCategories && candidate.skillCategories.length > 0 && skillsArray.length > 0) {
+    candidateDomain = candidate.skillCategories[0]; // Use primary category
+    interviewerDomain = skillsArray[0]; // Use primary category
     
-    if (exactCategoryMatches.length > 0) {
-      categoryScore = Math.min(30, exactCategoryMatches.length * 15); // Higher points for exact category matches
-      matchDetails.push(`🎯 Exact skill category match: ${exactCategoryMatches.join(', ')}`);
+    // Check for EXACT domain match ONLY
+    if (candidateDomain === interviewerDomain) {
+      isExactDomain = true;
+      matchDetails.push(`🎯 EXACT DOMAIN MATCH: ${candidateDomain}`);
+      console.log(`✅ EXACT DOMAIN MATCH: ${candidateDomain}`);
     } else {
-      // Check for semantic category matches (e.g., React.js -> Frontend Development)
-      const semanticMatches = [];
-      for (const candidateCategory of candidate.skillCategories) {
-        const relatedTechs = skillCategoryMapping[candidateCategory] || [];
-        const techMatches = relatedTechs.filter(tech => 
-          allInterviewerSkills.some(iSkill => 
-            iSkill.toLowerCase().includes(tech.toLowerCase()) ||
-            tech.toLowerCase().includes(iSkill.toLowerCase())
-          )
-        );
-        if (techMatches.length > 0) {
-          semanticMatches.push(`${candidateCategory} (${techMatches.join(', ')})`);
-        }
-      }
-      if (semanticMatches.length > 0) {
-        categoryScore = Math.min(20, semanticMatches.length * 10); // Lower points for semantic matches
-        matchDetails.push(`🔗 Related skill matches: ${semanticMatches.join('; ')}`);
-      }
+      // DIFFERENT DOMAINS - Give 0 points and move to next interviewer
+      console.log(`❌ DIFFERENT DOMAINS: ${candidateDomain} ↔ ${interviewerDomain} - 0 POINTS (move to next interviewer)`);
+      matchDetails.push(`❌ DIFFERENT DOMAINS: ${candidateDomain} ↔ ${interviewerDomain}`);
+      return {
+        match: false,
+        score: 0,
+        details: matchDetails,
+        quality: 'none'
+      };
     }
-    totalScore += categoryScore;
   }
 
-  // 2. Specific Technology Matching (30 points max)
+  // STEP 2: EXACT DOMAIN SCORING (40 points max) - Only exact domains get points
+  let domainScore = 0;
+  if (isExactDomain) {
+    // Exact domain match gets maximum domain score
+    domainScore = 40;
+    matchDetails.push(`🎯 Exact domain match: +40 points`);
+    console.log(`🎯 Exact domain match: +40 points`);
+  }
+  totalScore += domainScore;
+
+  // STEP 3: TECHNOLOGY MATCHING (20 points max) - Only for exact domain matches
   let techScore = 0;
   if (candidate.specificSkills && candidate.specificSkills.length > 0) {
-    const exactTechMatches = [];
-    const partialTechMatches = [];
+    const domainSpecificMatches = [];
+    const genericMatches = [];
     
     for (const skill of candidate.specificSkills) {
       const exactMatch = allInterviewerSkills.find(iSkill => 
         skill.toLowerCase() === iSkill.toLowerCase()
       );
+      
       if (exactMatch) {
-        exactTechMatches.push(skill);
-        techScore += 10; // High points for exact matches
-      } else {
-        const partialMatch = allInterviewerSkills.find(iSkill => 
-          skill.toLowerCase().includes(iSkill.toLowerCase()) ||
-          iSkill.toLowerCase().includes(skill.toLowerCase())
+        // Check if it's a domain-specific technology
+        const candidateDomainSpecific = DOMAIN_SPECIFIC_TECHNOLOGIES[candidateDomain] || [];
+        const isDomainSpecific = candidateDomainSpecific.some(tech => 
+          tech.toLowerCase() === skill.toLowerCase()
         );
-        if (partialMatch) {
-          partialTechMatches.push(skill);
-          techScore += 5; // Lower points for partial matches
+        const isGeneric = GENERIC_TECHNOLOGIES.some(tech => 
+          tech.toLowerCase() === skill.toLowerCase()
+        );
+        
+        if (isDomainSpecific) {
+          // Domain-specific technology gets high points
+          techScore += 8;
+          domainSpecificMatches.push(skill);
+          console.log(`✅ Domain-specific match: ${skill} (+8 points)`);
+        } else if (isGeneric) {
+          // Generic technology gets low points
+          techScore += 2;
+          genericMatches.push(skill);
+          console.log(`🔧 Generic match: ${skill} (+2 points)`);
+        } else {
+          // Other technology gets medium points
+          techScore += 5;
+          console.log(`🔍 Other match: ${skill} (+5 points)`);
         }
       }
     }
     
-    techScore = Math.min(30, techScore);
-    if (exactTechMatches.length > 0) {
-      matchDetails.push(`✅ Exact technology matches: ${exactTechMatches.join(', ')}`);
+    techScore = Math.min(20, techScore);
+    if (domainSpecificMatches.length > 0) {
+      matchDetails.push(`✅ Domain-specific tech matches: ${domainSpecificMatches.join(', ')}`);
     }
-    if (partialTechMatches.length > 0) {
-      matchDetails.push(`🔍 Related technology matches: ${partialTechMatches.join(', ')}`);
+    if (genericMatches.length > 0) {
+      matchDetails.push(`🔧 Generic tech matches: ${genericMatches.join(', ')}`);
     }
     totalScore += techScore;
   }
 
-  // Determine match quality and enforce minimum threshold
+  // STEP 4: DETERMINE FINAL MATCH QUALITY (Only exact domains can match)
   let quality = 'none';
   let finalMatch = false;
   
-  if (totalScore >= SKILL_MATCH_THRESHOLDS.EXCELLENT) {
-    quality = 'excellent';
-    finalMatch = true;
-  } else if (totalScore >= SKILL_MATCH_THRESHOLDS.GOOD) {
-    quality = 'good'; 
-    finalMatch = true;
-  } else if (totalScore >= SKILL_MATCH_THRESHOLDS.POOR) {
-    quality = 'poor';
-    finalMatch = true; // Allow but require user consent
+  if (isExactDomain) {
+    // Only exact domain matches can proceed
+    if (totalScore >= SKILL_MATCH_THRESHOLDS.EXCELLENT) {
+      quality = 'excellent';
+      finalMatch = true;
+    } else if (totalScore >= SKILL_MATCH_THRESHOLDS.GOOD) {
+      quality = 'good';
+      finalMatch = true;
+    } else if (totalScore >= SKILL_MATCH_THRESHOLDS.POOR) {
+      quality = 'poor';
+      finalMatch = true;
+    } else {
+      quality = 'none';
+      finalMatch = false;
+    }
   } else {
+    // Different domains always get 0 points
     quality = 'none';
-    finalMatch = false; // Block matching
+    finalMatch = false;
   }
 
-  console.log(`📊 Enhanced skills matching result: ${totalScore}/60 points, Quality: ${quality}, Match: ${finalMatch}`);
+  console.log(`📊 Exact-domain matching result: ${totalScore}/60 points, Quality: ${quality}, Match: ${finalMatch}`);
+  console.log(`🎯 Domain: ${isExactDomain ? 'EXACT MATCH' : 'DIFFERENT (0 points)'}`);
+  console.log(`📋 Required threshold: ${MINIMUM_SKILL_THRESHOLD}, Achieved: ${totalScore}`);
   console.log('🎯 Match details:', matchDetails);
-  console.log('=== END ENHANCED SKILLS MATCHING DEBUG ===\n');
+  console.log('=== END DOMAIN-FIRST SKILLS MATCHING DEBUG ===\n');
 
   return {
     match: finalMatch,
