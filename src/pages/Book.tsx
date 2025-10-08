@@ -87,7 +87,7 @@ const Book = () => {
     // Don't auto-redirect users who want to make new bookings
     if (isInterviewAlreadyMatched && currentStep === 'matching') {
       // This will trigger the success state only when user explicitly starts matching
-      handleStartMatching();
+      console.log('Auto-triggering matching for already matched interview');
     }
   }, [isInterviewAlreadyMatched, currentStep]);
 
@@ -108,6 +108,7 @@ const Book = () => {
         formData={{ ...formData, matchedInterviewer }}
         userEmail={user?.email || ''}
         userName={user?.user_metadata?.full_name || user?.email || ''}
+        userId={user?.id}
         onSuccess={handlePaymentSuccess}
         onError={handlePaymentError}
       />

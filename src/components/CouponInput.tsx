@@ -10,7 +10,8 @@ import { AddOn } from '@/utils/addOnConfig';
 interface CouponInputProps {
   originalPrice: number;
   planType: string;
-  onCouponApplied: (discount: DiscountCalculation | null) => void;
+  userId?: string;
+  onCouponApplied: (discount: DiscountCalculation | null, couponCode?: string) => void;
   appliedCoupon?: string | null;
   externalCouponCode?: string;
   onExternalCouponCodeChange?: () => void;
@@ -24,6 +25,7 @@ interface AddOnSelection {
 const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
   originalPrice,
   planType,
+  userId,
   onCouponApplied,
   appliedCoupon,
   externalCouponCode,
@@ -80,7 +82,7 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
 
   // Calculate total add-ons price
   const totalAddOnPrice = availableAddOns.reduce((total, addon) => {
-    return total + (addOns[addon.addon_key] ? parseFloat(addon.price) : 0);
+    return total + (addOns[addon.addon_key] ? addon.price : 0);
   }, 0);
 
   // Handle add-ons changes
@@ -106,8 +108,8 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
     setValidationResult(null);
 
     try {
-      console.log('🔍 Validating coupon:', couponCode.trim(), 'for plan:', planType);
-      const result = await validateCoupon(couponCode.trim(), planType);
+      console.log('🔍 Validating coupon:', couponCode.trim(), 'for plan:', planType, 'user:', userId);
+      const result = await validateCoupon(couponCode.trim(), planType, userId);
       console.log('🔍 Validation result:', result);
       
       if (!result) {
@@ -124,7 +126,7 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
       if (result.is_valid) {
         const discount = calculateDiscount(originalPrice, result.discount_type as 'percentage' | 'fixed', result.discount_value);
         setAppliedDiscount(discount);
-        onCouponApplied(discount);
+        onCouponApplied(discount, couponCode.trim().toUpperCase());
         
         toast({
           title: "Coupon Applied!",
@@ -153,7 +155,7 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
     setCouponCode('');
     setValidationResult(null);
     setAppliedDiscount(null);
-    onCouponApplied(null);
+    onCouponApplied(null, '');
     
     toast({
       title: "Coupon Removed",
@@ -181,9 +183,9 @@ const CouponInput = forwardRef<HTMLInputElement, CouponInputProps>(({
       .map(addon => ({
         addon_key: addon.addon_key,
         name: addon.name,
-        price: parseFloat(addon.price),
+        price: addon.price,
         quantity: 1,
-        total: parseFloat(addon.price)
+        total: addon.price
       }));
   };
 

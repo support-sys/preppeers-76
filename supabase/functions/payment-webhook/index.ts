@@ -164,6 +164,38 @@ const handler = async (req)=>{
         // Trigger auto-booking in background if payment is successful
         if (updateData && updateData.length > 0) {
           const paymentSession = updateData[0];
+          
+          // Track coupon usage if a coupon was applied
+          if (paymentSession.applied_coupon && paymentSession.coupon_discount_amount > 0) {
+            console.log('🎫 Tracking coupon usage:', {
+              coupon_name: paymentSession.applied_coupon,
+              user_id: paymentSession.user_id,
+              payment_session_id: sessionId,
+              discount_amount: paymentSession.coupon_discount_amount
+            });
+            
+            try {
+              const { data: couponUsageResult, error: couponUsageError } = await supabase.rpc('increment_coupon_usage', {
+                coupon_name_param: paymentSession.applied_coupon,
+                user_id_param: paymentSession.user_id,
+                payment_session_id_param: sessionId,
+                discount_amount_param: paymentSession.coupon_discount_amount
+              });
+              
+              if (couponUsageError) {
+                console.error('Error tracking coupon usage:', couponUsageError);
+                // Don't fail the webhook if coupon tracking fails
+              } else {
+                console.log('✅ Coupon usage tracked successfully:', couponUsageResult);
+              }
+            } catch (couponError) {
+              console.error('Exception tracking coupon usage:', couponError);
+              // Don't fail the webhook if coupon tracking fails
+            }
+          } else {
+            console.log('📦 Payment completed without coupon');
+          }
+          
           // Log add-ons data when payment is completed
           if (paymentSession.selected_add_ons && paymentSession.add_ons_total > 0) {
             console.log('📦 Payment completed with add-ons:', {

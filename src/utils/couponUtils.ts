@@ -51,8 +51,18 @@ export const getActiveCoupons = async (): Promise<Coupon[]> => {
       return [];
     }
 
-    console.log('✅ getActiveCoupons: Returning', data?.length || 0, 'coupons');
-    return data || [];
+    // Filter out coupons that have reached their usage limit
+    const availableCoupons = (data || []).filter(coupon => {
+      // If no usage_limit set, coupon is always available
+      if (coupon.usage_limit === null || coupon.usage_limit === undefined) {
+        return true;
+      }
+      // Only show if usage_count is below the limit
+      return coupon.usage_count < coupon.usage_limit;
+    });
+
+    console.log('✅ getActiveCoupons: Returning', availableCoupons.length, 'available coupons (filtered from', data?.length || 0, 'total)');
+    return availableCoupons;
   } catch (error) {
     console.error('❌ Error fetching active coupons:', error);
     return [];
@@ -60,18 +70,20 @@ export const getActiveCoupons = async (): Promise<Coupon[]> => {
 };
 
 /**
- * Validate a coupon code for a specific plan
+ * Validate a coupon code for a specific plan and user
  */
 export const validateCoupon = async (
   couponName: string,
-  planType: string
+  planType: string,
+  userId?: string
 ): Promise<CouponValidationResult | null> => {
   try {
-    console.log('🔍 validateCoupon called with:', { couponName, planType });
+    console.log('🔍 validateCoupon called with:', { couponName, planType, userId });
     
     const { data, error } = await supabase.rpc('validate_coupon', {
       p_coupon_name: couponName.trim().toUpperCase(),
-      p_plan_type: planType
+      p_plan_type: planType,
+      p_user_id: userId || null
     });
 
     console.log('🔍 validateCoupon RPC result:', { data, error });

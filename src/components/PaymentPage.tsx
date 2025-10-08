@@ -13,6 +13,7 @@ interface PaymentPageProps {
   formData: any;
   userEmail: string;
   userName: string;
+  userId?: string;
   onSuccess: (paymentData: any) => void;
   onError: (error: any) => void;
 }
@@ -21,11 +22,12 @@ interface AddOnSelection {
   [key: string]: boolean;
 }
 
-const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: PaymentPageProps) => {
+const PaymentPage = ({ formData, userEmail, userName, userId, onSuccess, onError }: PaymentPageProps) => {
   const selectedPlan = getPlanById(formData.selected_plan || 'professional');
   const originalAmount = formData.amount || selectedPlan?.discountedPrice || 799;
   const [finalAmount, setFinalAmount] = useState(originalAmount);
   const [appliedDiscount, setAppliedDiscount] = useState<DiscountCalculation | null>(null);
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string>('');
   const [externalCouponCode, setExternalCouponCode] = useState<string>('');
   const [addOns, setAddOns] = useState<AddOnSelection>({});
 
@@ -40,8 +42,9 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
   const baseAmount = originalAmount + totalAddOnPrice;
   const finalAmountWithDiscount = appliedDiscount ? appliedDiscount.final_price + totalAddOnPrice : baseAmount;
 
-  const handleCouponApplied = (discount: DiscountCalculation | null) => {
+  const handleCouponApplied = (discount: DiscountCalculation | null, couponCode?: string) => {
     setAppliedDiscount(discount);
+    setAppliedCouponCode(couponCode || '');
     const newBaseAmount = originalAmount + totalAddOnPrice;
     setFinalAmount(discount ? discount.final_price + totalAddOnPrice : newBaseAmount);
   };
@@ -95,6 +98,7 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
             <CouponInput
               originalPrice={originalAmount}
               planType={formData.selected_plan || 'professional'}
+              userId={userId}
               onCouponApplied={handleCouponApplied}
               externalCouponCode={externalCouponCode}
               onExternalCouponCodeChange={handleExternalCouponCodeChange}
@@ -112,7 +116,11 @@ const PaymentPage = ({ formData, userEmail, userName, onSuccess, onError }: Paym
               onError={onError}
               selectedPlan={selectedPlan}
               appliedDiscount={appliedDiscount}
-              addOns={addOns}
+              appliedCouponCode={appliedCouponCode}
+              addOns={{
+                resumeReview: addOns.resume_review || false,
+                meetingRecording: addOns.meeting_recording || false
+              }}
             />
           </div>
         </div>

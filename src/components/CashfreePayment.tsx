@@ -28,6 +28,7 @@ interface CashfreePaymentProps {
   onError: (error: any) => void;
   selectedPlan?: InterviewPlan;
   appliedDiscount?: DiscountCalculation | null;
+  appliedCouponCode?: string;
   addOns?: {
     resumeReview: boolean;
     meetingRecording: boolean;
@@ -82,6 +83,7 @@ const CashfreePayment = ({
   onError,
   selectedPlan,
   appliedDiscount,
+  appliedCouponCode,
   addOns
 }: CashfreePaymentProps) => {
   const { user } = useAuth();
@@ -207,6 +209,9 @@ const CashfreePayment = ({
       const selectedAddOns = addOns ? convertToBackendFormat(addOns) : [];
       const addOnsTotal = selectedAddOns.reduce((total, addon) => total + addon.total, 0);
 
+      // Extract coupon information
+      const couponDiscountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
+
       const paymentSessionData = {
         user_id: user.id,
         candidate_data: candidateData,
@@ -222,7 +227,9 @@ const CashfreePayment = ({
         plan_duration: candidateData.interviewDuration || 60,
         match_score: candidateData.matchedInterviewer?.matchScore || null,
         selected_add_ons: JSON.stringify(selectedAddOns),
-        add_ons_total: addOnsTotal
+        add_ons_total: addOnsTotal,
+        applied_coupon: appliedCouponCode || null,
+        coupon_discount_amount: couponDiscountAmount
       };
       
       console.log('Creating payment session with data:', paymentSessionData);
