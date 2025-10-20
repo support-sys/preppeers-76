@@ -385,10 +385,19 @@ const CashfreePayment = ({
       startPolling();
 
       // Initialize Cashfree payment with embedded checkout
+      // Auto-detect environment: use sandbox for localhost/development, production for live domains
+      const isDevelopment = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' || 
+                           window.location.hostname.includes('localhost') ||
+                           window.location.hostname.includes('127.0.0.1') ||
+                           window.location.hostname.endsWith('.local') ||
+                           window.location.hostname.endsWith('.dev');
+      
       const cashfree = new (window as any).Cashfree({
-         mode: "production"
-         //mode: "sandbox"
+         mode: isDevelopment ? "sandbox" : "production"
       });
+      
+      console.log(`🔧 Cashfree mode: ${isDevelopment ? 'sandbox' : 'production'} (hostname: ${window.location.hostname}, port: ${window.location.port})`);
 
       // Show payment form container
       setShowPaymentForm(true);

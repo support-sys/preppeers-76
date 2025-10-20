@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format } from 'date-fns';
+import { trackReadinessConversion } from '@/utils/readinessConversionTracker';
 import { 
   MatchingCandidate, 
   MatchedInterviewer, 
@@ -699,6 +700,18 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
     }
 
     console.log("✅ Interview scheduled successfully:", data);
+    
+    // Track readiness conversion if user came from readiness assessment
+    if (userEmail && data?.interview?.id) {
+      try {
+        await trackReadinessConversion(userEmail, data.interview.id);
+        console.log('🔄 Readiness conversion tracked successfully');
+      } catch (conversionError) {
+        console.error('❌ Error tracking readiness conversion:', conversionError);
+        // Don't throw error here as the interview was scheduled successfully
+      }
+    }
+    
     return data;
   } catch (error) {
     console.error('💥 Error in scheduleInterview:', error);

@@ -118,8 +118,23 @@ export const SmartCTAButtons = ({ className = "" }: { className?: string }) => {
   const { user, userRole } = useAuth();
 
   return (
-    <div className={`flex flex-col gap-2 justify-center items-center ${className}`}>
-      <IntervieweeButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
+    <div className={`flex flex-col gap-4 justify-center items-center ${className}`}>
+      {/* Group for the two main CTA buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+        {/* Free Readiness Check Button */}
+        <Link to="/readiness-check">
+          <Button 
+            size="lg" 
+            className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 px-8 py-4 text-lg font-semibold rounded-xl"
+          >
+            Interview Readiness Free
+            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+          </Button>
+        </Link>
+        
+        <IntervieweeButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
+      </div>
+      
       <InterviewerButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
     </div>
   );

@@ -20,6 +20,7 @@ import BecomeInterviewer from "./pages/BecomeInterviewer";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import RefundPolicy from "./pages/RefundPolicy";
+import ReadinessCheck from "./pages/ReadinessCheck";
 import NotFound from "./pages/NotFound";
 import FunnelTest from "./pages/FunnelTest";
 import AdminAnalytics from "./pages/AdminAnalytics";
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/readiness-check" element={<ReadinessCheck />} />
             
             {/* Funnel Tracking Routes */}
             <Route path="/funnel-test" element={<FunnelTest />} />
