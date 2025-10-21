@@ -322,7 +322,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
       </Popover>
       
       <p className="text-sm text-slate-400">
-        Choose any time that works for you - morning, afternoon, evening, or late night. We'll try to match your preferred time, or suggest alternatives. Must be at least 1 hour in the future.
+        We'll try to match your preferred time, or suggest alternatives.
       </p>
     </div>
   );

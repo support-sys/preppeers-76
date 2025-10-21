@@ -186,7 +186,7 @@ export const usePaymentStatus = () => {
   return {
     paymentSession,
     isLoading,
-    hasSuccessfulPayment: !!paymentSession && (paymentSession.payment_status === 'successful' || paymentSession.payment_status === 'completed'),
+    hasSuccessfulPayment: !!paymentSession && ['successful', 'completed'].includes(paymentSession.payment_status),
     isInterviewAlreadyMatched: !!paymentSession && paymentSession.interview_matched && hasScheduledInterview,
     markInterviewMatched,
     refetch: fetchPaymentStatus

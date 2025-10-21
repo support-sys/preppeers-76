@@ -369,9 +369,6 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({
                       <h3 className="text-lg font-bold text-white">
                         {selectedPlanData.name} Selected
                       </h3>
-                      <p className="text-slate-300 text-sm">
-                        {selectedPlanData.duration} minutes • ₹{selectedPlanData.price} one-time payment
-                      </p>
                     </div>
                   </div>
                 </div>

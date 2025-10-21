@@ -128,7 +128,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-          Tired of Rejections? <br />{" "}
+          Anxiety of Interview? <br />{" "}
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
             Walk in the Next Interview with Confidence
               </span>

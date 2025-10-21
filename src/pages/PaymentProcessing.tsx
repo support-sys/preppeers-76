@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import LinkedInShare from '@/components/LinkedInShare';
 
 const PaymentProcessing = () => {
   const { paymentSession, isLoading, hasSuccessfulPayment } = usePaymentStatus();
@@ -36,7 +37,9 @@ const PaymentProcessing = () => {
       paymentSessionId: paymentSession?.id,
       hasSuccessfulPayment,
       showSuccess,
-      showFailure
+      showFailure,
+      isCompleted: paymentSession?.payment_status === 'completed',
+      shouldShowSuccess: showSuccess || hasSuccessfulPayment || paymentSession?.payment_status === 'completed'
     });
 
     // If no payment session, redirect to home
@@ -62,6 +65,16 @@ const PaymentProcessing = () => {
         interviewMatched: paymentSession?.interview_matched,
         hasSuccessfulPayment
       });
+      setShowSuccess(true);
+      toast({
+        title: "🎉 Payment Successful!",
+        description: "Your interview has been automatically scheduled. Check your email for details!",
+      });
+    }
+
+    // Also show success for completed payments
+    if (paymentSession?.payment_status === 'completed' && !showSuccess) {
+      console.log('🎉 Payment completed, showing success state!');
       setShowSuccess(true);
       toast({
         title: "🎉 Payment Successful!",
@@ -289,7 +302,7 @@ const PaymentProcessing = () => {
   }
 
   // Show success state if payment was successful or interview was matched
-  if (showSuccess || (hasSuccessfulPayment && paymentSession?.interview_matched)) {
+  if (showSuccess || hasSuccessfulPayment || paymentSession?.payment_status === 'completed') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         {/* Tech Background Pattern */}
@@ -317,8 +330,19 @@ const PaymentProcessing = () => {
             <p className="text-slate-300 mb-6">
               Your interview has been automatically scheduled! Check your email for confirmation details.
             </p>
-            
-            <div className="space-y-3">
+                        {/* LinkedIn Share Section */}
+                        <LinkedInShare 
+              target_role={paymentSession?.candidate_data?.target_role || 'Software Developer'}
+              userEmail={user?.email}
+              onShareComplete={() => {
+                console.log('User shared interview booking on LinkedIn');
+                toast({
+                  title: "Thank you for sharing!",
+                  description: "Your interview guide is ready for download.",
+                });
+              }}
+            />
+            <div className="space-y-3 mb-6">
               <button
                 onClick={() => navigate('/dashboard')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
