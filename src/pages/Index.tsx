@@ -18,6 +18,10 @@ import ComparisonSection from "@/components/ComparisonSection";
 import FeedbackReportPreview from "@/components/FeedbackReportPreview";
 import InterviewerShowcase from "@/components/InterviewerShowcase";
 import CouponBanner from "@/components/CouponBanner";
+import ImpactStatistics from "@/components/ImpactStatistics";
+import CandidateJourney from "@/components/CandidateJourney";
+import EnhancedSuccessStories from "@/components/EnhancedSuccessStories";
+import TrustIndicators from "@/components/TrustIndicators";
 import { INTERVIEW_PLANS } from "@/utils/planConfig";
 
 const Index = () => {
@@ -136,8 +140,7 @@ const Index = () => {
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-          Practice with Tech Interviewers from top companies and get detailed feedback before your Big Day.
-          <br />
+          Give Mock Interview to Tech Interviewers from Top Companies and Get Detailed Feedback on your Interview.
           </p>
 
           {/* CTA Buttons */}
@@ -150,9 +153,11 @@ const Index = () => {
                alt="100% Satisfaction or Your Money Back Guarantee"
                className="w-32 h-auto shadow-lg hover:scale-105 transition-transform duration-300"
              />
-          </div>
+              </div>
         </div>
               </div>
+
+      
 
       {/* Interviewer Showcase Section - Moved Up */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
@@ -162,7 +167,7 @@ const Index = () => {
           </div>
         </div>
       </div>
-
+      <TrustIndicators />
       {/* Pricing Section - Optimized Compact Design */}
       <div className="relative z-10 border-t border-white/10" style={{ backgroundColor: '#16285a' }}>
         <div className="container mx-auto px-4 py-12">
@@ -349,6 +354,7 @@ const Index = () => {
         </div>
       </div>
 
+
       {/* How It Works + Feedback Report Preview Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
         <div className="container mx-auto px-4 py-12">
@@ -410,69 +416,15 @@ const Index = () => {
           </div>
         </div>
       </div>
+     {/* Impact Statistics Section */}
 
-      {/* Testimonials Section */}
-      <div className="relative z-10 bg-white/5 border-t border-white/10">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              From Rejections → to Dream Offers
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Real feedback from professionals who've transformed their careers
-              </p>
-            </div>
+{/* Candidate Journey Section */}
+      <CandidateJourney />
+      {/* Enhanced Success Stories Section */}
+      <EnhancedSuccessStories />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                    R
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-white font-semibold">Rahul Sharma</h4>
-                    <p className="text-slate-400 text-sm">Java Backend Developer</p>
-                  </div>
-                </div>
-                <p className="text-slate-300">
-                  "I was confused first to book interview but The mock interviews helped me identify my weak areas and gave me confidence. Finally Landed my dream job at JPM!"
-                </p>
-              </div>
-
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                    P
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-white font-semibold">Priya Patel</h4>
-                    <p className="text-slate-400 text-sm">Frontend Developer</p>
-                  </div>
-                </div>
-                <p className="text-slate-300">
-                  "The detailed feedback was incredibly valuable. I improved my coding interview skills significantly. Totally worth the Price!"
-                </p>
-              </div>
-
-              <div className="bg-white/10 rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                    A
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-white font-semibold">Amit Kumar</h4>
-                    <p className="text-slate-400 text-sm">Data Analyst</p>
-                  </div>
-                </div>
-                <p className="text-slate-300">
-                  "I tried other platforms but they were just AI agents taking MCQs. Practicing with real interviewers made all the difference. Best part is I got a detailed feedback report."
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ImpactStatistics />
+      
 
       {/* FAQ Section */}
       <div className="relative z-10 bg-white/5 border-t border-white/10">
