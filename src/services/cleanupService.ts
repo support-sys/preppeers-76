@@ -9,9 +9,9 @@ class CleanupService {
 
   /**
    * Start the cleanup service
-   * @param intervalMinutes - How often to run cleanup (default: 5 minutes)
+   * @param intervalMinutes - How often to run cleanup (default: 15 minutes)
    */
-  start(intervalMinutes: number = 5): void {
+  start(intervalMinutes: number = 15): void {
     if (this.isRunning) {
       console.log('🧹 Cleanup service is already running');
       return;
@@ -90,7 +90,7 @@ export const cleanupService = new CleanupService();
 // Auto-start cleanup service when module is imported
 if (typeof window !== 'undefined') {
   // Only start in browser environment
-  cleanupService.start(5); // Run every 5 minutes
+  cleanupService.start(15); // Run every 15 minutes (reduced from 5 to reduce DB load)
   
   // Cleanup on page unload
   window.addEventListener('beforeunload', () => {

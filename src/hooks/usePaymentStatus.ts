@@ -145,9 +145,11 @@ export const usePaymentStatus = () => {
     fetchPaymentStatus();
     
     // Set up real-time subscription for payment status changes
+    let channel: any = null;
+    
     if (user) {
-      const channel = supabase
-        .channel('payment-status-updates')
+      channel = supabase
+        .channel(`payment-status-updates-${user.id}`) // Make channel name unique per user
         .on(
           'postgres_changes',
           {
@@ -176,12 +178,16 @@ export const usePaymentStatus = () => {
            }
         )
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
-  }, [user]);
+
+    // Cleanup function
+    return () => {
+      if (channel) {
+        console.log('🧹 Cleaning up payment status subscription');
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [user?.id]); // Only depend on user.id, not the entire user object
 
   return {
     paymentSession,

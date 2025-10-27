@@ -95,7 +95,7 @@ export const usePaymentStatusPolling = (sessionId: string | null) => {
 
     // Set up real-time subscription for immediate updates
     const channel = supabase
-      .channel(`payment_session_${sessionId}`)
+      .channel(`payment_session_${sessionId}_${Date.now()}`) // Add timestamp to ensure unique channel names
       .on(
         'postgres_changes',
         {
@@ -114,7 +114,7 @@ export const usePaymentStatusPolling = (sessionId: string | null) => {
 
     setRealtimeChannel(channel);
 
-    // Fallback polling at much slower rate (every 10 seconds) as backup
+    // Fallback polling at much slower rate (every 15 seconds) as backup
     const pollInterval = setInterval(async () => {
       const session = await checkPaymentStatus();
       if (session) {
@@ -123,34 +123,42 @@ export const usePaymentStatusPolling = (sessionId: string | null) => {
         if (session.payment_status === 'successful' || session.payment_status === 'failed') {
           handlePaymentStatusChange(session);
           clearInterval(pollInterval);
+          // Clean up realtime channel when polling completes
+          if (channel) {
+            console.log('🧹 Cleaning up realtime channel after successful polling');
+            supabase.removeChannel(channel);
+            setRealtimeChannel(null);
+          }
         }
       }
-    }, 10000); // Reduced frequency since real-time should handle most updates
+    }, 15000); // Increased from 10s to 15s to reduce load
 
-    // Stop monitoring after 3 minutes (reduced from 5 minutes)
-    setTimeout(() => {
-      if (isPolling) {
-        clearInterval(pollInterval);
-        if (channel) {
-          supabase.removeChannel(channel);
-        }
-        setIsPolling(false);
-        setRealtimeChannel(null);
-        console.log('Payment status monitoring stopped after timeout');
-      }
-    }, 180000); // 3 minutes
-
-    return () => {
+    // Stop monitoring after 2 minutes (reduced from 3 minutes)
+    const timeoutId = setTimeout(() => {
+      console.log('🧹 Payment status monitoring timeout reached, cleaning up...');
       clearInterval(pollInterval);
       if (channel) {
         supabase.removeChannel(channel);
+        setRealtimeChannel(null);
       }
       setIsPolling(false);
-      setRealtimeChannel(null);
+      console.log('Payment status monitoring stopped after timeout');
+    }, 120000); // 2 minutes
+
+    return () => {
+      console.log('🧹 Cleaning up payment polling resources');
+      clearInterval(pollInterval);
+      clearTimeout(timeoutId);
+      if (channel) {
+        supabase.removeChannel(channel);
+        setRealtimeChannel(null);
+      }
+      setIsPolling(false);
     };
   }, [sessionId, isPolling, checkPaymentStatus, handlePaymentStatusChange]);
 
   const stopPolling = useCallback(() => {
+    console.log('🧹 Manually stopping payment polling');
     if (realtimeChannel) {
       supabase.removeChannel(realtimeChannel);
       setRealtimeChannel(null);
@@ -168,11 +176,13 @@ export const usePaymentStatusPolling = (sessionId: string | null) => {
     return null;
   }, [checkPaymentStatus]);
 
-  // Cleanup effect
+  // Cleanup effect - ensure channels are cleaned up when component unmounts
   useEffect(() => {
     return () => {
       if (realtimeChannel) {
+        console.log('🧹 Component unmounting, cleaning up realtime channel');
         supabase.removeChannel(realtimeChannel);
+        setRealtimeChannel(null);
       }
     };
   }, [realtimeChannel]);
