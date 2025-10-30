@@ -117,10 +117,7 @@ const PaymentPage = ({ formData, userEmail, userName, userId, onSuccess, onError
               selectedPlan={selectedPlan}
               appliedDiscount={appliedDiscount}
               appliedCouponCode={appliedCouponCode}
-              addOns={{
-                resumeReview: addOns.resume_review || false,
-                meetingRecording: addOns.meeting_recording || false
-              }}
+              addOns={addOns}
             />
           </div>
         </div>

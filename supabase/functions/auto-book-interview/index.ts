@@ -110,7 +110,8 @@ serve(async (req)=>{
         skills,
         technologies,
         experience_years,
-        current_time_slots
+        current_time_slots,
+        time_slots
       `)
       .eq('id', interviewerId)
       .single();
@@ -142,25 +143,15 @@ serve(async (req)=>{
       company: interviewerDetails.company,
       match_score: matchedInterviewer.match_score
     });
-    // Check availability one more time before booking
+    // Get the selected time slot - this is the candidate's FINAL selection from PlanSelection
+    // They already chose this slot from available alternatives, so we can book it directly
+    // IMPORTANT: Check candidateData first as it has the correct value, then fallback to paymentSession
     const selectedTimeSlot = candidateData.selectedTimeSlot || candidateData.timeSlot;
-    let canBookDirectly = false;
-    if (matchedInterviewer.timeMatch) {
-      // Exact time match - can book directly
-      canBookDirectly = true;
-      console.log('✅ Exact time match found - booking directly');
-    } else if (matchedInterviewer.alternativeTimeSlots && matchedInterviewer.alternativeTimeSlots.length > 0) {
-      // Check if the selected time slot is in alternatives
-      const isInAlternatives = matchedInterviewer.alternativeTimeSlots.some((slot)=>slot === selectedTimeSlot);
-      if (isInAlternatives) {
-        canBookDirectly = true;
-        console.log('✅ Selected time slot available in alternatives - booking directly');
-      }
-    }
-    if (!canBookDirectly) {
-      console.log('❌ Selected time slot not available - cannot auto-book');
+    
+    if (!selectedTimeSlot) {
+      console.log('❌ No time slot selected - cannot auto-book');
       return new Response(JSON.stringify({
-        message: 'Selected time slot not available',
+        message: 'No time slot selected',
         matched_interviewer: matchedInterviewer
       }), {
         status: 200,
@@ -170,7 +161,8 @@ serve(async (req)=>{
         }
       });
     }
-    // Book the interview
+    
+    console.log('✅ Time slot selected:', selectedTimeSlot, '- proceeding to book');
     console.log('📅 Booking interview automatically...');
     // Convert human-readable time slot to ISO timestamp for database
     let scheduledTimeISO = selectedTimeSlot;

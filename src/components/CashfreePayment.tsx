@@ -29,10 +29,7 @@ interface CashfreePaymentProps {
   selectedPlan?: InterviewPlan;
   appliedDiscount?: DiscountCalculation | null;
   appliedCouponCode?: string;
-  addOns?: {
-    resumeReview: boolean;
-    meetingRecording: boolean;
-  };
+  addOns?: { [key: string]: boolean };
 }
 
 // Cashfree SDK loading utility
@@ -114,8 +111,14 @@ const CashfreePayment = ({
 
   // Convert add-ons selection to backend format
   const convertToBackendFormat = (selectedAddOns: { [key: string]: boolean }) => {
-    return availableAddOns
-      .filter(addon => selectedAddOns[addon.addon_key])
+    console.log('🔍 convertToBackendFormat - input:', selectedAddOns);
+    console.log('🔍 convertToBackendFormat - availableAddOns:', availableAddOns);
+    const result = availableAddOns
+      .filter(addon => {
+        const isSelected = selectedAddOns[addon.addon_key];
+        console.log(`🔍 Filtering ${addon.addon_key}:`, isSelected);
+        return isSelected;
+      })
       .map(addon => ({
         addon_key: addon.addon_key,
         name: addon.name,
@@ -123,6 +126,8 @@ const CashfreePayment = ({
         quantity: 1,
         total: typeof addon.price === 'string' ? parseFloat(addon.price) : addon.price
       }));
+    console.log('🔍 convertToBackendFormat - result:', result);
+    return result;
   };
   const paymentContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -206,8 +211,11 @@ const CashfreePayment = ({
       console.log('🔍 CashfreePayment - extracted planId:', planId);
       
       // Convert add-ons to backend format
+      console.log('🔍 CashfreePayment - addOns prop:', addOns);
       const selectedAddOns = addOns ? convertToBackendFormat(addOns) : [];
+      console.log('🔍 CashfreePayment - selectedAddOns after conversion:', selectedAddOns);
       const addOnsTotal = selectedAddOns.reduce((total, addon) => total + addon.total, 0);
+      console.log('🔍 CashfreePayment - addOnsTotal:', addOnsTotal);
 
       // Extract coupon information
       const couponDiscountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
@@ -222,8 +230,8 @@ const CashfreePayment = ({
         payment_status: 'pending',
         matched_interviewer: candidateData.matchedInterviewer || null,
         interviewer_id: candidateData.matchedInterviewer?.id || null,
-        selected_time_slot: candidateData.timeSlot || null,
-        selected_date: candidateData.timeSlot ? parseTimeSlotToDate(candidateData.timeSlot) : null,
+        selected_time_slot: candidateData.selectedTimeSlot || candidateData.selected_time_slot || candidateData.timeSlot || null,
+        selected_date: (candidateData.selectedTimeSlot || candidateData.selected_time_slot || candidateData.timeSlot) ? parseTimeSlotToDate(candidateData.selectedTimeSlot || candidateData.selected_time_slot || candidateData.timeSlot) : null,
         plan_duration: candidateData.interviewDuration || 60,
         match_score: candidateData.matchedInterviewer?.matchScore || null,
         selected_add_ons: JSON.stringify(selectedAddOns),

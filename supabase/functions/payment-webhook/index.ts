@@ -142,10 +142,14 @@ const handler = async (req)=>{
         });
       }
       // Update payment session status to successful
+      // Only update if status is 'pending' or 'processing' to prevent race conditions
       const { data: updateData, error: updateError } = await supabase.from('payment_sessions').update({
         payment_status: 'completed',
         cashfree_payment_id: payment_id ? String(payment_id) : null
-      }).eq('id', sessionId).select();
+      }).eq('id', sessionId).in('payment_status', [
+        'pending',
+        'processing'
+      ]).select();
       if (updateError) {
         console.error('Error updating payment session:', updateError);
         return new Response(JSON.stringify({
@@ -161,10 +165,12 @@ const handler = async (req)=>{
         });
       } else {
         console.log('Payment session updated successfully:', updateData);
-        // Trigger auto-booking in background if payment is successful
+        // Trigger auto-booking ONLY if we actually updated a record
+        // If updateData.length === 0, another webhook already processed this
         if (updateData && updateData.length > 0) {
+          console.log('✅ This webhook processed the payment - proceeding with auto-book');
+          // Trigger auto-booking in background if payment is successful
           const paymentSession = updateData[0];
-          
           // Track coupon usage if a coupon was applied
           if (paymentSession.applied_coupon && paymentSession.coupon_discount_amount > 0) {
             console.log('🎫 Tracking coupon usage:', {
@@ -173,7 +179,6 @@ const handler = async (req)=>{
               payment_session_id: sessionId,
               discount_amount: paymentSession.coupon_discount_amount
             });
-            
             try {
               const { data: couponUsageResult, error: couponUsageError } = await supabase.rpc('increment_coupon_usage', {
                 coupon_name_param: paymentSession.applied_coupon,
@@ -181,21 +186,19 @@ const handler = async (req)=>{
                 payment_session_id_param: sessionId,
                 discount_amount_param: paymentSession.coupon_discount_amount
               });
-              
               if (couponUsageError) {
                 console.error('Error tracking coupon usage:', couponUsageError);
-                // Don't fail the webhook if coupon tracking fails
+              // Don't fail the webhook if coupon tracking fails
               } else {
                 console.log('✅ Coupon usage tracked successfully:', couponUsageResult);
               }
             } catch (couponError) {
               console.error('Exception tracking coupon usage:', couponError);
-              // Don't fail the webhook if coupon tracking fails
+            // Don't fail the webhook if coupon tracking fails
             }
           } else {
             console.log('📦 Payment completed without coupon');
           }
-          
           // Log add-ons data when payment is completed
           if (paymentSession.selected_add_ons && paymentSession.add_ons_total > 0) {
             console.log('📦 Payment completed with add-ons:', {
@@ -232,6 +235,8 @@ const handler = async (req)=>{
             console.error('Error calling auto-book interview:', autoBookError);
           // Don't fail the webhook if auto-booking fails
           }
+        } else {
+          console.log('⚠️ Payment session already processed by another webhook - skipping auto-book');
         }
       }
       return new Response(JSON.stringify({
