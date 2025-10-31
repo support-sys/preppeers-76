@@ -10,6 +10,7 @@ export interface Coupon {
   plan_type: 'all' | 'essential' | 'professional';
   usage_limit: number | null;
   usage_count: number;
+  visible: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +42,7 @@ export const getActiveCoupons = async (): Promise<Coupon[]> => {
       .from('coupons')
       .select('*')
       .eq('status', 'active')
+      .eq('visible', true) // Only show visible coupons
       .gte('expiring_on', today) // Not expired
       .order('created_at', { ascending: false });
 
