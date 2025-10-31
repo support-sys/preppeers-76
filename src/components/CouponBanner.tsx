@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, X, Tag, Clock } from 'lucide-react';
-import { getActiveCoupons, copyToClipboard, formatDiscountText, formatExpiryText } from '@/utils/couponUtils';
+import { getActiveCoupons, copyToClipboard, formatDiscountText, formatExpiryText, formatPlanType } from '@/utils/couponUtils';
 import { Coupon } from '@/utils/couponUtils';
 
 interface CouponBannerProps {
@@ -73,6 +73,9 @@ const CouponBanner: React.FC<CouponBannerProps> = ({ onClose }) => {
                     <span className="text-white font-bold text-sm">{coupon.coupon_name}</span>
                     <span className="text-yellow-300 text-xs font-semibold">
                       {formatDiscountText(coupon)}
+                    </span>
+                    <span className="text-blue-300 text-xs font-semibold">
+                      {formatPlanType(coupon.plan_type)}
                     </span>
                   </div>
                   

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, CalendarX, Settings, Video, ExternalLink, FileText, Trash2, Eye, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, Users, CalendarX, Settings, Video, ExternalLink, FileText, Trash2, Eye, CheckCircle, MessageSquare, ClipboardCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -64,7 +64,10 @@ interface Interview {
   selected_plan?: string;
   interview_duration?: number;
   plan_details?: any;
-  specific_skills?: string[]; // ← ADD THIS FIELD
+  specific_skills?: string[];
+  feedback_submitted?: boolean;
+  interviewer_email?: string;
+  interviewer_name?: string;
 }
 
 const InterviewerDashboard = () => {
@@ -313,6 +316,53 @@ const InterviewerDashboard = () => {
       toast({
         title: "Resume Available",
         description: "Candidate has uploaded a resume but URL is not accessible.",
+      });
+    }
+  };
+
+  const handleAddFeedback = (interview: Interview) => {
+    // Build prefilled form URL with interview data
+    const baseUrl = assessmentConfig.feedbackFormUrl;
+    const params = new URLSearchParams();
+    
+    // Map interview data to form fields
+    params.append('entry.273813679', interview.candidate_email || '');
+    params.append('entry.2000148292', interview.candidate_name || '');
+    params.append('entry.357973421', interview.target_role || '');
+    params.append('entry.715683291', interview.specific_skills?.join(', ') || '');
+    params.append('entry.927252494', interview.interviewer_email || '');
+    params.append('entry.908773004', interview.interviewer_name || '');
+    params.append('entry.1204842539', interview.scheduled_time || ''); 
+    params.append('entry.1957722280', interview.selected_plan || ''); 
+    params.append('entry.382117976', interview.interview_duration?.toString() || '');
+    
+    const prefilledUrl = `${baseUrl}&${params.toString()}`;
+    window.open(prefilledUrl, '_blank');
+  };
+
+  const handleMarkFeedbackSubmitted = async (interviewId: string) => {
+    try {
+      const { error } = await supabase
+        .from('interviews')
+        .update({ feedback_submitted: true })
+        .eq('id', interviewId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Feedback Marked Submitted",
+        description: "Feedback has been marked as submitted successfully.",
+      });
+
+      fetchInterviews(); // Refresh the list
+    } catch (error) {
+      console.error('Error marking feedback as submitted:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark feedback as submitted. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -619,17 +669,17 @@ const InterviewerDashboard = () => {
           ) : (
             <div className="space-y-4">
               {upcomingInterviews.map((interview) => (
-                <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold">{interview.target_role}</h3>
-                    <p className="text-slate-300">
+                <div key={interview.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white/5 rounded-lg gap-3 sm:gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold truncate">{interview.target_role}</h3>
+                    <p className="text-slate-300 text-sm sm:text-base">
                       {formatTimeRange(interview.scheduled_time, interview.interview_duration || 60)}
                     </p>
                     <p className="text-slate-400 text-sm">
                       {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                     </p>
                     {interview.specific_skills && interview.specific_skills.length > 0 && (
-                      <p className="text-blue-400 text-sm">
+                      <p className="text-blue-400 text-sm truncate">
                         Skills: {interview.specific_skills.join(', ')}
                       </p>
                     )}
@@ -646,11 +696,11 @@ const InterviewerDashboard = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button 
                       size="sm" 
                       variant="outline"
-                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30 flex-shrink-0"
                       onClick={() => handleViewDetails(interview)}
                     >
                       <Eye className="w-4 h-4 mr-2" />
@@ -660,7 +710,7 @@ const InterviewerDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30 flex-shrink-0"
                         onClick={() => handleViewResume(interview.resume_url!)}
                       >
                         <FileText className="w-4 h-4 mr-2" />
@@ -670,7 +720,7 @@ const InterviewerDashboard = () => {
                     {interview.google_meet_link ? (
                       <Button 
                         size="sm" 
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-green-600 hover:bg-green-700 flex-shrink-0"
                         onClick={() => handleJoinMeeting(interview.google_meet_link!)}
                       >
                         <Video className="w-4 h-4 mr-2" />
@@ -681,7 +731,7 @@ const InterviewerDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-shrink-0"
                         disabled
                       >
                         <Video className="w-4 h-4 mr-2" />
@@ -691,7 +741,7 @@ const InterviewerDashboard = () => {
                     <Button 
                       size="sm" 
                       variant="outline"
-                      className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30"
+                      className="bg-red-600/20 border-red-400/30 text-red-300 hover:bg-red-600/30 flex-shrink-0"
                       onClick={() => handleDeleteInterview(interview)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -719,17 +769,17 @@ const InterviewerDashboard = () => {
           ) : (
             <div className="space-y-4">
               {pastInterviews.map((interview) => (
-                <div key={interview.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                  <div>
-                    <h3 className="text-white font-semibold">{interview.target_role}</h3>
-                    <p className="text-slate-300">
+                <div key={interview.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white/5 rounded-lg gap-3 sm:gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold truncate">{interview.target_role}</h3>
+                    <p className="text-slate-300 text-sm sm:text-base">
                       {formatTimeRange(interview.scheduled_time, interview.interview_duration || 60)}
                     </p>
                     <p className="text-slate-400 text-sm">
                       {formatExperience(interview.experience)} • {formatPlanName(interview.selected_plan || 'standard')} Plan • {formatDuration(interview.interview_duration || 60)}
                     </p>
                     {interview.specific_skills && interview.specific_skills.length > 0 && (
-                      <p className="text-blue-400 text-sm">
+                      <p className="text-blue-400 text-sm truncate">
                         Skills: {interview.specific_skills.join(', ')}
                       </p>
                     )}
@@ -737,11 +787,11 @@ const InterviewerDashboard = () => {
                       Status: {interview.status}
                     </p>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button 
                       size="sm" 
                       variant="outline"
-                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30"
+                      className="bg-purple-600/20 border-purple-400/30 text-purple-300 hover:bg-purple-600/30 flex-shrink-0"
                       onClick={() => handleViewDetails(interview)}
                     >
                       <Eye className="w-4 h-4 mr-2" />
@@ -751,12 +801,44 @@ const InterviewerDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30"
+                        className="bg-blue-600/20 border-blue-400/30 text-blue-300 hover:bg-blue-600/30 flex-shrink-0"
                         onClick={() => handleViewResume(interview.resume_url!)}
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         Resume
                       </Button>
+                    )}
+                    {interview.feedback_submitted ? (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="bg-green-600/20 border-green-400/30 text-green-300 hover:bg-green-600/30 flex-shrink-0"
+                        onClick={() => handleAddFeedback(interview)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Modify Feedback
+                      </Button>
+                    ) : (
+                      <>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-amber-600/20 border-amber-400/30 text-amber-300 hover:bg-amber-600/30 flex-shrink-0"
+                          onClick={() => handleAddFeedback(interview)}
+                        >
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          Add Feedback
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-green-600/20 border-green-400/30 text-green-300 hover:bg-green-600/30 flex-shrink-0"
+                          onClick={() => handleMarkFeedbackSubmitted(interview.id)}
+                        >
+                          <ClipboardCheck className="w-4 h-4 mr-2" />
+                          Mark Submitted
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>

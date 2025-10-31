@@ -195,6 +195,18 @@ export const formatExpiryText = (expiryDate: string): string => {
 };
 
 /**
+ * Format plan type for display
+ */
+export const formatPlanType = (planType: string): string => {
+  const planMap: { [key: string]: string } = {
+    'all': 'All Plans',
+    'essential': 'Essential Plan',
+    'professional': 'Professional Plan'
+  };
+  return planMap[planType] || planType;
+};
+
+/**
  * Copy text to clipboard
  */
 export const copyToClipboard = async (text: string): Promise<boolean> => {
