@@ -1,0 +1,39 @@
+-- Example: How to Update Payout Rates
+-- This file is for reference only - run these queries in Supabase SQL Editor
+
+-- View current payout rates
+SELECT plan_type, amount, description, updated_at 
+FROM public.payout_config 
+ORDER BY plan_type;
+
+-- Update Essential plan rate to ₹350
+UPDATE public.payout_config 
+SET amount = 350.00,
+    updated_at = NOW()
+WHERE plan_type = 'essential';
+
+-- Update Professional plan rate to ₹750
+UPDATE public.payout_config 
+SET amount = 750.00,
+    updated_at = NOW()
+WHERE plan_type = 'professional';
+
+-- Update multiple rates at once
+UPDATE public.payout_config 
+SET amount = CASE 
+  WHEN plan_type = 'essential' THEN 350.00
+  WHEN plan_type = 'professional' THEN 750.00
+  ELSE amount
+END,
+updated_at = NOW()
+WHERE plan_type IN ('essential', 'professional');
+
+-- Add a new plan type (if needed in future)
+-- INSERT INTO public.payout_config (plan_type, amount, description)
+-- VALUES ('executive', 1000.00, 'Payout amount for Executive plan');
+
+-- Notes:
+-- 1. Changes take effect immediately for NEW payouts created after the update
+-- 2. Existing payouts are NOT affected (they keep their original amounts)
+-- 3. Only admins with 'manage_payouts' permission can update rates
+-- 4. The trigger function reads from this table on EVERY payout creation

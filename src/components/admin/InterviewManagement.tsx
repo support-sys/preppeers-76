@@ -55,7 +55,7 @@ const InterviewManagement = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'scheduled' | 'completed' | 'under_review' | 'cancelled' | 'rescheduled'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
 
   useEffect(() => {
@@ -139,10 +139,14 @@ const InterviewManagement = () => {
         return <Clock className="w-4 h-4 text-blue-400" />;
       case 'completed':
         return <CheckCircle className="w-4 h-4 text-green-400" />;
+      case 'under_review':
+        return <AlertCircle className="w-4 h-4 text-yellow-400" />;
       case 'cancelled':
         return <XCircle className="w-4 h-4 text-red-400" />;
+      case 'rescheduled':
+        return <Clock className="w-4 h-4 text-purple-400" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-yellow-400" />;
+        return <AlertCircle className="w-4 h-4 text-gray-400" />;
     }
   };
 
@@ -152,10 +156,14 @@ const InterviewManagement = () => {
         return 'bg-blue-600';
       case 'completed':
         return 'bg-green-600';
+      case 'under_review':
+        return 'bg-yellow-600';
       case 'cancelled':
         return 'bg-red-600';
+      case 'rescheduled':
+        return 'bg-purple-600';
       default:
-        return 'bg-yellow-600';
+        return 'bg-gray-600';
     }
   };
 
@@ -281,8 +289,14 @@ const InterviewManagement = () => {
                 <DropdownMenuItem onClick={() => setStatusFilter('completed')} className="text-slate-300">
                   Completed
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter('under_review')} className="text-slate-300">
+                  Under Review
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setStatusFilter('cancelled')} className="text-slate-300">
                   Cancelled
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter('rescheduled')} className="text-slate-300">
+                  Rescheduled
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -313,10 +327,10 @@ const InterviewManagement = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-slate-700/50 p-3 rounded-lg">
             <div className="text-2xl font-bold text-white">{filteredInterviews.length}</div>
-            <div className="text-xs text-slate-400">Total Interviews</div>
+            <div className="text-xs text-slate-400">Total</div>
           </div>
           <div className="bg-slate-700/50 p-3 rounded-lg">
             <div className="text-2xl font-bold text-blue-400">
@@ -331,10 +345,22 @@ const InterviewManagement = () => {
             <div className="text-xs text-slate-400">Completed</div>
           </div>
           <div className="bg-slate-700/50 p-3 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-400">
+              {filteredInterviews.filter(i => i.status === 'under_review').length}
+            </div>
+            <div className="text-xs text-slate-400">Under Review</div>
+          </div>
+          <div className="bg-slate-700/50 p-3 rounded-lg">
             <div className="text-2xl font-bold text-red-400">
               {filteredInterviews.filter(i => i.status === 'cancelled').length}
             </div>
             <div className="text-xs text-slate-400">Cancelled</div>
+          </div>
+          <div className="bg-slate-700/50 p-3 rounded-lg">
+            <div className="text-2xl font-bold text-purple-400">
+              {filteredInterviews.filter(i => i.status === 'rescheduled').length}
+            </div>
+            <div className="text-xs text-slate-400">Rescheduled</div>
           </div>
         </div>
 
@@ -439,7 +465,7 @@ const InterviewManagement = () => {
                             Email Interviewer
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-slate-700" />
-                          {hasPermission('manage_interviews') && interview.status === 'scheduled' && (
+                          {hasPermission('manage_interviews') && (interview.status === 'scheduled' || interview.status === 'rescheduled') && (
                             <>
                               <DropdownMenuItem 
                                 className="text-slate-300 hover:bg-slate-700"
@@ -450,21 +476,69 @@ const InterviewManagement = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'under_review')}
+                              >
+                                <AlertCircle className="w-4 h-4 mr-2" />
+                                Mark Under Review
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
                                 onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'cancelled')}
                               >
                                 <XCircle className="w-4 h-4 mr-2" />
-                                Cancel Interview
+                                Cancel
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'rescheduled')}
+                              >
+                                <Clock className="w-4 h-4 mr-2" />
+                                Mark Rescheduled
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {hasPermission('manage_interviews') && interview.status === 'under_review' && (
+                            <>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'completed')}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Mark Completed
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'scheduled')}
+                              >
+                                <Clock className="w-4 h-4 mr-2" />
+                                Back to Scheduled
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'cancelled')}
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Cancel
                               </DropdownMenuItem>
                             </>
                           )}
                           {hasPermission('manage_interviews') && interview.status === 'cancelled' && (
-                            <DropdownMenuItem 
-                              className="text-slate-300 hover:bg-slate-700"
-                              onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'scheduled')}
-                            >
-                              <Clock className="w-4 h-4 mr-2" />
-                              Reschedule
-                            </DropdownMenuItem>
+                            <>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'scheduled')}
+                              >
+                                <Clock className="w-4 h-4 mr-2" />
+                                Re-activate (Scheduled)
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleUpdateInterviewStatus(interview.interview_id, 'rescheduled')}
+                              >
+                                <Clock className="w-4 h-4 mr-2" />
+                                Mark as Rescheduled
+                              </DropdownMenuItem>
+                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

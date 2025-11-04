@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, CalendarX, Settings, Video, ExternalLink, FileText, Trash2, Eye, CheckCircle, MessageSquare, ClipboardCheck } from 'lucide-react';
+import { Calendar, Clock, Users, CalendarX, Settings, Video, ExternalLink, FileText, Trash2, Eye, CheckCircle, MessageSquare, ClipboardCheck, DollarSign } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,7 @@ import ScheduleEditor from './ScheduleEditor';
 import DateBlocker from './DateBlocker';
 import TimeSlotManager from './TimeSlotManager';
 import InterviewDetailsDialog from './InterviewDetailsDialog';
+import InterviewerPayoutDashboard from './InterviewerPayoutDashboard';
 import { formatDateTimeIST } from '@/utils/dateUtils';
 import { assessmentConfig } from '@/config/assessmentConfig';
 
@@ -75,7 +76,7 @@ const InterviewerDashboard = () => {
   const { toast } = useToast();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'time-slots'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'schedule' | 'block-dates' | 'time-slots' | 'payouts'>('dashboard');
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [blockedDatesCount, setBlockedDatesCount] = useState(0);
@@ -441,6 +442,10 @@ const InterviewerDashboard = () => {
     return <TimeSlotManager onClose={() => setActiveView('dashboard')} />;
   }
 
+  if (activeView === 'payouts') {
+    return <InterviewerPayoutDashboard onClose={() => setActiveView('dashboard')} />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -460,6 +465,14 @@ const InterviewerDashboard = () => {
           >
             <CalendarX className="w-4 h-4 mr-2" />
             Block Dates
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setActiveView('payouts')}
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm"
+          >
+            <DollarSign className="w-4 h-4 mr-2" />
+            Payout History
           </Button>
         </div>
       </div>
