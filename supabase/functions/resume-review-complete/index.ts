@@ -1,6 +1,17 @@
+// @ts-ignore - Deno runtime module resolution
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore - Deno runtime module resolution
 import { Resend } from "npm:resend@2.0.0";
+// @ts-ignore - Deno runtime module resolution
+import { encode as encodeBase64 } from "https://deno.land/std@0.190.0/encoding/base64.ts";
+// @ts-ignore - Deno runtime module resolution
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+declare const Deno: {
+  env: {
+    get: (key: string) => string | undefined;
+  };
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,46 +51,27 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
+    const adminApiKey = Deno.env.get("ADMIN_SERVICE_API_KEY");
+    const incomingAdminKey = req.headers.get("x-admin-api-key");
+    const allowedOrigins = (Deno.env.get("ADMIN_ALLOWED_ORIGINS") || "")
+      .split(",")
+      .map(origin => origin.trim())
+      .filter(Boolean);
+
+    if (allowedOrigins.length > 0) {
+      const requestOrigin = req.headers.get("origin");
+      if (!requestOrigin || !allowedOrigins.includes(requestOrigin)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
     const payload = await req.json() as CompletionPayload;
     validatePayload(payload);
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    const accessToken = authHeader.replace("Bearer ", "");
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(accessToken);
-
-    if (userError || !user) {
-      console.error("Failed to verify user", userError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile || profile.role !== "admin") {
-      console.error("User is not admin", profileError);
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
 
     const { data: review, error: fetchError } = await supabaseAdmin
       .from("resume_reviews")

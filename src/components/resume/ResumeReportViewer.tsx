@@ -23,7 +23,7 @@ export const ResumeReportViewer = ({
 }: ResumeReportViewerProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reportType, setReportType] = useState<'pdf' | 'html' | 'unknown'>('unknown');
+  const [reportType, setReportType] = useState<'pdf' | 'html' | 'external' | 'unknown'>('unknown');
   const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(true);
   const [copiedCoupon, setCopiedCoupon] = useState(false);
@@ -32,7 +32,9 @@ export const ResumeReportViewer = ({
   useEffect(() => {
     // Determine report type from URL
     if (reportUrl) {
-      if (reportUrl.toLowerCase().endsWith('.pdf')) {
+      if (reportUrl.toLowerCase().includes('drive.google.com')) {
+        setReportType('external');
+      } else if (reportUrl.toLowerCase().endsWith('.pdf')) {
         setReportType('pdf');
       } else if (reportUrl.toLowerCase().endsWith('.html') || reportUrl.toLowerCase().endsWith('.htm')) {
         setReportType('html');
@@ -206,91 +208,82 @@ export const ResumeReportViewer = ({
           <Download className="w-4 h-4 mr-2" />
           Download Report
         </Button>
-        <Button
-          onClick={() => window.open(reportUrl, '_blank')}
-          variant="outline"
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          size="lg"
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Open in New Tab
-        </Button>
       </div>
 
       {/* Report Viewer */}
-      <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Resume Feedback Report
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="w-full" style={{ minHeight: '800px', height: '80vh' }}>
-            {loading && (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />
-              </div>
-            )}
-            
-            {reportType === 'pdf' && (
-              <iframe
-                src={reportUrl}
-                className="w-full h-full border-0 rounded-b-lg"
-                title="Resume Review Report"
-                onLoad={() => setLoading(false)}
-                onError={() => {
-                  setLoading(false);
-                  setError('Failed to load PDF report');
-                }}
-              />
-            )}
+      {reportType !== 'pdf' && reportType !== 'html' && (
+        <div className="text-center space-y-3 bg-white/5 border border-white/10 rounded-xl px-6 py-5">
+          <p className="text-slate-200 text-sm">
+            Your detailed report is ready. Open it below.
+          </p>
+          <Button
+            onClick={() => window.open(reportUrl, '_blank')}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Open Detailed Report
+          </Button>
+        </div>
+      )}
+      {(reportType === 'pdf' || reportType === 'html') && (
+        <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Resume Feedback Report
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="w-full" style={{ minHeight: '800px', height: '80vh' }}>
+              {loading && (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />
+                </div>
+              )}
+              
+              {reportType === 'pdf' && (
+                <iframe
+                  src={reportUrl}
+                  className="w-full h-full border-0 rounded-b-lg"
+                  title="Resume Review Report"
+                  onLoad={() => setLoading(false)}
+                  onError={() => {
+                    setLoading(false);
+                    setError('Failed to load PDF report');
+                  }}
+                />
+              )}
 
-            {reportType === 'html' && (
-              <iframe
-                src={reportUrl}
-                className="w-full h-full border-0 rounded-b-lg"
-                title="Resume Review Report"
-                onLoad={() => setLoading(false)}
-                onError={() => {
-                  setLoading(false);
-                  setError('Failed to load HTML report');
-                }}
-              />
-            )}
+              {reportType === 'html' && (
+                <iframe
+                  src={reportUrl}
+                  className="w-full h-full border-0 rounded-b-lg"
+                  title="Resume Review Report"
+                  onLoad={() => setLoading(false)}
+                  onError={() => {
+                    setLoading(false);
+                    setError('Failed to load HTML report');
+                  }}
+                />
+              )}
 
-            {reportType === 'unknown' && (
-              <div className="p-8 text-center">
-                <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-300 mb-4">
-                  Your report is ready. Click the buttons above to view or download it.
-                </p>
-                <Button
-                  onClick={handleDownload}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Report
-                </Button>
-              </div>
-            )}
-
-            {error && (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-                <p className="text-red-400 mb-4">{error}</p>
-                <Button
-                  onClick={() => window.open(reportUrl, '_blank')}
-                  variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
-                >
-                  Open in New Tab
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {error && (
+                <div className="p-8 text-center">
+                  <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+                  <p className="text-red-400 mb-4">{error}</p>
+                  <Button
+                    onClick={() => window.open(reportUrl, '_blank')}
+                    variant="outline"
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    Open in New Tab
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Conversion CTA Section */}
       <Card className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border border-blue-500/40 shadow-[0_25px_80px_-30px_rgba(59,130,246,0.7)]">

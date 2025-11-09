@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import AdminNavigation from '@/components/admin/AdminNavigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertTriangle, CheckCircle2, FileText, Loader2, Upload, User } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileText, Loader2, User, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ResumeReviewRecord {
@@ -20,9 +20,6 @@ interface ResumeReviewRecord {
   submitted_at: string | null;
   report_generated_at: string | null;
 }
-
-const sanitizeFileName = (fileName: string) =>
-  fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return 'Not available';
@@ -48,15 +45,9 @@ const ResumeReviewUploadAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [record, setRecord] = useState<ResumeReviewRecord | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [reportLink, setReportLink] = useState<string>('');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const bucketPath = useMemo(() => {
-    if (!reviewId || !file) return null;
-    const cleanedName = sanitizeFileName(file.name);
-    return `resume-review-reports/${reviewId}/${Date.now()}_${cleanedName}`;
-  }, [file, reviewId]);
 
   useEffect(() => {
     const fetchReview = async () => {
@@ -65,7 +56,8 @@ const ResumeReviewUploadAdmin = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const supabaseClient = supabase as any;
+      const { data, error } = await supabaseClient
         .from('resume_reviews')
         .select('id, user_name, user_email, target_role, experience_years, resume_url, status, report_url, submitted_at, report_generated_at')
         .eq('id', reviewId)
@@ -80,6 +72,7 @@ const ResumeReviewUploadAdmin = () => {
         });
       } else {
         setRecord(data as ResumeReviewRecord);
+        setReportLink((data as ResumeReviewRecord).report_url ?? '');
       }
       setLoading(false);
     };
@@ -87,39 +80,20 @@ const ResumeReviewUploadAdmin = () => {
     fetchReview();
   }, [reviewId, toast]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0];
-    setUploadError(null);
-    setSuccessMessage(null);
-
-    if (!selected) {
-      setFile(null);
-      return;
-    }
-
-    const allowedTypes = ['application/pdf'];
-    if (!allowedTypes.includes(selected.type)) {
-      setUploadError('Only PDF files are allowed.');
-      return;
-    }
-
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (selected.size > maxSize) {
-      setUploadError('File size exceeds 10MB limit.');
-      return;
-    }
-
-    setFile(selected);
-  };
-
-  const handleUpload = async () => {
+  const handleComplete = async () => {
     if (!record || !reviewId) {
       setUploadError('Review ID missing. Please use the link from the reviewer email.');
       return;
     }
 
-    if (!file || !bucketPath) {
-      setUploadError('Please select a PDF report before uploading.');
+    if (!reportLink.trim()) {
+      setUploadError('Please paste the report link before continuing.');
+      return;
+    }
+
+    const normalizedLink = reportLink.trim();
+    if (!/^https?:\/\//i.test(normalizedLink)) {
+      setUploadError('Link must start with http:// or https://');
       return;
     }
 
@@ -128,52 +102,32 @@ const ResumeReviewUploadAdmin = () => {
     setSuccessMessage(null);
 
     try {
-      const { error: uploadErrorResponse } = await supabase.storage
-        .from('resume-review-reports')
-        .upload(bucketPath, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
-
-      if (uploadErrorResponse) {
-        throw uploadErrorResponse;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('resume-review-reports')
-        .getPublicUrl(bucketPath);
-
-      const publicUrl = urlData?.publicUrl;
-      if (!publicUrl) {
-        throw new Error('Failed to generate public URL for uploaded report.');
-      }
-
-      const { data: completionData, error: completionError } = await supabase.functions.invoke(
-        'resume-review-complete',
-        {
-          body: {
-            reviewId,
-            reportUrl: publicUrl,
-          },
+      const {
+        data: completionData,
+        error: completionError,
+      } = await supabase.functions.invoke('resume-review-complete', {
+        body: {
+          reviewId,
+          reportUrl: normalizedLink,
         }
-      );
+      });
 
       if (completionError) {
-        throw completionError;
+        console.error('Completion function error', completionError);
+        throw new Error(completionError.message || 'Failed to finalize review');
       }
 
-      setSuccessMessage('Report uploaded and review marked as completed.');
+      setSuccessMessage('Report link saved and review marked as completed.');
       setRecord((prev) =>
         prev
           ? {
               ...prev,
-              report_url: publicUrl,
+              report_url: normalizedLink,
               status: 'completed',
               report_generated_at: new Date().toISOString(),
             }
           : prev
       );
-      setFile(null);
       toast({
         title: 'Review completed',
         description: completionData?.success
@@ -181,11 +135,11 @@ const ResumeReviewUploadAdmin = () => {
           : 'Report stored successfully.',
       });
     } catch (error: any) {
-      console.error('Failed to upload review report', error);
-      setUploadError(error.message ?? 'Failed to upload report. Please try again.');
+      console.error('Failed to submit review link', error);
+      setUploadError(error.message ?? 'Failed to submit link. Please try again.');
       toast({
-        title: 'Upload failed',
-        description: error.message ?? 'Unable to store the report.',
+        title: 'Submission failed',
+        description: error.message ?? 'Unable to store the link.',
         variant: 'destructive',
       });
     } finally {
@@ -316,20 +270,16 @@ const ResumeReviewUploadAdmin = () => {
 
             <div className="space-y-4">
               <label className="block text-sm font-medium text-slate-200">
-                Upload Completed Review (PDF only)
+                Paste Google Drive report link
               </label>
               <Input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
+                type="url"
+                placeholder="https://drive.google.com/..."
+                value={reportLink}
+                onChange={(event) => setReportLink(event.target.value)}
                 disabled={saving}
                 className="bg-slate-800 border-slate-700 text-slate-100"
               />
-              {file && (
-                <p className="text-xs text-slate-400">
-                  Selected file: <span className="text-slate-200">{file.name}</span>
-                </p>
-              )}
 
               {uploadError && (
                 <div className="text-xs text-red-300 bg-red-900/30 border border-red-500/40 rounded-md p-3">
@@ -345,26 +295,25 @@ const ResumeReviewUploadAdmin = () => {
               )}
 
               <Button
-                onClick={handleUpload}
-                disabled={saving || !file}
+                onClick={handleComplete}
+                disabled={saving || !reportLink}
                 className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2"
               >
                 {saving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Uploading...
+                    Saving...
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4" />
-                    Upload &amp; Mark Complete
+                    <LinkIcon className="w-4 h-4" />
+                    Save Link &amp; Notify
                   </>
                 )}
               </Button>
 
               <p className="text-xs text-slate-500 leading-5">
-                Once the PDF is uploaded, the candidate&apos;s status is set to <strong>completed</strong>.
-                The candidate email is handled separately via the resume review completion function.
+                Once saved, the candidate&apos;s status is set to <strong>completed</strong> and an email is sent with this link.
               </p>
             </div>
           </CardContent>
