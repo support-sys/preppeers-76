@@ -20,8 +20,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireRole }
   }
 
   if (!user) {
-    const currentPath = window.location.pathname;
-    return <Navigate to={`/auth?from=${encodeURIComponent(currentPath)}`} />;
+    const currentPathWithSearch = `${window.location.pathname}${window.location.search}`;
+    return <Navigate to={`/auth?from=${encodeURIComponent(currentPathWithSearch)}`} />;
+  }
+
+  if (requireRole && userRole === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-xl">Preparing your account...</div>
+      </div>
+    );
   }
 
   if (requireRole && userRole !== requireRole) {

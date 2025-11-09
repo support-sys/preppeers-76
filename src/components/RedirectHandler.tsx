@@ -10,7 +10,13 @@ const RedirectHandler = () => {
     if (shouldRedirectToBook) {
       // Clear flag immediately and navigate without delay
       clearRedirectFlag();
-      navigate('/book', { replace: true }); // Use replace to prevent back button issues
+      const storedRedirect = sessionStorage.getItem('postAuthRedirect');
+      if (storedRedirect) {
+        sessionStorage.removeItem('postAuthRedirect');
+        navigate(storedRedirect, { replace: true });
+      } else {
+        navigate('/book', { replace: true }); // Use replace to prevent back button issues
+      }
     }
   }, [shouldRedirectToBook, clearRedirectFlag, navigate]);
 

@@ -18,16 +18,10 @@ export const IntervieweeButton = ({ className = "", size = "lg" }: SmartCTAButto
     if (!user) {
       return {
         text: "Start My Mock Interview",
-        to: "/auth?role=interviewee"
+        to: "/auth?role=interviewee&from=/book"
       };
     }
 
-    if (!profileComplete) {
-      return {
-        text: "Complete Your Profile",
-        to: "/book"
-      };
-    }
 
     if (hasScheduledInterview) {
       return {
@@ -115,19 +109,17 @@ export const InterviewerButton = ({ className = "", size = "lg" }: SmartCTAButto
 
 // Combined component that shows both buttons with proper logic
 export const SmartCTAButtons = ({ className = "" }: { className?: string }) => {
-  const { user, userRole } = useAuth();
-
   return (
     <div className={`flex flex-col gap-4 justify-center items-center ${className}`}>
       {/* Group for the two main CTA buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-        {/* Free Readiness Check Button */}
-        <Link to="/readiness-check">
+        {/* Free Resume Review Button */}
+        <Link to="/resume-review">
           <Button 
             size="lg" 
             className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 px-8 py-4 text-lg font-semibold rounded-xl"
           >
-            Interview Readiness Free
+            Expert Resume Review Free
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
           </Button>
         </Link>
@@ -135,7 +127,17 @@ export const SmartCTAButtons = ({ className = "" }: { className?: string }) => {
         <IntervieweeButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
       </div>
       
-      <InterviewerButton className="px-8 py-4 text-lg font-semibold rounded-xl" />
+      <InterviewerCTAWrapper />
     </div>
   );
+};
+
+const InterviewerCTAWrapper = () => {
+  const { user, userRole } = useAuth();
+
+  if (user && userRole === 'interviewee') {
+    return null;
+  }
+
+  return <InterviewerButton className="px-8 py-4 text-lg font-semibold rounded-xl" />;
 };

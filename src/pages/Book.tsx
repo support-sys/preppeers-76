@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -25,6 +25,7 @@ import { useBookingFlow } from "@/hooks/useBookingFlow";
 
 const Book = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { paymentSession, hasSuccessfulPayment, isInterviewAlreadyMatched, isLoading: paymentLoading } = usePaymentStatus();
   const [currentFormStep, setCurrentFormStep] = useState<'form' | 'interviewer-matching' | 'plan-selection'>('form');
   const [selectedSlot, setSelectedSlot] = useState<string>('');

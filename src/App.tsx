@@ -20,12 +20,13 @@ import BecomeInterviewer from "./pages/BecomeInterviewer";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import RefundPolicy from "./pages/RefundPolicy";
-import ReadinessCheck from "./pages/ReadinessCheck";
+import ResumeReview from "./pages/ResumeReview";
 import NotFound from "./pages/NotFound";
 import FunnelTest from "./pages/FunnelTest";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminAuth from "./pages/admin/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ResumeReviewUploadAdmin from "./pages/admin/ResumeReviewUpload";
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 import "@/services/cleanupService"; // Start cleanup service
 
@@ -87,7 +88,14 @@ const App = () => (
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
-            <Route path="/readiness-check" element={<ReadinessCheck />} />
+            <Route 
+              path="/resume-review" 
+              element={
+                <ProtectedRoute>
+                  <ResumeReview />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Funnel Tracking Routes */}
             <Route path="/funnel-test" element={<FunnelTest />} />
@@ -102,6 +110,14 @@ const App = () => (
                   <AdminDashboard />
                 </AdminProtectedRoute>
               } 
+            />
+            <Route
+              path="/admin/resume-review/upload"
+              element={
+                <AdminProtectedRoute>
+                  <ResumeReviewUploadAdmin />
+                </AdminProtectedRoute>
+              }
             />
             <Route 
               path="/admin/*" 

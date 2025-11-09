@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format } from 'date-fns';
 import { trackReadinessConversion } from '@/utils/readinessConversionTracker';
+import { trackResumeReviewConversion } from '@/utils/resumeReviewConversion';
 import { 
   MatchingCandidate, 
   MatchedInterviewer, 
@@ -708,6 +709,15 @@ export const scheduleInterview = async (interviewer: any, candidate: any, userEm
         console.log('🔄 Readiness conversion tracked successfully');
       } catch (conversionError) {
         console.error('❌ Error tracking readiness conversion:', conversionError);
+        // Don't throw error here as the interview was scheduled successfully
+      }
+      
+      // Track resume review conversion if user came from resume review
+      try {
+        await trackResumeReviewConversion(userEmail, data.interview.id);
+        console.log('🔄 Resume review conversion tracked successfully');
+      } catch (conversionError) {
+        console.error('❌ Error tracking resume review conversion:', conversionError);
         // Don't throw error here as the interview was scheduled successfully
       }
     }

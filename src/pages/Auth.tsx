@@ -35,24 +35,38 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const resolveRedirectTarget = () => {
+    const fromParam = searchParams.get('from');
+    if (fromParam) return fromParam;
+
+    const roleParam = searchParams.get('role');
+    if (roleParam === 'interviewer') {
+      return '/become-interviewer';
+    }
+    if (roleParam === 'interviewee') {
+      return '/book';
+    }
+
+    return userRole === 'interviewer' ? '/become-interviewer'
+      : userRole === 'interviewee' ? '/book'
+      : '/';
+  };
+
   // Redirect if user is already authenticated
   React.useEffect(() => {
     if (!authLoading && user && userRole) {
-      if (userRole === 'interviewee') {
-        navigate('/book', { replace: true });
-      } else if (userRole === 'interviewer') {
-        navigate('/become-interviewer', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      navigate(resolveRedirectTarget(), { replace: true });
     }
-  }, [user, userRole, authLoading, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, userRole, authLoading, navigate, searchParams]);
 
   // Check URL parameters for role and mode
   React.useEffect(() => {
     const mode = searchParams.get('mode');
     const roleParam = searchParams.get('role');
     const confirmed = searchParams.get('confirmed');
+    const fromParamRaw = searchParams.get('from');
+    const fromParam = fromParamRaw ?? (roleParam === 'interviewee' ? '/book' : undefined);
     
     if (mode === 'reset') {
       setShowResetPassword(true);
@@ -132,7 +146,7 @@ const Auth = () => {
         if (role === 'interviewer') {
           navigate('/interviewers');
         } else {
-          navigate('/book');
+          navigate(resolveRedirectTarget());
         }
       }
     }

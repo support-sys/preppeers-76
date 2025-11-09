@@ -1,24 +1,31 @@
-import React, { useState } from 'react';
-import { Linkedin, Share2, Download, Check } from 'lucide-react';
-import { LINKEDIN_SHARE_CONFIG } from '@/config/linkedinShareConfig';
+import React, { useMemo, useState } from 'react';
+import { Linkedin, Share2, Download, Check, CheckCircle2 } from 'lucide-react';
+import LINKEDIN_SHARE_CONFIG, { ShareVariant } from '@/config/linkedinShareConfig';
 
 interface LinkedInShareProps {
   target_role: string;
   userEmail?: string;
   onShareComplete?: () => void;
+  variant?: ShareVariant;
 }
 
 export const LinkedInShare: React.FC<LinkedInShareProps> = ({
   target_role,
   userEmail,
-  onShareComplete
+  onShareComplete,
+  variant = 'mockInterview'
 }) => {
   const [hasShared, setHasShared] = useState(false);
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [userConfirmedShare, setUserConfirmedShare] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { shareMessage, appUrl, shareUrl, postUrl, incentive, ui, dialog } = LINKEDIN_SHARE_CONFIG;
+  const config = useMemo(
+    () => LINKEDIN_SHARE_CONFIG.variants[variant] ?? LINKEDIN_SHARE_CONFIG.variants.mockInterview,
+    [variant]
+  );
+  const { dialog } = LINKEDIN_SHARE_CONFIG;
+  const { shareMessage, postUrl, ui, postShare } = config;
 
   const handleShare = () => {
     try {
@@ -27,7 +34,6 @@ export const LinkedInShare: React.FC<LinkedInShareProps> = ({
       
       console.log('🔗 LinkedIn Post URL with prefilled text:', linkedInPostUrl);
       console.log('📝 Prefilled message:', shareMessage);
-      console.log('🌐 App URL:', appUrl);
       
       // Open LinkedIn with prefilled post
       window.open(linkedInPostUrl, '_blank', `width=${dialog.width},height=${dialog.height}`);
@@ -50,8 +56,9 @@ export const LinkedInShare: React.FC<LinkedInShareProps> = ({
     setIsLoading(true);
 
     try {
-      // Open the resource link in a new tab
-      window.open(incentive.resourceUrl, '_blank');
+      if (postShare?.resourceUrl) {
+        window.open(postShare.resourceUrl, '_blank');
+      }
       
       setHasShared(true);
       
@@ -83,11 +90,11 @@ export const LinkedInShare: React.FC<LinkedInShareProps> = ({
         <div className="space-y-4">
                   <div className="bg-white/5 border border-white/10 rounded-lg p-3 sm:p-4">
                     <p className="text-xs sm:text-sm text-slate-300 mb-2">This message will be prefilled on LinkedIn:</p>
-                    <div className="bg-white/5 p-3 rounded text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    <div className="bg-white/5 p-3 rounded text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
                       {shareMessage}
                     </div>
                     <p className="text-xs text-slate-400 mt-2">
-                      💡 LinkedIn will open with this message ready - just click "Post"! After sharing, you'll get instant access to our free guide.
+                      💡 LinkedIn will open with this message ready - just click "Post"! After sharing, confirm below to continue.
                     </p>
                   </div>
 
@@ -99,14 +106,18 @@ export const LinkedInShare: React.FC<LinkedInShareProps> = ({
             <span className="text-sm sm:text-base">{ui.shareButtonText}</span>
           </button>
 
-          {showClaimForm && (
+          {showClaimForm && postShare && (
             <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-3 sm:p-4">
               <div className="flex items-center space-x-2 mb-3">
-                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
-                <h4 className="font-medium text-green-400 text-sm sm:text-base">{incentive.title}</h4>
+                {postShare.resourceUrl ? (
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
+                )}
+                <h4 className="font-medium text-green-400 text-sm sm:text-base">{postShare.title}</h4>
               </div>
               <p className="text-xs sm:text-sm text-green-300 mb-3 leading-relaxed">
-                {incentive.description}
+                {postShare.description}
               </p>
               
               <div className="flex items-start space-x-2 mb-3">
@@ -130,12 +141,16 @@ export const LinkedInShare: React.FC<LinkedInShareProps> = ({
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Opening...</span>
+                    <span>{ui.confirmButtonLoadingText}</span>
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4" />
-                    <span>{incentive.buttonText}</span>
+                    {postShare.resourceUrl ? (
+                      <Download className="w-4 h-4" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                    <span>{ui.confirmButtonText}</span>
                   </>
                 )}
               </button>
@@ -145,9 +160,9 @@ export const LinkedInShare: React.FC<LinkedInShareProps> = ({
       ) : (
         <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4 sm:p-6 text-center">
           <Check className="w-12 h-12 sm:w-16 sm:h-16 text-green-400 mx-auto mb-3" />
-          <h4 className="font-medium text-green-400 mb-2 text-sm sm:text-base">{incentive.successTitle}</h4>
+          <h4 className="font-medium text-green-400 mb-2 text-sm sm:text-base">{ui.successTitle}</h4>
           <p className="text-xs sm:text-sm text-green-300 leading-relaxed">
-            {incentive.successMessage}
+            {ui.successMessage}
           </p>
         </div>
       )}
