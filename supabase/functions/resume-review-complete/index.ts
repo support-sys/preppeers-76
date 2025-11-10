@@ -51,23 +51,6 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const adminApiKey = Deno.env.get("ADMIN_SERVICE_API_KEY");
-    const incomingAdminKey = req.headers.get("x-admin-api-key");
-    const allowedOrigins = (Deno.env.get("ADMIN_ALLOWED_ORIGINS") || "")
-      .split(",")
-      .map(origin => origin.trim())
-      .filter(Boolean);
-
-    if (allowedOrigins.length > 0) {
-      const requestOrigin = req.headers.get("origin");
-      if (!requestOrigin || !allowedOrigins.includes(requestOrigin)) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-    }
-
     const payload = await req.json() as CompletionPayload;
     validatePayload(payload);
 

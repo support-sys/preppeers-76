@@ -113,11 +113,7 @@ const App = () => (
             />
             <Route
               path="/admin/resume-review/upload"
-              element={
-                <AdminProtectedRoute>
-                  <ResumeReviewUploadAdmin />
-                </AdminProtectedRoute>
-              }
+              element={<ResumeReviewUploadAdmin />}
             />
             <Route 
               path="/admin/*" 

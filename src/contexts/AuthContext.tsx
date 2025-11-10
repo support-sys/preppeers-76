@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  userRole: 'interviewer' | 'interviewee' | null;
+  userRole: 'interviewer' | 'interviewee' | 'admin' | null;
   profileComplete: boolean;
   hasScheduledInterview: boolean;
   justLoggedIn: boolean;
@@ -34,7 +34,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<'interviewer' | 'interviewee' | null>(null);
+  const [userRole, setUserRole] = useState<'interviewer' | 'interviewee' | 'admin' | null>(null);
   const [profileComplete, setProfileComplete] = useState(false);
   const [hasScheduledInterview, setHasScheduledInterview] = useState(false);
   const [justLoggedIn, setJustLoggedIn] = useState(false);

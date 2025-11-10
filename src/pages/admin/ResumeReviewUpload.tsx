@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import AdminNavigation from '@/components/admin/AdminNavigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, CheckCircle2, FileText, Loader2, User, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ResumeReviewRecord {
   id: string;
@@ -38,21 +38,48 @@ const formatDateTime = (value?: string | null) => {
 };
 
 const ResumeReviewUploadAdmin = () => {
+  const { user, userRole, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const reviewId = searchParams.get('reviewId') ?? '';
   const { toast } = useToast();
 
-  const [loading, setLoading] = useState(true);
+  const [isReviewLoading, setIsReviewLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [record, setRecord] = useState<ResumeReviewRecord | null>(null);
   const [reportLink, setReportLink] = useState<string>('');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const roleValue = userRole as string | null;
+  const isAdmin = roleValue === 'admin';
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      const currentPath = `${window.location.pathname}${window.location.search}`;
+      navigate(`/auth?from=${encodeURIComponent(currentPath)}`, { replace: true });
+      return;
+    }
+
+    if (!isAdmin) {
+      setAuthError('You do not have access to this page.');
+      setIsReviewLoading(false);
+    } else {
+      setAuthError(null);
+    }
+  }, [authLoading, user, isAdmin, navigate]);
+
+  useEffect(() => {
+    if (authLoading || !user || !isAdmin) {
+      return;
+    }
+
     const fetchReview = async () => {
       if (!reviewId) {
-        setLoading(false);
+        setIsReviewLoading(false);
         return;
       }
 
@@ -74,11 +101,11 @@ const ResumeReviewUploadAdmin = () => {
         setRecord(data as ResumeReviewRecord);
         setReportLink((data as ResumeReviewRecord).report_url ?? '');
       }
-      setLoading(false);
+      setIsReviewLoading(false);
     };
 
     fetchReview();
-  }, [reviewId, toast]);
+  }, [authLoading, user, isAdmin, reviewId, toast]);
 
   const handleComplete = async () => {
     if (!record || !reviewId) {
@@ -148,6 +175,22 @@ const ResumeReviewUploadAdmin = () => {
   };
 
   const renderContent = () => {
+    if (authError) {
+      return (
+        <Card className="max-w-2xl mx-auto border-red-400/40 bg-red-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-200">
+              <AlertTriangle className="w-5 h-5" />
+              Access denied
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-red-100 text-sm">
+            {authError}
+          </CardContent>
+        </Card>
+      );
+    }
+
     if (!reviewId) {
       return (
         <Card className="max-w-2xl mx-auto border-red-400/40 bg-red-950/20">
@@ -164,7 +207,7 @@ const ResumeReviewUploadAdmin = () => {
       );
     }
 
-    if (loading) {
+    if (isReviewLoading) {
       return (
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-8 h-8 text-white animate-spin" />
@@ -322,17 +365,22 @@ const ResumeReviewUploadAdmin = () => {
     );
   };
 
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white px-4 sm:px-6 py-10 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <AdminNavigation />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Resume Review Upload</h1>
-            <p className="text-sm text-slate-400">
-              Review ID: <span className="text-slate-200">{reviewId || 'Not provided'}</span>
-            </p>
-          </div>
+    <div className="min-h-screen bg-slate-950 text-white px-4 sm:px-6 py-10">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold text-white">Resume Review Upload</h1>
+          <p className="text-sm text-slate-400">
+            Review ID: <span className="text-slate-200">{reviewId || 'Not provided'}</span>
+          </p>
         </div>
 
         {renderContent()}
