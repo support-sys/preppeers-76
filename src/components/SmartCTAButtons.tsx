@@ -119,7 +119,7 @@ export const SmartCTAButtons = ({ className = "" }: { className?: string }) => {
             size="lg" 
             className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-blue-500/25 px-8 py-4 text-lg font-semibold rounded-xl"
           >
-            Expert Resume Review Free
+            Detailed Resume Review
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
           </Button>
         </Link>
