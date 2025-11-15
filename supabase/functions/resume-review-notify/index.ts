@@ -1,6 +1,15 @@
+// @ts-ignore - Deno runtime module resolution
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore - Deno runtime module resolution
 import { Resend } from "npm:resend@2.0.0";
+// @ts-ignore - Deno runtime module resolution
 import { encode as encodeBase64 } from "https://deno.land/std@0.190.0/encoding/base64.ts";
+
+declare const Deno: {
+  env: {
+    get: (key: string) => string | undefined;
+  };
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +25,8 @@ interface ResumeReviewRecord {
   resume_url: string;
   status: string;
   submitted_at?: string;
+  payment_status?: string;
+  payment_amount?: number | null;
 }
 
 serve(async (req) => {
@@ -24,34 +35,81 @@ serve(async (req) => {
   }
 
   try {
-    const payload = await req.json();
-    console.log("Received resume review payload", payload);
+    // Derive base URL from request origin (same approach as resume-review-complete)
+    // Priority: origin header → referer header → check if req.url is Supabase (use fallback) → fallback to production
+    let requestOrigin =
+      req.headers.get("origin") ??
+      (req.headers.get("referer")
+        ? new URL(req.headers.get("referer")!).origin
+        : null);
+    
+    // If we couldn't get origin from headers, check req.url
+    // But if req.url is a Supabase URL (Edge Function call), use fallback instead
+    if (!requestOrigin) {
+      const reqUrlOrigin = new URL(req.url).origin;
+      if (reqUrlOrigin.includes(".supabase.co")) {
+        // This is an Edge Function-to-Edge Function call, use fallback
+        requestOrigin = "https://interviewise.in";
+      } else {
+        requestOrigin = reqUrlOrigin;
+      }
+    }
+    
+    // Final fallback
+    requestOrigin = requestOrigin ?? "https://interviewise.in";
+    
+    console.log("📧 Request origin:", requestOrigin);
 
+    const payload = await req.json();
+    console.log("📧 Received resume review payload:", JSON.stringify(payload, null, 2));
+
+    // Supabase Database Webhook sends: { type: 'UPDATE' | 'INSERT', table: 'resume_reviews', record: {...}, old_record: {...} }
+    // Or sometimes: { new: {...}, old: {...} }
     const record: ResumeReviewRecord | undefined = payload?.record ?? payload?.new ?? payload;
+    const eventType = payload?.type ?? (payload?.old ? 'UPDATE' : 'INSERT');
+
+    console.log("📋 Event type:", eventType);
+    console.log("📋 Extracted record:", JSON.stringify(record, null, 2));
 
     if (!record) {
-      console.error("No record found in payload");
+      console.error("❌ No record found in payload");
       return new Response(JSON.stringify({ error: "Missing record in payload" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
+    console.log("✅ Record extracted - ID:", record.id);
+    console.log("✅ Payment status:", record.payment_status ?? "null/undefined");
+    console.log("✅ Review status:", record.status ?? "null/undefined");
+
     if (!record.resume_url) {
-      console.error("Record missing resume_url", record);
+      console.error("❌ Record missing resume_url", record);
       return new Response(JSON.stringify({ error: "Missing resume_url" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
+    // Only skip if payment_status exists AND is not "paid"
+    // If payment_status is null/undefined, allow through (for backward compatibility)
+    if (record.payment_status !== undefined && record.payment_status !== null && record.payment_status !== "paid") {
+      console.log("⏭️ Skipping notification – payment not completed. Payment status:", record.payment_status);
+      return new Response(JSON.stringify({ message: "Skipped - payment not completed" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     if (record.status && record.status !== "pending") {
-      console.log("Skipping notification for status", record.status);
+      console.log("⏭️ Skipping notification for status:", record.status);
       return new Response(JSON.stringify({ message: "Skipped - status not pending" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+
+    console.log("✅ All checks passed. Proceeding to send notification email...");
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
@@ -59,9 +117,12 @@ serve(async (req) => {
     }
 
     const supportEmail = Deno.env.get("SUPPORT_EMAIL") ?? "support@interviewise.in";
-    const uploadBaseUrl = Deno.env.get("RESUME_REVIEW_UPLOAD_URL_BASE") ?? "https://interviewise.com/admin/resume-review/upload";
-
+    // Derive upload URL from request origin (works for both dev and prod)
+    // Falls back to env var if request origin not available (e.g., database webhooks)
+    const uploadBaseUrl = Deno.env.get("RESUME_REVIEW_UPLOAD_URL_BASE") ?? `${requestOrigin}/admin/resume-review/upload`;
     const uploadLink = `${uploadBaseUrl}?reviewId=${encodeURIComponent(record.id)}`;
+    
+    console.log("📧 Upload link:", uploadLink);
 
     let attachmentContent: string | null = null;
     let attachmentName = `resume-${record.id}.pdf`;
@@ -121,6 +182,7 @@ serve(async (req) => {
         <p><strong>Experience:</strong> ${experienceDisplay}</p>
         <p><strong>Submitted At:</strong> ${submittedAtDisplay}</p>
       </div>
+      <p><strong>Payment:</strong> Paid ₹${record.payment_amount ?? 99}</p>
       ${resumeAttachmentNote}
       <p>
         Once the review is ready, upload the finalized PDF using the link below.<br/>

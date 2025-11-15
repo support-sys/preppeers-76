@@ -81,6 +81,8 @@ export const INTERVIEW_PLANS: { [key: string]: InterviewPlan } = {
   // }
 };
 
+export const RESUME_REVIEW_PRICE = 99;
+
 export const getPlanById = (planId: string): InterviewPlan | null => {
   return INTERVIEW_PLANS[planId] || null;
 };
@@ -108,3 +110,5 @@ export const getPlanDuration = (planId: string): number => {
   const plan = getPlanById(planId);
   return plan?.duration || 60;
 };
+
+export const getResumeReviewPrice = (): number => RESUME_REVIEW_PRICE;

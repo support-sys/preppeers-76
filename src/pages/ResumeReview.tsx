@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ResumeReviewForm, ResumeReviewData } from '@/components/resume/ResumeReviewForm';
 import { ResumeReportViewer } from '@/components/resume/ResumeReportViewer';
+import { ResumeReviewPayment } from '@/components/resume/ResumeReviewPayment';
 import { LinkedInShare } from '@/components/LinkedInShare';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +20,8 @@ interface ResumeReviewStatus {
   report_url: string | null;
   user_email: string;
   target_role: string;
+  user_name?: string | null;
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded';
 }
 
 const ResumeReview = () => {
@@ -28,25 +31,36 @@ const ResumeReview = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [stage, setStage] = useState<'form' | 'payment' | 'waiting'>('form');
   const [submittedEmail, setSubmittedEmail] = useState<string>('');
   const [submittedReviewId, setSubmittedReviewId] = useState<string | null>(null);
   const [reviewData, setReviewData] = useState<ResumeReviewStatus | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [hasConfirmedShare, setHasConfirmedShare] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed' | 'refunded' | null>(null);
+  const [paymentSuccessPending, setPaymentSuccessPending] = useState(false);
+  const [pendingReviewInfo, setPendingReviewInfo] = useState<{ email: string; name: string } | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const subscriptionRef = useRef<any>(null);
 
   useEffect(() => {
     const reviewIdParam = searchParams.get('reviewId');
     const emailParam = searchParams.get('email');
+    const paymentParam = searchParams.get('payment');
 
     if (reviewIdParam) {
       setSubmittedReviewId(reviewIdParam);
+      setStage('waiting');
       setIsSubmitted(true);
       setHasConfirmedShare(false);
 
       if (emailParam) {
         setSubmittedEmail(emailParam);
+        setPendingReviewInfo((prev) => prev ?? { email: emailParam, name: '' });
+      }
+
+      if (paymentParam === 'success') {
+        setPaymentSuccessPending(true);
       }
     }
   }, [searchParams]);
@@ -113,9 +127,9 @@ const ResumeReview = () => {
 
     try {
       setIsCheckingStatus(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('resume_reviews')
-        .select('id, status, report_url, user_email, target_role')
+        .select('id, status, report_url, user_email, user_name, target_role, payment_status, payment_amount')
         .eq('id', submittedReviewId)
         .single();
 
@@ -125,11 +139,34 @@ const ResumeReview = () => {
       }
 
       if (data) {
-        setReviewData(data as ResumeReviewStatus);
-        setSubmittedEmail(data.user_email);
+        const typedData = data as unknown as ResumeReviewStatus;
+        setReviewData(typedData);
+        setSubmittedEmail(typedData.user_email);
+        setPendingReviewInfo((prev) => prev ?? { email: typedData.user_email, name: typedData.user_name || '' });
+
+        const paymentState = typedData.payment_status ?? null;
+        setPaymentStatus(paymentState);
+
+        if (paymentState === 'paid') {
+          if (paymentSuccessPending) {
+            setPaymentSuccessPending(false);
+          }
+          if (stage !== 'waiting') {
+            setStage('waiting');
+          }
+          if (!isSubmitted) {
+            setIsSubmitted(true);
+          }
+        } else if (stage === 'waiting') {
+          if (paymentSuccessPending) {
+            console.log('Payment confirmation pending—holding waiting state');
+          } else {
+          setStage('payment');
+          setIsSubmitted(false);
+          }
+        }
         
-        // If report is ready, stop polling
-        if (data.status === 'completed' && data.report_url) {
+        if (typedData.status === 'completed' && typedData.report_url) {
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
@@ -181,7 +218,7 @@ const ResumeReview = () => {
       console.log('📊 Review data to save:', reviewData);
 
       // Save to database - use anonymous client to avoid auth issues
-      const { data: savedReview, error } = await supabase
+      const { data: savedReview, error } = await (supabase as any)
         .from('resume_reviews')
         .insert(reviewData)
         .select()
@@ -206,25 +243,36 @@ const ResumeReview = () => {
 
       console.log('✅ Resume review saved successfully:', savedReview.id);
 
-      // Show success and start checking for report
-      setSubmittedEmail(data.email || user.email || '');
+      // Show success and move to payment step
+      const emailToUse = data.email || user.email || '';
+
+      setSubmittedEmail(emailToUse);
       setSubmittedReviewId(savedReview.id);
       setReviewData({
         id: savedReview.id,
         status: savedReview.status || 'pending',
         report_url: savedReview.report_url || null,
-        user_email: data.email || user.email || '',
+        user_email: emailToUse,
         target_role: data.targetRole,
+        user_name: data.name || user.user_metadata?.full_name || '',
+        payment_status: savedReview.payment_status || 'pending'
       });
-      setIsSubmitted(true);
+      setPendingReviewInfo({
+        email: emailToUse,
+        name: data.name || user.user_metadata?.full_name || ''
+      });
+      setPaymentStatus(
+        (savedReview.payment_status as 'pending' | 'paid' | 'failed' | 'refunded' | undefined) ?? 'pending'
+      );
+      setStage('payment');
+      setIsSubmitted(false);
       setIsSubmitting(false);
 
       toast({
-        title: "Resume Submitted Successfully!",
-        description: "Your resume has been submitted. We'll notify you when your report is ready.",
+        title: "Resume Submitted!",
+        description: "Complete the payment below to start your expert resume review.",
       });
 
-      // Scroll to top to show success message
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (error) {
@@ -239,6 +287,14 @@ const ResumeReview = () => {
   };
 
   const isReportReady = !!(reviewData && reviewData.status === 'completed' && reviewData.report_url);
+
+  const handlePaymentCompleted = () => {
+    setStage('waiting');
+    setIsSubmitted(true);
+    setPaymentStatus('paid');
+    setHasConfirmedShare(false);
+    checkReviewStatus();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -256,7 +312,7 @@ const ResumeReview = () => {
 
       <div className="relative z-10 pt-16 sm:pt-24 md:pt-32 pb-16 sm:pb-20">
         {/* Report Viewer Gate - Show share prompt before displaying report */}
-        {isSubmitted && isReportReady && (
+        {stage === 'waiting' && isReportReady && (
           <div className="container mx-auto px-4 sm:px-6 mb-8">
             <div className="max-w-4xl mx-auto space-y-6">
               {!hasConfirmedShare ? (
@@ -293,7 +349,7 @@ const ResumeReview = () => {
         )}
 
         {/* Processing/Waiting State - Show when report is not ready yet */}
-        {isSubmitted && reviewData && !isReportReady && (
+        {stage === 'waiting' && reviewData && !isReportReady && (
           <div className="container mx-auto px-4 sm:px-6 mb-8">
             <div className="max-w-2xl mx-auto">
               <ResumeReportViewer
@@ -307,7 +363,7 @@ const ResumeReview = () => {
         )}
 
         {/* Initial Success State - Show immediately after submission */}
-        {isSubmitted && !reviewData && (
+        {stage === 'waiting' && !reviewData && (
           <div className="container mx-auto px-4 sm:px-6 mb-8">
             <div className="max-w-2xl mx-auto">
               <Card className="bg-green-900/20 border-green-500/30 shadow-2xl">
@@ -323,7 +379,7 @@ const ResumeReview = () => {
                     We've sent a confirmation to <span className="text-white font-semibold">{submittedEmail}</span>
                   </p>
                   <p className="text-sm text-slate-300">
-                    Our AI will analyze your resume and generate a detailed feedback report. You'll see it here when it's ready!
+                    Our reviewers are getting started. You'll see your detailed report here once it's ready!
                   </p>
                   
                   {/* Conversion CTA Section */}
@@ -386,7 +442,7 @@ const ResumeReview = () => {
         )}
 
         {/* Loading State */}
-        {isSubmitting && !isSubmitted && (
+        {isSubmitting && stage === 'form' && (
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center">
               <Card className="bg-white/10 border-white/20 p-8 md:p-12">
@@ -403,13 +459,25 @@ const ResumeReview = () => {
         )}
 
         {/* Form */}
-        {!isSubmitting && !isSubmitted && (
+        {stage === 'form' && (
           <div className="container mx-auto px-4 sm:px-6">
             <ResumeReviewForm
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               initialEmail={user?.email ?? undefined}
               initialName={user?.user_metadata?.full_name ?? undefined}
+            />
+          </div>
+        )}
+
+        {stage === 'payment' && submittedReviewId && pendingReviewInfo && user && (
+          <div className="container mx-auto px-4 sm:px-6">
+            <ResumeReviewPayment
+              resumeReviewId={submittedReviewId}
+              userId={user.id}
+              userEmail={pendingReviewInfo.email}
+              userName={pendingReviewInfo.name || user.user_metadata?.full_name || user.email || ''}
+              onPaymentCompleted={handlePaymentCompleted}
             />
           </div>
         )}

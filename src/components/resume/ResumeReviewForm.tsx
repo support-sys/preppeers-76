@@ -7,6 +7,7 @@ import { getAvailableRoles } from '@/config/readinessQuestions';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { RESUME_REVIEW_PRICE } from '@/utils/planConfig';
 
 export interface ResumeReviewData {
   email: string;
@@ -196,7 +197,7 @@ export const ResumeReviewForm = ({ onSubmit, isSubmitting = false, initialEmail,
             Get Your Resume Reviewed
           </CardTitle>
           <CardDescription className="text-base md:text-lg text-slate-300">
-            Upload your resume and get expert AI-powered feedback delivered to your email
+            Upload your resume and receive expert, personalised feedback. One-time review fee: ₹{RESUME_REVIEW_PRICE}.
           </CardDescription>
         </CardHeader>
 
@@ -357,6 +358,9 @@ export const ResumeReviewForm = ({ onSubmit, isSubmitting = false, initialEmail,
             </div>
 
             {/* Submit Button */}
+            <div className="text-sm text-slate-300 bg-slate-800/60 border border-slate-700 rounded-lg px-4 py-3">
+              Pay ₹{RESUME_REVIEW_PRICE} after uploading to start your expert resume review.
+            </div>
             <Button 
               type="submit" 
               size="lg" 
@@ -369,7 +373,7 @@ export const ResumeReviewForm = ({ onSubmit, isSubmitting = false, initialEmail,
                 <>Uploading Resume...</>
               ) : (
                 <>
-                  Submit Resume for Review
+                  Continue to Payment
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </>
               )}
@@ -378,18 +382,18 @@ export const ResumeReviewForm = ({ onSubmit, isSubmitting = false, initialEmail,
 
           {/* Trust Signals */}
           <div className="mt-6 pt-6 border-t border-slate-600/50">
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-4 text-center text-xs text-slate-400">
               <div>
-                <p className="text-2xl font-bold text-green-400">✓</p>
-                <p className="text-xs text-slate-400">100% Free</p>
+                <p className="text-2xl font-bold text-green-400">₹{RESUME_REVIEW_PRICE}</p>
+                <p className="mt-1">One-time fee</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-green-400">✓</p>
-                <p className="text-xs text-slate-400">Expert Reviewed</p>
+                <p className="mt-1">Expert reviewed</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-400">✓</p>
-                <p className="text-xs text-slate-400">No Payment Required</p>
+                <p className="text-2xl font-bold text-green-400">📄</p>
+                <p className="mt-1">Actionable PDF report</p>
               </div>
             </div>
           </div>

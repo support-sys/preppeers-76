@@ -19,6 +19,10 @@ interface ResumeReviewRecord {
   report_url: string | null;
   submitted_at: string | null;
   report_generated_at: string | null;
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded' | null;
+  payment_amount?: number | null;
+  payment_reference?: string | null;
+  payment_verified_at?: string | null;
 }
 
 const formatDateTime = (value?: string | null) => {
@@ -86,7 +90,7 @@ const ResumeReviewUploadAdmin = () => {
       const supabaseClient = supabase as any;
       const { data, error } = await supabaseClient
         .from('resume_reviews')
-        .select('id, user_name, user_email, target_role, experience_years, resume_url, status, report_url, submitted_at, report_generated_at')
+        .select('id, user_name, user_email, target_role, experience_years, resume_url, status, report_url, submitted_at, report_generated_at, payment_status, payment_amount, payment_reference, payment_verified_at')
         .eq('id', reviewId)
         .single();
 
@@ -231,8 +235,47 @@ const ResumeReviewUploadAdmin = () => {
       );
     }
 
+    const paymentStatus = record.payment_status ?? 'pending';
+    const isPaymentComplete = paymentStatus === 'paid';
+
     return (
       <div className="space-y-6">
+        <Card className="border-slate-700 bg-slate-900/60">
+          <CardHeader className="border-b border-slate-800">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <LinkIcon className="w-5 h-5 text-blue-300" />
+              Payment Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-200 pt-6">
+            <div>
+              <p className="text-slate-400 text-xs uppercase">Status</p>
+              <p className={`font-semibold ${isPaymentComplete ? 'text-emerald-400' : paymentStatus === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
+                {paymentStatus ? paymentStatus.replace('_', ' ') : 'pending'}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-xs uppercase">Amount</p>
+              <p className="font-medium">
+                {typeof record.payment_amount === 'number' ? `₹${record.payment_amount}` : '₹99'}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-xs uppercase">Reference</p>
+              <p className="font-medium break-all">{record.payment_reference ?? 'Not available'}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-xs uppercase">Verified At</p>
+              <p className="font-medium">{formatDateTime(record.payment_verified_at)}</p>
+            </div>
+            {!isPaymentComplete && (
+              <div className="md:col-span-2 text-xs text-yellow-300 bg-yellow-900/20 border border-yellow-500/30 rounded-md p-3">
+                Payment is not completed yet. Please confirm the candidate completes the checkout before uploading the report.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="border-slate-700 bg-slate-900/60">
           <CardHeader className="border-b border-slate-800">
             <CardTitle className="flex items-center gap-2 text-white">
@@ -339,8 +382,8 @@ const ResumeReviewUploadAdmin = () => {
 
               <Button
                 onClick={handleComplete}
-                disabled={saving || !reportLink}
-                className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2"
+                disabled={saving || !reportLink || !isPaymentComplete}
+                className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <>
@@ -358,6 +401,11 @@ const ResumeReviewUploadAdmin = () => {
               <p className="text-xs text-slate-500 leading-5">
                 Once saved, the candidate&apos;s status is set to <strong>completed</strong> and an email is sent with this link.
               </p>
+              {!isPaymentComplete && (
+                <p className="text-xs text-red-300 leading-5">
+                  Payment must be marked as paid before you can send the report link.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
