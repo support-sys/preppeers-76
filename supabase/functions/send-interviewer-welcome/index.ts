@@ -121,12 +121,12 @@ const handler = async (req)=>{
       cc: [
         "support@interviewise.in"
       ],
-      subject: "🎉 Welcome to InterviewWise - Assessment & Onboarding Details",
+      subject: "🎉 Welcome to Interviewise - Assessment & Onboarding Details",
       html: `
         <html>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin-bottom: 10px;">🎉 Welcome to InterviewWise!</h1>
+              <h1 style="color: #2563eb; margin-bottom: 10px;">🎉 Welcome to Interviewise!</h1>
               <p style="font-size: 18px; color: #666;">Thank you for joining our interviewer community</p>
             </div>
             
@@ -178,7 +178,7 @@ const handler = async (req)=>{
               <p style="color: #666; margin-bottom: 20px;">We'll contact you soon with your assessment details. Thank you for choosing to make a difference in candidates' careers!</p>
               <p style="color: #888; font-size: 14px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
                 Best regards,<br>
-                <strong>The InterviewWise Team</strong><br>
+                <strong>The Interviewise Team</strong><br>
                 <a href="mailto:support@interviewise.in" style="color: #2563eb;">support@interviewise.in</a>
               </p>
             </div>

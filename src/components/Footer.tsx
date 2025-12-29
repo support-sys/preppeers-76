@@ -62,14 +62,14 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-300 hover:text-blue-400 transition-colors">
+                <Link to="/terms-of-service" className="text-slate-300 hover:text-blue-400 transition-colors">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-300 hover:text-blue-400 transition-colors">
+                <Link to="/privacy-policy" className="text-slate-300 hover:text-blue-400 transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-slate-300 hover:text-blue-400 transition-colors">
@@ -82,7 +82,7 @@ const Footer = () => {
 
         <div className="border-t border-white/10 mt-8 pt-8 text-center">
           <p className="text-slate-400">
-            © 2025 INTERVIEWISE. All rights reserved. Built for IT professionals by IT professionals.
+            © 2025 INTERVIEWISE DIGITAL SERVICES. All rights reserved. Built for IT professionals by IT professionals.
           </p>
         </div>
       </div>

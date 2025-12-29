@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', '@supabase/supabase-js'],
+      include: ['react', 'react-dom', '@supabase/supabase-js', '@radix-ui/react-tabs'],
     },
   };
 });

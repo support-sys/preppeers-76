@@ -20,6 +20,8 @@ import BecomeInterviewer from "./pages/BecomeInterviewer";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import RefundPolicy from "./pages/RefundPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ResumeReview from "./pages/ResumeReview";
 import NotFound from "./pages/NotFound";
 import FunnelTest from "./pages/FunnelTest";
@@ -88,6 +90,8 @@ const App = () => (
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route 
               path="/resume-review" 
               element={
